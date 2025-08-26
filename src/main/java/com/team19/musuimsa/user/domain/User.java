@@ -18,7 +18,7 @@ public class User {
     private Long userId;
 
     @Column(nullable = false, unique = true)
-    private String id;
+    private String email;
 
     @Column(nullable = false)
     private String password;
@@ -29,8 +29,8 @@ public class User {
     @Column(nullable = false)
     private String profileImageUrl;
 
-    public User(String id, String password, String nickname, String profileImageUrl) {
-        this.id = id;
+    public User(String email, String password, String nickname, String profileImageUrl) {
+        this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.profileImageUrl = profileImageUrl;
