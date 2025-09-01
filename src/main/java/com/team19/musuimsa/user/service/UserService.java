@@ -1,5 +1,6 @@
 package com.team19.musuimsa.user.service;
 
+import com.team19.musuimsa.exception.auth.AuthenticationException;
 import com.team19.musuimsa.exception.auth.InvalidPasswordException;
 import com.team19.musuimsa.exception.auth.LoginFailedException;
 import com.team19.musuimsa.exception.conflict.EmailDuplicateException;
@@ -73,8 +74,11 @@ public class UserService {
         return UserResponseDto.from(user);
     }
 
-    public UserResponseDto updateUserInfo(Long userId, UserUpdateRequestDto userUpdateRequestDto) {
+    public UserResponseDto updateUserInfo(Long userId, UserUpdateRequestDto userUpdateRequestDto,
+            User loginUser) {
         User user = getUserById(userId);
+
+        validateUserPermission(user, loginUser, "자신의 정보만 수정할 수 있습니다.");
 
         String newNickname = userUpdateRequestDto.nickname();
         if (newNickname != null && !newNickname.equals(user.getNickname())) {
@@ -88,8 +92,11 @@ public class UserService {
         return UserResponseDto.from(user);
     }
 
-    public void updateUserPassword(Long userId, UserPasswordUpdateRequestDto requestDto) {
+    public void updateUserPassword(Long userId, UserPasswordUpdateRequestDto requestDto,
+            User loginUser) {
         User user = getUserById(userId);
+
+        validateUserPermission(user, loginUser, "자신의 비밀번호만 변경할 수 있습니다.");
 
         if (!passwordEncoder.matches(requestDto.currentPassword(), user.getPassword())) {
             throw new InvalidPasswordException();
@@ -99,8 +106,10 @@ public class UserService {
         user.updatePassword(newEncodedPassword);
     }
 
-    public void deleteUser(Long userId) {
+    public void deleteUser(Long userId, User loginUser) {
         User user = getUserById(userId);
+
+        validateUserPermission(user, loginUser, "자신만 탈퇴할 수 있습니다.");
 
         userRepository.delete(user);
     }
@@ -118,5 +127,11 @@ public class UserService {
     private User getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
+    private void validateUserPermission(User targetUser, User loginUser, String errorMessage) {
+        if (!targetUser.getUserId().equals(loginUser.getUserId())) {
+            throw new AuthenticationException(errorMessage);
+        }
     }
 }
