@@ -45,7 +45,7 @@ public class JwtUtil {
     private String createToken(String email, long expirationTime) {
         Date now = new Date();
 
-        return BEARER_PREFIX + Jwts.builder()
+        return Jwts.builder()
                 .subject(email)
                 .expiration(new Date(now.getTime() + expirationTime))
                 .issuedAt(now)
