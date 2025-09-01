@@ -21,14 +21,11 @@ public class GlobalExceptionHandler {
             DataConflictException ex,
             HttpServletRequest request) {
 
-        ErrorResponseDto error = new ErrorResponseDto(
-                HttpStatus.CONFLICT.value(),
-                HttpStatus.CONFLICT.getReasonPhrase(),
+        return handleException(
+                HttpStatus.CONFLICT,
                 ex.getMessage(),
                 request.getRequestURI()
         );
-
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -36,14 +33,11 @@ public class GlobalExceptionHandler {
             AuthenticationException ex,
             HttpServletRequest request) {
 
-        ErrorResponseDto error = new ErrorResponseDto(
-                HttpStatus.UNAUTHORIZED.value(),
-                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
+        return handleException(
+                HttpStatus.UNAUTHORIZED,
                 ex.getMessage(),
                 request.getRequestURI()
         );
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -55,14 +49,11 @@ public class GlobalExceptionHandler {
                 .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
                 .collect(Collectors.joining(", "));
 
-        ErrorResponseDto error = new ErrorResponseDto(
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+        return handleException(
+                HttpStatus.BAD_REQUEST,
                 errorMessage,
                 request.getRequestURI()
         );
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 
     @ExceptionHandler(Exception.class)
@@ -72,13 +63,19 @@ public class GlobalExceptionHandler {
 
         log.error("An unexpected error occurred: {}", ex.getMessage(), ex);
 
-        ErrorResponseDto error = new ErrorResponseDto(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
+        return handleException(
+                HttpStatus.INTERNAL_SERVER_ERROR,
                 "서버 내부 오류가 발생했습니다.",
                 request.getRequestURI()
         );
+    }
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    private ResponseEntity<ErrorResponseDto> handleException(
+            HttpStatus status,
+            String message,
+            String path) {
+
+        return ResponseEntity.status(status)
+                .body(ErrorResponseDto.from(status, message, path));
     }
 }
