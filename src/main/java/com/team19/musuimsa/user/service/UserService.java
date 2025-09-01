@@ -3,10 +3,12 @@ package com.team19.musuimsa.user.service;
 import com.team19.musuimsa.exception.auth.LoginFailedException;
 import com.team19.musuimsa.exception.conflict.EmailDuplicateException;
 import com.team19.musuimsa.exception.conflict.NicknameDuplicateException;
+import com.team19.musuimsa.exception.notfound.UserNotFoundException;
 import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.dto.LoginRequestDto;
 import com.team19.musuimsa.user.dto.SignUpRequestDto;
 import com.team19.musuimsa.user.dto.TokenResponseDto;
+import com.team19.musuimsa.user.dto.UserResponseDto;
 import com.team19.musuimsa.user.repository.UserRepository;
 import com.team19.musuimsa.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +61,14 @@ public class UserService {
         user.updateRefreshToken(refreshToken);
 
         return new TokenResponseDto(accessToken, refreshToken);
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponseDto getUserInfo(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+
+        return UserResponseDto.from(user);
     }
 
     private void checkDuplicateUser(SignUpRequestDto signUpRequestDto) {

@@ -3,6 +3,7 @@ package com.team19.musuimsa.exception.handler;
 import com.team19.musuimsa.exception.auth.AuthenticationException;
 import com.team19.musuimsa.exception.conflict.DataConflictException;
 import com.team19.musuimsa.exception.dto.ErrorResponseDto;
+import com.team19.musuimsa.exception.notfound.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,18 @@ public class GlobalExceptionHandler {
 
         return handleException(
                 HttpStatus.CONFLICT,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponseDto> handleEntityNotFoundException(
+            EntityNotFoundException ex,
+            HttpServletRequest request) {
+
+        return handleException(
+                HttpStatus.NOT_FOUND,
                 ex.getMessage(),
                 request.getRequestURI()
         );

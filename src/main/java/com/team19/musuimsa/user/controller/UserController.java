@@ -3,11 +3,14 @@ package com.team19.musuimsa.user.controller;
 import com.team19.musuimsa.user.dto.LoginRequestDto;
 import com.team19.musuimsa.user.dto.SignUpRequestDto;
 import com.team19.musuimsa.user.dto.TokenResponseDto;
+import com.team19.musuimsa.user.dto.UserResponseDto;
 import com.team19.musuimsa.user.service.UserService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -38,5 +41,13 @@ public class UserController {
         TokenResponseDto tokenResponseDto = userService.login(loginRequestDto);
 
         return ResponseEntity.ok(tokenResponseDto);
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserResponseDto> getUserInfo(
+            @PathVariable Long userId) {
+        UserResponseDto userInfo = userService.getUserInfo(userId);
+
+        return ResponseEntity.ok(userInfo);
     }
 }
