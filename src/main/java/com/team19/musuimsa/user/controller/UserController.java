@@ -61,7 +61,7 @@ public class UserController {
     @PatchMapping("/{userId}")
     public ResponseEntity<UserResponseDto> updateUserInfo(
             @PathVariable Long userId,
-            @Valid @RequestBody UserUpdateRequestDto userUpdateRequestDto,
+            @RequestBody UserUpdateRequestDto userUpdateRequestDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         UserResponseDto updatedUser = userService.updateUserInfo(userId, userUpdateRequestDto,
@@ -82,7 +82,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}")
-    public ResponseEntity<String> deleteUser(
+    public ResponseEntity<Void> deleteUser(
             @PathVariable Long userId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
