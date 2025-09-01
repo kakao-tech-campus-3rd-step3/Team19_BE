@@ -2,6 +2,7 @@ package com.team19.musuimsa.user.service;
 
 import com.team19.musuimsa.exception.auth.AuthenticationException;
 import com.team19.musuimsa.exception.auth.InvalidPasswordException;
+import com.team19.musuimsa.exception.auth.InvalidRefreshTokenException;
 import com.team19.musuimsa.exception.auth.LoginFailedException;
 import com.team19.musuimsa.exception.conflict.EmailDuplicateException;
 import com.team19.musuimsa.exception.conflict.NicknameDuplicateException;
@@ -65,6 +66,40 @@ public class UserService {
         user.updateRefreshToken(refreshToken);
 
         return new TokenResponseDto(accessToken, refreshToken);
+    }
+
+    public void logout(User loginUser) {
+        User user = getUserById(loginUser.getUserId());
+        user.invalidateRefreshToken();
+    }
+
+    public TokenResponseDto reissueToken(String refreshToken) {
+        // "Bearer " 접두사 제거
+        String pureToken = refreshToken.substring(7);
+
+        // 1. 토큰 검증
+        if (!jwtUtil.validateToken(pureToken)) {
+            throw new InvalidRefreshTokenException();
+        }
+
+        // 2. 토큰에서 사용자 정보 추출
+        String email = jwtUtil.getUserInfoFromToken(pureToken).getSubject();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(InvalidRefreshTokenException::new);
+
+        // 3. DB에 저장된 토큰과 일치하는지 확인
+        if (!user.getRefreshToken().equals(pureToken)) {
+            throw new InvalidRefreshTokenException();
+        }
+
+        // 4. 새로운 Access Token 생성
+        String newAccessToken = jwtUtil.createAccessToken(email);
+
+        // 5. Refresh Token 새로 발급
+        String newRefreshToken = jwtUtil.createRefreshToken(email);
+        user.updateRefreshToken(newRefreshToken);
+
+        return new TokenResponseDto(newAccessToken, newRefreshToken);
     }
 
     @Transactional(readOnly = true)

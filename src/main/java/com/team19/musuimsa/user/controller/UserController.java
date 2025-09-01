@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -46,6 +47,24 @@ public class UserController {
     ) {
         TokenResponseDto tokenResponseDto = userService.login(loginRequestDto);
 
+        return ResponseEntity.ok(tokenResponseDto);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logoutUser(
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        userService.logout(userDetails.getUser());
+
+        return ResponseEntity.ok("성공적으로 로그아웃 되었습니다.");
+    }
+
+    @PostMapping("/reissue")
+    public ResponseEntity<TokenResponseDto> reissueTokens(
+            @RequestHeader("Authorization-Refresh") String refreshToken
+    ) {
+        TokenResponseDto tokenResponseDto = userService.reissueToken(refreshToken);
+        
         return ResponseEntity.ok(tokenResponseDto);
     }
 

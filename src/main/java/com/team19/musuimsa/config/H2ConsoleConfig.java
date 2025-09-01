@@ -8,6 +8,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer.FrameOptionsConfig;
 import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
@@ -27,7 +28,7 @@ public class H2ConsoleConfig {
                 // h2-console은 CSRF 보호가 필요 없음
                 .csrf(AbstractHttpConfigurer::disable)
                 // h2-console은 프레임 안에서 실행되므로 X-Frame-Options 비활성화
-                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable()));
+                .headers(headers -> headers.frameOptions(FrameOptionsConfig::disable));
 
         return http.build();
     }
