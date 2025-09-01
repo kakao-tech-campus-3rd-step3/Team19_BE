@@ -9,6 +9,7 @@ import com.team19.musuimsa.user.dto.LoginRequestDto;
 import com.team19.musuimsa.user.dto.SignUpRequestDto;
 import com.team19.musuimsa.user.dto.TokenResponseDto;
 import com.team19.musuimsa.user.dto.UserResponseDto;
+import com.team19.musuimsa.user.dto.UserUpdateRequestDto;
 import com.team19.musuimsa.user.repository.UserRepository;
 import com.team19.musuimsa.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -65,8 +66,22 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserResponseDto getUserInfo(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+        User user = getUserById(userId);
+
+        return UserResponseDto.from(user);
+    }
+
+    public UserResponseDto updateUserInfo(Long userId, UserUpdateRequestDto userUpdateRequestDto) {
+        User user = getUserById(userId);
+
+        String newNickname = userUpdateRequestDto.nickname();
+        if (newNickname != null && !newNickname.equals(user.getNickname())) {
+            userRepository.findByNickname(newNickname).ifPresent(existingUser -> {
+                throw new NicknameDuplicateException(newNickname);
+            });
+        }
+
+        user.updateUser(newNickname, userUpdateRequestDto.profileImageUrl());
 
         return UserResponseDto.from(user);
     }
@@ -79,5 +94,10 @@ public class UserService {
         userRepository.findByNickname(signUpRequestDto.nickname()).ifPresent(user -> {
             throw new NicknameDuplicateException(signUpRequestDto.nickname());
         });
+    }
+
+    private User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
     }
 }

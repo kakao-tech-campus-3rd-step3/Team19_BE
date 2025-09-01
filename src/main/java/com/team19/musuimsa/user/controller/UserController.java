@@ -4,12 +4,14 @@ import com.team19.musuimsa.user.dto.LoginRequestDto;
 import com.team19.musuimsa.user.dto.SignUpRequestDto;
 import com.team19.musuimsa.user.dto.TokenResponseDto;
 import com.team19.musuimsa.user.dto.UserResponseDto;
+import com.team19.musuimsa.user.dto.UserUpdateRequestDto;
 import com.team19.musuimsa.user.service.UserService;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -49,5 +51,15 @@ public class UserController {
         UserResponseDto userInfo = userService.getUserInfo(userId);
 
         return ResponseEntity.ok(userInfo);
+    }
+
+    @PatchMapping("/{userId}")
+    public ResponseEntity<UserResponseDto> updateUserInfo(
+            @PathVariable Long userId,
+            @Valid @RequestBody UserUpdateRequestDto userUpdateRequestDto
+    ) {
+        UserResponseDto updatedUser = userService.updateUserInfo(userId, userUpdateRequestDto);
+
+        return ResponseEntity.ok(updatedUser);
     }
 }
