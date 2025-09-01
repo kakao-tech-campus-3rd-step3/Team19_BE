@@ -1,6 +1,7 @@
 package com.team19.musuimsa.exception.handler;
 
 import com.team19.musuimsa.exception.auth.AuthenticationException;
+import com.team19.musuimsa.exception.auth.InvalidPasswordException;
 import com.team19.musuimsa.exception.conflict.DataConflictException;
 import com.team19.musuimsa.exception.dto.ErrorResponseDto;
 import com.team19.musuimsa.exception.notfound.EntityNotFoundException;
@@ -48,6 +49,18 @@ public class GlobalExceptionHandler {
 
         return handleException(
                 HttpStatus.UNAUTHORIZED,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ResponseEntity<ErrorResponseDto> handleInvalidPasswordException(
+            InvalidPasswordException ex,
+            HttpServletRequest request) {
+
+        return handleException(
+                HttpStatus.BAD_REQUEST,
                 ex.getMessage(),
                 request.getRequestURI()
         );

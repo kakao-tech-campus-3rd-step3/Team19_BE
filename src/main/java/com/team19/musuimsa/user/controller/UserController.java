@@ -3,6 +3,7 @@ package com.team19.musuimsa.user.controller;
 import com.team19.musuimsa.user.dto.LoginRequestDto;
 import com.team19.musuimsa.user.dto.SignUpRequestDto;
 import com.team19.musuimsa.user.dto.TokenResponseDto;
+import com.team19.musuimsa.user.dto.UserPasswordUpdateRequestDto;
 import com.team19.musuimsa.user.dto.UserResponseDto;
 import com.team19.musuimsa.user.dto.UserUpdateRequestDto;
 import com.team19.musuimsa.user.service.UserService;
@@ -10,6 +11,7 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -47,7 +49,8 @@ public class UserController {
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponseDto> getUserInfo(
-            @PathVariable Long userId) {
+            @PathVariable Long userId
+    ) {
         UserResponseDto userInfo = userService.getUserInfo(userId);
 
         return ResponseEntity.ok(userInfo);
@@ -61,5 +64,24 @@ public class UserController {
         UserResponseDto updatedUser = userService.updateUserInfo(userId, userUpdateRequestDto);
 
         return ResponseEntity.ok(updatedUser);
+    }
+
+    @PatchMapping("/{userId}/password")
+    public ResponseEntity<String> updateUserPassword(
+            @PathVariable Long userId,
+            @Valid @RequestBody UserPasswordUpdateRequestDto requestDto
+    ) {
+        userService.updateUserPassword(userId, requestDto);
+
+        return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
+    }
+
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<String> deleteUser(
+            @PathVariable Long userId
+    ) {
+        userService.deleteUser(userId);
+
+        return ResponseEntity.noContent().build();
     }
 }

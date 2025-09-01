@@ -1,5 +1,6 @@
 package com.team19.musuimsa.user.service;
 
+import com.team19.musuimsa.exception.auth.InvalidPasswordException;
 import com.team19.musuimsa.exception.auth.LoginFailedException;
 import com.team19.musuimsa.exception.conflict.EmailDuplicateException;
 import com.team19.musuimsa.exception.conflict.NicknameDuplicateException;
@@ -8,6 +9,7 @@ import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.dto.LoginRequestDto;
 import com.team19.musuimsa.user.dto.SignUpRequestDto;
 import com.team19.musuimsa.user.dto.TokenResponseDto;
+import com.team19.musuimsa.user.dto.UserPasswordUpdateRequestDto;
 import com.team19.musuimsa.user.dto.UserResponseDto;
 import com.team19.musuimsa.user.dto.UserUpdateRequestDto;
 import com.team19.musuimsa.user.repository.UserRepository;
@@ -84,6 +86,23 @@ public class UserService {
         user.updateUser(newNickname, userUpdateRequestDto.profileImageUrl());
 
         return UserResponseDto.from(user);
+    }
+
+    public void updateUserPassword(Long userId, UserPasswordUpdateRequestDto requestDto) {
+        User user = getUserById(userId);
+
+        if (!passwordEncoder.matches(requestDto.currentPassword(), user.getPassword())) {
+            throw new InvalidPasswordException();
+        }
+
+        String newEncodedPassword = passwordEncoder.encode(requestDto.newPassword());
+        user.updatePassword(newEncodedPassword);
+    }
+
+    public void deleteUser(Long userId) {
+        User user = getUserById(userId);
+
+        userRepository.delete(user);
     }
 
     private void checkDuplicateUser(SignUpRequestDto signUpRequestDto) {
