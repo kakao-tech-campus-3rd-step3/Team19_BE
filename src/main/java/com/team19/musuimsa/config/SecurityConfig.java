@@ -53,7 +53,8 @@ public class SecurityConfig {
                 // 인증이 필요한 요청에 대해서는 인증을 요구함
                 .authorizeHttpRequests(auth -> auth
                         // 회원가입과 로그인 API는 모두 허용
-                        .requestMatchers("/api/users/signup", "/api/users/login").permitAll()
+                        .requestMatchers("/api/users/signup", "/api/users/login",
+                                "/api/users/reissue").permitAll()
                         // 특정 사용자를 조회하는 GET 요청은 허용
                         .requestMatchers(HttpMethod.GET, "/api/users/{userId}").permitAll()
                         // 그 외의 모든 /api/users/** 요청은 인증된 사용자만 접근 가능
