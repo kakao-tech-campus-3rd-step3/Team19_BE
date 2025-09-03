@@ -2,6 +2,7 @@ package com.team19.musuimsa.security;
 
 import com.team19.musuimsa.user.domain.User;
 import java.util.Collection;
+import java.util.Collections;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -53,6 +54,6 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return null; // 지금은 별도의 권한(Role)이 필요 없으므로 null 반환
+        return Collections.emptyList(); // 지금은 별도의 권한(Role)이 필요 없으므로 emptyList 반환
     }
 }
