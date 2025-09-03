@@ -1,7 +1,7 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.5.5'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'org.springframework.boot' version '3.5.5'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'com.team19'
@@ -9,48 +9,49 @@ version = '0.0.1-SNAPSHOT'
 description = 'Demo project for Spring Boot'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	// Spring Web
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	// Spring Data JPA
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	// Spring Validation
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	// Spring Security
-	implementation 'org.springframework.boot:spring-boot-starter-security'
+    // Spring Web
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    // Spring Data JPA
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    // Spring Validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    // Spring Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
 
-	// Lombok
-	compileOnly 'org.projectlombok:lombok'
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
 
-	// Database
-	runtimeOnly 'com.mysql:mysql-connector-j' // MySQL (운영용)
-	runtimeOnly 'com.h2database:h2' // H2 (개발용)
+    // Database
+    runtimeOnly 'com.mysql:mysql-connector-j' // MySQL (운영용)
+    runtimeOnly 'com.h2database:h2' // H2 (개발용)
 
-	// JJWT (JWT 라이브러리)
-	implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
+    // JJWT (JWT 라이브러리)
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.5'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
 
-	annotationProcessor 'org.projectlombok:lombok'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }
