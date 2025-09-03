@@ -1,7 +1,7 @@
 package com.team19.musuimsa.filter;
 
 import com.team19.musuimsa.security.UserDetailsImpl;
-import com.team19.musuimsa.security.UserDetailsService;
+import com.team19.musuimsa.security.UserDetailsServiceImpl;
 import com.team19.musuimsa.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -23,7 +23,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final UserDetailsService userDetailsService;
+    private final UserDetailsServiceImpl userDetailsService;
 
     @Override
     public void doFilterInternal(HttpServletRequest request, HttpServletResponse response,

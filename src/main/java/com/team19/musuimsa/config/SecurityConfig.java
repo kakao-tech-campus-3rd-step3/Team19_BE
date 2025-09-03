@@ -1,7 +1,7 @@
 package com.team19.musuimsa.config;
 
 import com.team19.musuimsa.filter.JwtAuthorizationFilter;
-import com.team19.musuimsa.security.UserDetailsService;
+import com.team19.musuimsa.security.UserDetailsServiceImpl;
 import com.team19.musuimsa.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -23,7 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
-    private final UserDetailsService userDetailsService;
+    private final UserDetailsServiceImpl userDetailsService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
