@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
-    List<Review> findByShelter(Shelter shelter);
+    List<Review> findByShelterOrderByCreatedAtDesc(Shelter shelter);
 
     List<Review> findByUser(User user);
 
