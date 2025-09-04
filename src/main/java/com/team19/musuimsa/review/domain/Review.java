@@ -49,7 +49,7 @@ public class Review {
         return new Review(null, shelter, user, photoUrl, title, content, rating, createdAt, updatedAt);
     }
 
-    private Review(Long reviewId, Shelter shelter, User user, String photoUrl, String title, String title, int rating, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    private Review(Long reviewId, Shelter shelter, User user, String photoUrl, String title, String content, int rating, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.reviewId = reviewId;
         this.shelter = shelter;
         this.user = user;
