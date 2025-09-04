@@ -1,7 +1,13 @@
 package com.team19.musuimsa.config;
 
+import com.team19.musuimsa.filter.JwtAuthorizationFilter;
+import com.team19.musuimsa.security.UserDetailsServiceImpl;
+import com.team19.musuimsa.util.JwtUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -9,10 +15,15 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtUtil jwtUtil;
+    private final UserDetailsServiceImpl userDetailsService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -20,6 +31,12 @@ public class SecurityConfig {
     }
 
     @Bean
+    public JwtAuthorizationFilter jwtAuthorizationFilter() {
+        return new JwtAuthorizationFilter(jwtUtil, userDetailsService);
+    }
+
+    @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 // API 서버는 토큰 기반으로 인증, 서버가 직접 제공하는 로그인 화면이나 브라우저 인증 팝업 필요 없음
@@ -36,11 +53,19 @@ public class SecurityConfig {
                 // 인증이 필요한 요청에 대해서는 인증을 요구함
                 .authorizeHttpRequests(auth -> auth
                         // 회원가입과 로그인 API는 모두 허용
-                        .requestMatchers("/api/users/**").permitAll()
+                        .requestMatchers("/api/users/signup", "/api/users/login",
+                                "/api/users/reissue").permitAll()
+                        // 특정 사용자를 조회하는 GET 요청은 허용
+                        .requestMatchers(HttpMethod.GET, "/api/users/{userId}").permitAll()
+                        // 그 외의 모든 /api/users/** 요청은 인증된 사용자만 접근 가능
+                        .requestMatchers("/api/users/**").authenticated()
 
-                        // 그 외의 요청은 인증된 사용자만 접근 가능
-                        .anyRequest().authenticated()
+                        // 나머지 요청은 일단 모두 허용 (추후에 필요에 따라 변경 가능)
+                        .anyRequest().permitAll()
                 );
+
+        // JWT 인증 필터를 UsernamePasswordAuthenticationFilter 전에 추가
+        http.addFilterBefore(jwtAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
