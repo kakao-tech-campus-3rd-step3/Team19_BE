@@ -1,14 +1,16 @@
 package com.team19.musuimsa.review.domain;
 
+import com.team19.musuimsa.dateTime.BaseEntity;
 import com.team19.musuimsa.user.domain.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import java.time.LocalDateTime;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -16,16 +18,18 @@ import lombok.NoArgsConstructor;
 @Table(name = "reviews")
 @Getter
 @NoArgsConstructor
-public class Review {
+public class Review extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long reviewId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "shelter_id", nullable = false)
     private Shelter shelter;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     private String photoUrl;
@@ -33,23 +37,19 @@ public class Review {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "text")
     private String content;
 
     @Column(nullable = false)
     private int rating;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
-
-    public static Review of(Shelter shelter, User user, String photoUrl, String title, String content, int rating, LocalDateTime createdAt, LocalDateTime updatedAt) {
-        return new Review(null, shelter, user, photoUrl, title, content, rating, createdAt, updatedAt);
+    public static Review of(Shelter shelter, User user, String photoUrl, String title,
+            String content, int rating) {
+        return new Review(null, shelter, user, photoUrl, title, content, rating);
     }
 
-    private Review(Long reviewId, Shelter shelter, User user, String photoUrl, String title, String content, int rating, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    private Review(Long reviewId, Shelter shelter, User user, String photoUrl, String title,
+            String content, int rating) {
         this.reviewId = reviewId;
         this.shelter = shelter;
         this.user = user;
@@ -57,7 +57,24 @@ public class Review {
         this.title = title;
         this.content = content;
         this.rating = rating;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
+
+    public void update(String title, String content, Integer rating, String photoUrl) {
+        if (title != null) {
+            this.title = title;
+        }
+
+        if (content != null) {
+            this.content = content;
+        }
+
+        if (rating != null) {
+            this.rating = rating;
+        }
+
+        if (photoUrl != null) {
+            this.photoUrl = photoUrl;
+        }
+    }
+
 }
