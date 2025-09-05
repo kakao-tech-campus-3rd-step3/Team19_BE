@@ -1,16 +1,19 @@
 package com.team19.musuimsa.review.domain;
 
 import com.team19.musuimsa.dateTime.BaseEntity;
+import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.user.domain.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -18,6 +21,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "reviews")
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Review extends BaseEntity {
 
     @Id
@@ -43,20 +47,9 @@ public class Review extends BaseEntity {
     @Column(nullable = false)
     private int rating;
 
-    public static Review of(Shelter shelter, User user, String photoUrl, String title,
-            String content, int rating) {
-        return new Review(null, shelter, user, photoUrl, title, content, rating);
-    }
-
-    private Review(Long reviewId, Shelter shelter, User user, String photoUrl, String title,
-            String content, int rating) {
-        this.reviewId = reviewId;
-        this.shelter = shelter;
-        this.user = user;
-        this.photoUrl = photoUrl;
-        this.title = title;
-        this.content = content;
-        this.rating = rating;
+    public static Review of(Shelter shelter, User user, CreateReviewRequest request) {
+        return new Review(null, shelter, user, request.photoUrl(), request.title(),
+                request.content(), request.rating());
     }
 
     public void update(String title, String content, Integer rating, String photoUrl) {
