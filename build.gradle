@@ -25,6 +25,9 @@ repositories {
 }
 
 dependencies {
+    // WebFlux
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
     // Spring Web
     implementation 'org.springframework.boot:spring-boot-starter-web'
     // Spring Data JPA
