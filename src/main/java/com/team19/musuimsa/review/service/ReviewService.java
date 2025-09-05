@@ -9,6 +9,8 @@ import com.team19.musuimsa.review.dto.CreateReviewResponse;
 import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
 import com.team19.musuimsa.review.repository.ReviewRepository;
+import com.team19.musuimsa.shelter.domain.Shelter;
+import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.repository.UserRepository;
 import java.nio.file.AccessDeniedException;
@@ -50,7 +52,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFoundException(reviewId));
 
-        if (!review.getUser().equals(user)) {
+        if (!review.getUser().getUserId().equals(user.getUserId())) {
             throw new AccessDeniedException("자신의 리뷰만 수정할 수 있습니다.");
         }
 
@@ -65,7 +67,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId).orElseThrow(
                 () -> new ReviewNotFoundException(reviewId));
 
-        if (!review.getUser().equals(user)) {
+        if (!review.getUser().getUserId().equals(user.getUserId())) {
             throw new AccessDeniedException("자신의 리뷰만 삭제할 수 있습니다.");
         }
 
