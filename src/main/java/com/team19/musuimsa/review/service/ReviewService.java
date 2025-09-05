@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
@@ -28,7 +29,6 @@ public class ReviewService {
     private final UserRepository userRepository;
 
     // 리뷰 생성
-    @Transactional
     public CreateReviewResponse createReview(Long shelterId, CreateReviewRequest request,
             User user) {
         Shelter shelter = shelterRepository.findById(shelterId)
@@ -38,15 +38,10 @@ public class ReviewService {
 
         reviewRepository.save(review);
 
-        CreateReviewResponse response = new CreateReviewResponse(review.getReviewId(),
-                review.getShelter().getShelterId(), review.getUser().getUserId(),
-                review.getCreatedAt(), review.getUpdatedAt());
-
-        return response;
+        return CreateReviewResponse.from(review);
     }
 
     // 리뷰 수정
-    @Transactional
     public ReviewResponse updateReview(Long reviewId, UpdateReviewRequest request, User user)
             throws AccessDeniedException {
         Review review = reviewRepository.findById(reviewId)
@@ -58,7 +53,7 @@ public class ReviewService {
 
         review.update(request.title(), request.content(), request.rating(), request.photoUrl());
 
-        return toDto(review);
+        return ReviewResponse.from(review);
     }
 
     // 리뷰 삭제
@@ -75,6 +70,7 @@ public class ReviewService {
     }
 
     // 쉼터별 리뷰 조회
+    @Transactional(readOnly = true)
     public List<ReviewResponse> getReviewsByShelter(Long shelterId) {
         Shelter shelter = shelterRepository.findById(shelterId)
                 .orElseThrow(() -> new ShelterNotFoundException(shelterId));
@@ -82,11 +78,12 @@ public class ReviewService {
         List<Review> reviews = reviewRepository.findByShelterOrderByCreatedAtDesc(shelter);
 
         return reviews.stream()
-                .map(this::toDto)
+                .map(ReviewResponse::from)
                 .toList();
     }
 
     // 사용자별 리뷰 조회
+    @Transactional(readOnly = true)
     public List<ReviewResponse> getReviewsByUser(User user) {
         User loginUser = userRepository.findById(user.getUserId())
                 .orElseThrow(() -> new UserNotFoundException(user.getUserId()));
@@ -94,16 +91,8 @@ public class ReviewService {
         List<Review> reviews = reviewRepository.findByUser(loginUser);
 
         return reviews.stream()
-                .map(this::toDto)
+                .map(ReviewResponse::from)
                 .toList();
     }
 
-    private ReviewResponse toDto(Review review) {
-        return new ReviewResponse(
-                review.getReviewId(), review.getShelter().getShelterId(),
-                review.getUser().getUserId(), review.getUser().getNickname(), review.getTitle(),
-                review.getContent(), review.getRating(), review.getPhotoUrl(),
-                review.getCreatedAt(), review.getUpdatedAt()
-        );
-    }
 }
