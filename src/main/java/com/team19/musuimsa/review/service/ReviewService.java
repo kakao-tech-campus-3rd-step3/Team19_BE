@@ -13,31 +13,26 @@ import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.repository.UserRepository;
 import java.nio.file.AccessDeniedException;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final ShelterRepository shelterRepository;
     private final UserRepository userRepository;
 
-    public ReviewService(ReviewRepository reviewRepository, ShelterRepository shelterRepository,
-            UserRepository userRepository) {
-        this.reviewRepository = reviewRepository;
-        this.shelterRepository = shelterRepository;
-        this.userRepository = userRepository;
-    }
-
     // 리뷰 생성
     @Transactional
-    public CreateReviewResponse createReview(Long shelterId, CreateReviewRequest request, User user) {
+    public CreateReviewResponse createReview(Long shelterId, CreateReviewRequest request,
+            User user) {
         Shelter shelter = shelterRepository.findById(shelterId)
                 .orElseThrow(() -> new ShelterNotFoundException(shelterId));
 
-        Review review = Review.of(shelter, user, request.photoUrl(), request.title(),
-                request.content(), request.rating());
+        Review review = Review.of(shelter, user, request);
 
         reviewRepository.save(review);
 
