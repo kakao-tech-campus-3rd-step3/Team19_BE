@@ -4,6 +4,7 @@ import com.team19.musuimsa.exception.auth.AuthenticationException;
 import com.team19.musuimsa.exception.auth.InvalidPasswordException;
 import com.team19.musuimsa.exception.conflict.DataConflictException;
 import com.team19.musuimsa.exception.dto.ErrorResponseDto;
+import com.team19.musuimsa.exception.external.ExternalApiException;
 import com.team19.musuimsa.exception.notfound.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.stream.Collectors;
@@ -61,6 +62,20 @@ public class GlobalExceptionHandler {
 
         return handleException(
                 HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(ExternalApiException.class)
+    public ResponseEntity<ErrorResponseDto> handleExternalApiException(
+            ExternalApiException ex,
+            HttpServletRequest request) {
+
+        log.error("External API error at {}: {}", ex.getUrl(), ex.getMessage(), ex);
+
+        return handleException(
+                HttpStatus.BAD_GATEWAY, // 502: 외부 시스템 호출 실패
                 ex.getMessage(),
                 request.getRequestURI()
         );
