@@ -4,20 +4,15 @@ import java.util.List;
 
 public record ExternalResponse(
         Header header,
-        Body body
+        Integer numOfRows,
+        Integer pageNo,
+        Integer totalCount,
+        List<ExternalShelterItem> body
 ) {
     public record Header(
             String resultMsg,
             String resultCode,
             String errorMsg
-    ) {
-    }
-
-    public record Body(
-            Integer pageNo,
-            Integer numOfRows,
-            Integer totalCount,
-            List<ExternalShelterItem> items
     ) {
     }
 }

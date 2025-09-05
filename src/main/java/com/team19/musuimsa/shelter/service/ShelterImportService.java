@@ -51,8 +51,8 @@ public class ShelterImportService {
                 shelterRepository.saveAll(batch);
                 saved += batch.size();
 
-                ExternalResponse.Body body = res.body();
-                int total = Optional.ofNullable(body.totalCount()).orElse(0);
+                int total = Optional.ofNullable(res.totalCount()).orElse(0);
+                int pageSize = Optional.ofNullable(res.numOfRows()).orElse(client.pageSize());
                 int lastPage = (int) Math.ceil(total / (double) client.pageSize());
                 log.info("[Shelter Import] page {}/{} saved {}", page, lastPage, batch.size());
                 if (page >= lastPage) {
@@ -69,8 +69,7 @@ public class ShelterImportService {
     }
 
     private static List<ExternalShelterItem> safeItems(ExternalResponse res) {
-        if (res == null || res.body() == null || res.body().items() == null) return List.of();
-        return res.body().items();
+        return (res == null || res.body() == null) ? List.of() : res.body();
     }
 
     private Optional<Shelter> toShelter(ExternalShelterItem i) {
