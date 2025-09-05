@@ -6,17 +6,15 @@ import com.team19.musuimsa.exception.notfound.UserNotFoundException;
 import com.team19.musuimsa.review.domain.Review;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.review.dto.CreateReviewResponse;
-import com.team19.musuimsa.review.dto.ReviewDto;
+import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
 import com.team19.musuimsa.review.repository.ReviewRepository;
 import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.repository.UserRepository;
 import java.nio.file.AccessDeniedException;
 import java.util.List;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ReviewService {
@@ -34,8 +32,7 @@ public class ReviewService {
 
     // 리뷰 생성
     @Transactional
-    public CreateReviewResponse createReview(Long shelterId, CreateReviewRequest request,
-            @AuthenticationPrincipal User user) {
+    public CreateReviewResponse createReview(Long shelterId, CreateReviewRequest request, User user) {
         Shelter shelter = shelterRepository.findById(shelterId)
                 .orElseThrow(() -> new ShelterNotFoundException(shelterId));
 
@@ -53,8 +50,7 @@ public class ReviewService {
 
     // 리뷰 수정
     @Transactional
-    public ReviewDto updateReview(Long reviewId, UpdateReviewRequest request,
-            @AuthenticationPrincipal User user)
+    public ReviewResponse updateReview(Long reviewId, UpdateReviewRequest request, User user)
             throws AccessDeniedException {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFoundException(reviewId));
@@ -66,11 +62,10 @@ public class ReviewService {
         review.update(request.title(), request.content(), request.rating(), request.photoUrl());
 
         return toDto(review);
-
     }
 
     // 리뷰 삭제
-    public void deleteReview(Long reviewId, @AuthenticationPrincipal User user)
+    public void deleteReview(Long reviewId, User user)
             throws AccessDeniedException {
         Review review = reviewRepository.findById(reviewId).orElseThrow(
                 () -> new ReviewNotFoundException(reviewId));
@@ -83,7 +78,7 @@ public class ReviewService {
     }
 
     // 쉼터별 리뷰 조회
-    public List<ReviewDto> getReviewsByShelter(Long shelterId) {
+    public List<ReviewResponse> getReviewsByShelter(Long shelterId) {
         Shelter shelter = shelterRepository.findById(shelterId)
                 .orElseThrow(() -> new ShelterNotFoundException(shelterId));
 
@@ -95,19 +90,19 @@ public class ReviewService {
     }
 
     // 사용자별 리뷰 조회
-    public List<ReviewDto> getReviewsByUser(@AuthenticationPrincipal User user) {
+    public List<ReviewResponse> getReviewsByUser(User user) {
         User loginUser = userRepository.findById(user.getUserId())
                 .orElseThrow(() -> new UserNotFoundException(user.getUserId()));
 
-        List<Review> reviews = reviewRepository.findByUser(user);
+        List<Review> reviews = reviewRepository.findByUser(loginUser);
 
         return reviews.stream()
                 .map(this::toDto)
                 .toList();
     }
 
-    private ReviewDto toDto(Review review) {
-        return new ReviewDto(
+    private ReviewResponse toDto(Review review) {
+        return new ReviewResponse(
                 review.getReviewId(), review.getShelter().getShelterId(),
                 review.getUser().getUserId(), review.getUser().getNickname(), review.getTitle(),
                 review.getContent(), review.getRating(), review.getPhotoUrl(),
