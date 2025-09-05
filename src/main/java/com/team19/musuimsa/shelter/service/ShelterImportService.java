@@ -2,7 +2,8 @@ package com.team19.musuimsa.shelter.service;
 
 import com.team19.musuimsa.exception.external.ExternalApiException;
 import com.team19.musuimsa.shelter.domain.Shelter;
-import com.team19.musuimsa.shelter.dto.external.*;
+import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
+import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -48,7 +51,7 @@ public class ShelterImportService {
                 shelterRepository.saveAll(batch);
                 saved += batch.size();
 
-                ExternalPageBody body = res.body();
+                ExternalResponse.Body body = res.body();
                 int total = Optional.ofNullable(body.totalCount()).orElse(0);
                 int lastPage = (int) Math.ceil(total / (double) client.pageSize());
                 log.info("[Shelter Import] page {}/{} saved {}", page, lastPage, batch.size());
@@ -128,23 +131,26 @@ public class ShelterImportService {
     }
 
     private static BigDecimal parseBigDecimal(String s) {
-        try { return (s == null || s.isBlank()) ? null : new BigDecimal(s.trim()); }
-        catch (Exception e) { return null; }
+        try {
+            return (s == null || s.isBlank()) ? null : new BigDecimal(s.trim());
+        } catch (Exception e) {
+            return null;
+        }
     }
 
 
     private static Integer parseInt(String s) {
         try {
-            return (s==null||s.isBlank())? null : Integer.parseInt(s.trim());
-        } catch(Exception e){
+            return (s == null || s.isBlank()) ? null : Integer.parseInt(s.trim());
+        } catch (Exception e) {
             return null;
         }
     }
 
     private static Long parseLong(String s) {
         try {
-            return (s==null||s.isBlank())? null : Long.parseLong(s.trim());
-        } catch(Exception e){
+            return (s == null || s.isBlank()) ? null : Long.parseLong(s.trim());
+        } catch (Exception e) {
             return null;
         }
     }
