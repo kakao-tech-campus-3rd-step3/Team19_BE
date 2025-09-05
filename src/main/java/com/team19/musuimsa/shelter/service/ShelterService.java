@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class ShelterService {
 
     private static final ZoneId ZONE = ZoneId.of("Asia/Seoul");

@@ -17,13 +17,13 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ShelterImportService {
 
     private final ShelterOpenApiClient client;
     private final ShelterRepository shelterRepository;
 
     // 저장 없이 특정 페이지만 변환해서 반환(정상 응답/매핑 확인용)
-    @Transactional(readOnly = true)
     public List<Shelter> previewPage(int pageNo) {
         ExternalResponse res = client.fetchPage(pageNo);
         List<ExternalShelterItem> items = safeItems(res);
@@ -35,7 +35,6 @@ public class ShelterImportService {
     }
 
     // 전체 임포트 1회 (업서트)
-    @Transactional
     public int importOnce() {
         int page = 1, saved = 0;
         while (true) {
