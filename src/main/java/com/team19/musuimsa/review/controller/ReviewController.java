@@ -2,7 +2,7 @@ package com.team19.musuimsa.review.controller;
 
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.review.dto.CreateReviewResponse;
-import com.team19.musuimsa.review.dto.ReviewDto;
+import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
 import com.team19.musuimsa.review.service.ReviewService;
 import com.team19.musuimsa.user.domain.User;
@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -34,24 +33,23 @@ public class ReviewController {
     // 리뷰 생성
     @PostMapping("/shelters/{shelterId}/reviews")
     public ResponseEntity<CreateReviewResponse> createReview(
-            @RequestBody CreateReviewRequest request, @PathVariable Long shelterId, @AuthenticationPrincipal User user) {
+            @RequestBody CreateReviewRequest request, @PathVariable Long shelterId,
+            @AuthenticationPrincipal User user) {
 
         CreateReviewResponse response = reviewService.createReview(shelterId, request, user);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     // 리뷰 수정
     @PatchMapping("/reviews/{reviewId}")
-    public ResponseEntity<ReviewDto> updateReview(@PathVariable Long reviewId,
+    public ResponseEntity<ReviewResponse> updateReview(@PathVariable Long reviewId,
             @RequestBody UpdateReviewRequest request, @AuthenticationPrincipal User user)
             throws AccessDeniedException {
 
-        ReviewDto response = reviewService.updateReview(reviewId, request, user);
+        ReviewResponse response = reviewService.updateReview(reviewId, request, user);
 
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(response);
+        return ResponseEntity.ok(response);
     }
 
     // 리뷰 삭제
@@ -62,26 +60,25 @@ public class ReviewController {
 
         reviewService.deleteReview(reviewId, user);
 
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+        return ResponseEntity.noContent().build();
     }
 
     // 쉼터 리뷰 조회
     @GetMapping("/shelters/{shelterId}/reviews")
-    public ResponseEntity<List<ReviewDto>> getReviewByShelter(@PathVariable Long shelterId) {
+    public ResponseEntity<List<ReviewResponse>> getReviewByShelter(@PathVariable Long shelterId) {
 
-        List<ReviewDto> reviews = reviewService.getReviewsByShelter(shelterId);
+        List<ReviewResponse> reviews = reviewService.getReviewsByShelter(shelterId);
 
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(reviews);
+        return ResponseEntity.ok(reviews);
     }
 
     // 내가 쓴 리뷰 조회
     @GetMapping("/users/me/reviews")
-    public ResponseEntity<List<ReviewDto>> getReviewByUser(@AuthenticationPrincipal User user) {
+    public ResponseEntity<List<ReviewResponse>> getReviewByUser(
+            @AuthenticationPrincipal User user) {
 
-        List<ReviewDto> reviews = reviewService.getReviewsByUser(user);
+        List<ReviewResponse> reviews = reviewService.getReviewsByUser(user);
 
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(reviews);
+        return ResponseEntity.ok(reviews);
     }
 }
