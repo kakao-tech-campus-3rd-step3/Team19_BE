@@ -2,7 +2,7 @@ package com.team19.musuimsa.review.dto;
 
 import java.time.LocalDateTime;
 
-public record ReviewDto(
+public record ReviewResponse(
 
         Long reviewId,
 
