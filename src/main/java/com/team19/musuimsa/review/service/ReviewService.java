@@ -1,5 +1,6 @@
 package com.team19.musuimsa.review.service;
 
+import com.team19.musuimsa.exception.auth.UserAccessDeniedException;
 import com.team19.musuimsa.exception.notfound.ReviewNotFoundException;
 import com.team19.musuimsa.exception.notfound.ShelterNotFoundException;
 import com.team19.musuimsa.exception.notfound.UserNotFoundException;
@@ -48,7 +49,7 @@ public class ReviewService {
                 .orElseThrow(() -> new ReviewNotFoundException(reviewId));
 
         if (!review.getUser().getUserId().equals(user.getUserId())) {
-            throw new AccessDeniedException("자신의 리뷰만 수정할 수 있습니다.");
+            throw new UserAccessDeniedException();
         }
 
         review.update(request.title(), request.content(), request.rating(), request.photoUrl());
@@ -63,7 +64,7 @@ public class ReviewService {
                 () -> new ReviewNotFoundException(reviewId));
 
         if (!review.getUser().getUserId().equals(user.getUserId())) {
-            throw new AccessDeniedException("자신의 리뷰만 삭제할 수 있습니다.");
+            throw new UserAccessDeniedException();
         }
 
         reviewRepository.delete(review);
