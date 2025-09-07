@@ -1,17 +1,14 @@
 package com.team19.musuimsa.shelter.dto;
 
-import java.util.Map;
-
-public record ShelterDetailResponse(
+public record ShelterResponse(
         Long shelterId,
         String name,
         String address,
-        double latitude,
-        double longitude,
-        Map<String, String> operatingHours,
+        Double latitude,
+        Double longitude,
+        OperatingHoursResponse operatingHoursResponse,
         Integer capacity,
-        boolean isOpened,
-        boolean isOutdoors,
+        Boolean isOutdoors,
         CoolingEquipment coolingEquipment,
         Integer totalRating,
         Integer reviewCount,
@@ -19,6 +16,7 @@ public record ShelterDetailResponse(
 ) {
     public record CoolingEquipment(
             Integer fanCount,
-            Integer acCount
-    ) {}
+            Integer airConditionerCount
+    ) {
+    }
 }
