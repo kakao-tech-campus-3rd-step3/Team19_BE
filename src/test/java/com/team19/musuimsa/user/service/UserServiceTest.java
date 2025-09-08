@@ -212,8 +212,8 @@ class UserServiceTest {
                     user);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(user.getNickname()).isEqualTo("newNickname");
-                softly.assertThat(user.getProfileImageUrl()).isEqualTo("newProfile.jpg");
+                softly.assertThat(responseDto.nickname()).isEqualTo("newNickname");
+                softly.assertThat(responseDto.profileImageUrl()).isEqualTo("newProfile.jpg");
             });
         }
 
