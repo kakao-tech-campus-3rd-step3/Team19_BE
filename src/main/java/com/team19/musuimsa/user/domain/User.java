@@ -1,6 +1,8 @@
 package com.team19.musuimsa.user.domain;
 
+import com.team19.musuimsa.exception.auth.AuthenticationException;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -31,7 +33,8 @@ public class User {
     @Column(nullable = false)
     private String profileImageUrl;
 
-    private String refreshToken;
+    @Embedded
+    private RefreshToken refreshToken;
 
     public User(String email, String password, String nickname, String profileImageUrl) {
         this.email = email;
@@ -41,7 +44,7 @@ public class User {
     }
 
     public void updateRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
+        this.refreshToken = RefreshToken.from(refreshToken);
     }
 
     public void updateUser(String nickname, String profileImageUrl) {
@@ -59,5 +62,11 @@ public class User {
 
     public void invalidateRefreshToken() {
         this.refreshToken = null;
+    }
+
+    public void validateUserPermission(User loginUser, String errorMessage) {
+        if (!this.userId.equals(loginUser.getUserId())) {
+            throw new AuthenticationException(errorMessage);
+        }
     }
 }
