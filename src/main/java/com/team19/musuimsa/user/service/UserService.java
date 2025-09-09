@@ -1,12 +1,12 @@
 package com.team19.musuimsa.user.service;
 
-import com.team19.musuimsa.exception.auth.AuthenticationException;
 import com.team19.musuimsa.exception.auth.InvalidPasswordException;
 import com.team19.musuimsa.exception.auth.InvalidRefreshTokenException;
 import com.team19.musuimsa.exception.auth.LoginFailedException;
 import com.team19.musuimsa.exception.conflict.EmailDuplicateException;
 import com.team19.musuimsa.exception.conflict.NicknameDuplicateException;
 import com.team19.musuimsa.exception.notfound.UserNotFoundException;
+import com.team19.musuimsa.user.domain.RefreshToken;
 import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.dto.LoginRequestDto;
 import com.team19.musuimsa.user.dto.SignUpRequestDto;
@@ -30,6 +30,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    private static final String DEFAULT_PROFILE_IMAGE_URL = "https://wikis.krsocsci.org/images/a/aa/%EA%B8%B0%EB%B3%B8_%ED%94%84%EB%A1%9C%ED%95%84.png";
+
     public Long signUp(SignUpRequestDto signUpRequestDto) {
         checkDuplicateUser(signUpRequestDto);
 
@@ -37,7 +39,7 @@ public class UserService {
 
         String profileImageUrl = signUpRequestDto.profileImageUrl();
         if (profileImageUrl == null || profileImageUrl.isEmpty()) {
-            profileImageUrl = "https://wikis.krsocsci.org/images/a/aa/%EA%B8%B0%EB%B3%B8_%ED%94%84%EB%A1%9C%ED%95%84.png";
+            profileImageUrl = DEFAULT_PROFILE_IMAGE_URL;
         }
 
         User user = new User(
@@ -75,7 +77,8 @@ public class UserService {
 
     public TokenResponseDto reissueToken(String refreshToken) {
         // "Bearer " 접두사 제거
-        String pureToken = refreshToken.substring(7);
+        RefreshToken token = RefreshToken.from(refreshToken);
+        String pureToken = token.getPureToken();
 
         // 1. 토큰 검증
         if (!jwtUtil.validateToken(pureToken)) {
@@ -88,7 +91,8 @@ public class UserService {
                 .orElseThrow(InvalidRefreshTokenException::new);
 
         // 3. DB에 저장된 토큰과 일치하는지 확인
-        if (!user.getRefreshToken().equals(pureToken)) {
+        if (user.getRefreshToken() == null || !user.getRefreshToken().getToken()
+                .equals(refreshToken)) {
             throw new InvalidRefreshTokenException();
         }
 
@@ -113,7 +117,7 @@ public class UserService {
             User loginUser) {
         User user = getUserById(userId);
 
-        validateUserPermission(user, loginUser, "자신의 정보만 수정할 수 있습니다.");
+        user.validateUserPermission(loginUser, "자신의 정보만 수정할 수 있습니다.");
 
         String newNickname = userUpdateRequestDto.nickname();
         if (newNickname != null && !newNickname.equals(user.getNickname())) {
@@ -131,7 +135,7 @@ public class UserService {
             User loginUser) {
         User user = getUserById(userId);
 
-        validateUserPermission(user, loginUser, "자신의 비밀번호만 변경할 수 있습니다.");
+        user.validateUserPermission(loginUser, "자신의 비밀번호만 변경할 수 있습니다.");
 
         if (!passwordEncoder.matches(requestDto.currentPassword(), user.getPassword())) {
             throw new InvalidPasswordException();
@@ -144,7 +148,7 @@ public class UserService {
     public void deleteUser(Long userId, User loginUser) {
         User user = getUserById(userId);
 
-        validateUserPermission(user, loginUser, "자신만 탈퇴할 수 있습니다.");
+        user.validateUserPermission(loginUser, "자신만 탈퇴할 수 있습니다.");
 
         userRepository.delete(user);
     }
@@ -162,11 +166,5 @@ public class UserService {
     private User getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
-    }
-
-    private void validateUserPermission(User targetUser, User loginUser, String errorMessage) {
-        if (!targetUser.getUserId().equals(loginUser.getUserId())) {
-            throw new AuthenticationException(errorMessage);
-        }
     }
 }
