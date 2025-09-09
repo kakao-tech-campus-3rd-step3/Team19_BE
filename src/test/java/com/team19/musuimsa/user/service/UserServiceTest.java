@@ -25,6 +25,7 @@ import com.team19.musuimsa.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import java.util.Optional;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -112,17 +113,21 @@ class UserServiceTest {
         @DisplayName("성공")
         void login_Success() {
             LoginRequestDto requestDto = new LoginRequestDto("test@example.com", "password123");
+            String fullRefreshToken = "Bearer refreshToken";
+
             given(userRepository.findByEmail(requestDto.email())).willReturn(Optional.of(user));
             given(passwordEncoder.matches(requestDto.password(), user.getPassword())).willReturn(
                     true);
             given(jwtUtil.createAccessToken(user.getEmail())).willReturn("accessToken");
-            given(jwtUtil.createRefreshToken(user.getEmail())).willReturn("refreshToken");
+            given(jwtUtil.createRefreshToken(user.getEmail())).willReturn(fullRefreshToken);
 
             TokenResponseDto tokenResponseDto = userService.login(requestDto);
 
-            assertThat(tokenResponseDto.accessToken()).isEqualTo("accessToken");
-            assertThat(tokenResponseDto.refreshToken()).isEqualTo("refreshToken");
-            assertThat(user.getRefreshToken()).isEqualTo("refreshToken");
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(tokenResponseDto.accessToken()).isEqualTo("accessToken");
+                softly.assertThat(tokenResponseDto.refreshToken()).isEqualTo(fullRefreshToken);
+                softly.assertThat(user.getRefreshToken().getToken()).isEqualTo(fullRefreshToken);
+            });
         }
 
         @Test
@@ -153,28 +158,36 @@ class UserServiceTest {
         @Test
         @DisplayName("성공")
         void reissueToken_Success() {
-            String refreshToken = "Bearer validRefreshToken";
-            user.updateRefreshToken("validRefreshToken");
+            String oldRefreshToken = "Bearer oldRefreshToken";
+            String newRefreshToken = "Bearer newRefreshToken";
+            String newAccessToken = "newAccessToken";
+            String pureToken = "oldRefreshToken";
+
+            user.updateRefreshToken(oldRefreshToken);
             Claims claims = Jwts.claims().subject(user.getEmail()).build();
 
-            given(jwtUtil.validateToken("validRefreshToken")).willReturn(true);
-            given(jwtUtil.getUserInfoFromToken("validRefreshToken")).willReturn(claims);
+            given(jwtUtil.validateToken(pureToken)).willReturn(true);
+            given(jwtUtil.getUserInfoFromToken(pureToken)).willReturn(claims);
             given(userRepository.findByEmail(user.getEmail())).willReturn(Optional.of(user));
-            given(jwtUtil.createAccessToken(user.getEmail())).willReturn("newAccessToken");
-            given(jwtUtil.createRefreshToken(user.getEmail())).willReturn("newRefreshToken");
+            given(jwtUtil.createAccessToken(user.getEmail())).willReturn(newAccessToken);
+            given(jwtUtil.createRefreshToken(user.getEmail())).willReturn(newRefreshToken);
 
-            TokenResponseDto tokenResponseDto = userService.reissueToken(refreshToken);
+            TokenResponseDto tokenResponseDto = userService.reissueToken(oldRefreshToken);
 
-            assertThat(tokenResponseDto.accessToken()).isEqualTo("newAccessToken");
-            assertThat(tokenResponseDto.refreshToken()).isEqualTo("newRefreshToken");
-            assertThat(user.getRefreshToken()).isEqualTo("newRefreshToken");
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(tokenResponseDto.accessToken()).isEqualTo(newAccessToken);
+                softly.assertThat(tokenResponseDto.refreshToken()).isEqualTo(newRefreshToken);
+                softly.assertThat(user.getRefreshToken().getToken()).isEqualTo(newRefreshToken);
+            });
         }
 
         @Test
         @DisplayName("실패 - 유효하지 않은 토큰")
         void reissueToken_Fail_InvalidToken() {
             String refreshToken = "Bearer invalidToken";
-            given(jwtUtil.validateToken("invalidToken")).willReturn(false);
+            String pureToken = "invalidToken";
+
+            given(jwtUtil.validateToken(pureToken)).willReturn(false);
 
             assertThrows(InvalidRefreshTokenException.class,
                     () -> userService.reissueToken(refreshToken));
@@ -198,8 +211,10 @@ class UserServiceTest {
             UserResponseDto responseDto = userService.updateUserInfo(user.getUserId(), requestDto,
                     user);
 
-            assertThat(responseDto.nickname()).isEqualTo("newNickname");
-            assertThat(responseDto.profileImageUrl()).isEqualTo("newProfile.jpg");
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(responseDto.nickname()).isEqualTo("newNickname");
+                softly.assertThat(responseDto.profileImageUrl()).isEqualTo("newProfile.jpg");
+            });
         }
 
         @Test
