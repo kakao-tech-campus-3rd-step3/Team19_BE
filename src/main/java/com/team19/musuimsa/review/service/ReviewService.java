@@ -6,7 +6,6 @@ import com.team19.musuimsa.exception.notfound.ShelterNotFoundException;
 import com.team19.musuimsa.exception.notfound.UserNotFoundException;
 import com.team19.musuimsa.review.domain.Review;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
-import com.team19.musuimsa.review.dto.CreateReviewResponse;
 import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
 import com.team19.musuimsa.review.repository.ReviewRepository;
@@ -30,7 +29,7 @@ public class ReviewService {
     private final UserRepository userRepository;
 
     // 리뷰 생성
-    public CreateReviewResponse createReview(Long shelterId, CreateReviewRequest request,
+    public ReviewResponse createReview(Long shelterId, CreateReviewRequest request,
             User user) {
         Shelter shelter = shelterRepository.findById(shelterId)
                 .orElseThrow(() -> new ShelterNotFoundException(shelterId));
@@ -39,7 +38,7 @@ public class ReviewService {
 
         reviewRepository.save(review);
 
-        return CreateReviewResponse.from(review);
+        return ReviewResponse.from(review);
     }
 
     // 리뷰 수정
@@ -68,6 +67,17 @@ public class ReviewService {
         }
 
         reviewRepository.delete(review);
+    }
+
+    // 리뷰 단건 조회
+    @Transactional(readOnly = true)
+    public ReviewResponse getReview(Long reviewId) {
+
+        Review review = reviewRepository.findById(reviewId).orElseThrow(
+                () -> new ReviewNotFoundException(reviewId)
+        );
+
+        return ReviewResponse.from(review);
     }
 
     // 쉼터별 리뷰 조회

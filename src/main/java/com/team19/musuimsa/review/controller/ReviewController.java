@@ -1,14 +1,13 @@
 package com.team19.musuimsa.review.controller;
 
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
-import com.team19.musuimsa.review.dto.CreateReviewResponse;
 import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
 import com.team19.musuimsa.review.service.ReviewService;
 import com.team19.musuimsa.user.domain.User;
+import java.net.URI;
 import java.nio.file.AccessDeniedException;
 import java.util.List;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,13 +31,15 @@ public class ReviewController {
 
     // 리뷰 생성
     @PostMapping("/shelters/{shelterId}/reviews")
-    public ResponseEntity<CreateReviewResponse> createReview(
+    public ResponseEntity<ReviewResponse> createReview(
             @RequestBody CreateReviewRequest request, @PathVariable Long shelterId,
             @AuthenticationPrincipal User user) {
 
-        CreateReviewResponse response = reviewService.createReview(shelterId, request, user);
+        ReviewResponse response = reviewService.createReview(shelterId, request, user);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        URI location = URI.create("/api/reviews/" + response.reviewId());
+
+        return ResponseEntity.created(location).body(response);
     }
 
     // 리뷰 수정
@@ -61,6 +62,15 @@ public class ReviewController {
         reviewService.deleteReview(reviewId, user);
 
         return ResponseEntity.noContent().build();
+    }
+
+    // 리뷰 단건 조회
+    @GetMapping("/reviews/{reviewId}")
+    public ResponseEntity<ReviewResponse> getReview(@PathVariable Long reviewId) {
+
+        ReviewResponse response = reviewService.getReview(reviewId);
+
+        return ResponseEntity.ok(response);
     }
 
     // 쉼터 리뷰 조회
