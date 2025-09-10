@@ -1,63 +1,74 @@
 package com.team19.musuimsa.shelter.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.LocalTime;
-import lombok.*;
 
 @Entity
-@Table(name = "shelters")
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "shelters")
 public class Shelter {
 
+    // RSTR_FCLTY_NO
     @Id
-    private Long shelterId; // PK: RSTR_FCLTY_NO
+    private Long shelterId;
 
+    // RSTR_NM
     @Column(nullable = false, length = 100)
-    private String name; // RSTR_NM
+    private String name;
 
-    @Column(length = 255)
-    private String photoUrl;
+    // DTL_ADRES
+    @Column(nullable = false, length = 100)
+    private String address;
 
-    @Column(nullable = false, length = 255)
-    private String address; // RN_DTL_ADRES
-
+    // LA
     @Column(nullable = false, precision = 10, scale = 8)
-    private BigDecimal latitude; // LA
+    private BigDecimal latitude;
 
+    // LO
     @Column(nullable = false, precision = 11, scale = 8)
-    private BigDecimal longitude; // LO
+    private BigDecimal longitude;
 
-    private Integer capacity; // USE_PSBL_NMPR
+    // WKDAY_OPER_BEGIN_TIME
+    private LocalTime weekdayOpenTime;
 
-    private Integer fanCount; // COLR_HOLD_ELFN
+    // WKDAY_OPER_END_TIME
+    private LocalTime weekdayCloseTime;
 
-    private Integer airConditionerCount; // COLR_HOLD_ARCDTN
+    // WKEND_HDAY_OPER_BEGIN_TIME
+    private LocalTime weekendOpenTime;
 
-    private Boolean isOutdoors; // FCLTY_TY == '002' → true
+    // WKEND_HDAY_OPER_END_TIME
+    private LocalTime weekendCloseTime;
 
-    private LocalTime weekdayOpenTime; // WKDAY_OPER_BEGIN_TIME
+    // USE_PSBL_NMPR
+    private Integer capacity;
 
-    private LocalTime weekdayCloseTime; // WKDAY_OPER_END_TIME
+    // FCLTY_TY == '002' → true
+    private Boolean isOutdoors;
 
-    private LocalTime weekendOpenTime; // WKEND_HDAY_OPER_BEGIN_TIME
+    // COLR_HOLD_ELFN
+    private Integer fanCount;
 
-    private LocalTime weekendCloseTime; // WKEND_HDAY_OPER_END_TIME
+    // COLR_HOLD_ARCNDTN
+    private Integer airConditionerCount;
 
     private Integer totalRating;
 
     private Integer reviewCount;
 
-    @PrePersist
-    void initDefaults() {
-        if (totalRating == null) {
-            totalRating = 0;
-        }
-        if (reviewCount == null) {
-            reviewCount = 0;
-        }
-    }
+    @Column(length = 255)
+    private String photoUrl;
+
 }
