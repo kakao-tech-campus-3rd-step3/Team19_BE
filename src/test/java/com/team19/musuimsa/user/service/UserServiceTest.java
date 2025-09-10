@@ -7,7 +7,6 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.team19.musuimsa.exception.auth.AuthenticationException;
 import com.team19.musuimsa.exception.auth.InvalidPasswordException;
 import com.team19.musuimsa.exception.auth.InvalidRefreshTokenException;
 import com.team19.musuimsa.exception.auth.LoginFailedException;
@@ -100,7 +99,6 @@ class UserServiceTest {
             given(userRepository.findByNickname(requestDto.nickname())).willReturn(
                     Optional.of(user));
 
-            // when & then
             assertThrows(NicknameDuplicateException.class, () -> userService.signUp(requestDto));
         }
     }
@@ -204,11 +202,10 @@ class UserServiceTest {
         void updateUserInfo_Success() {
             UserUpdateRequestDto requestDto = new UserUpdateRequestDto("newNickname",
                     "newProfile.jpg");
-            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
             given(userRepository.findByNickname(requestDto.nickname())).willReturn(
                     Optional.empty());
 
-            UserResponseDto responseDto = userService.updateUserInfo(user.getUserId(), requestDto,
+            UserResponseDto responseDto = userService.updateUserInfo(requestDto,
                     user);
 
             SoftAssertions.assertSoftly(softly -> {
@@ -218,30 +215,16 @@ class UserServiceTest {
         }
 
         @Test
-        @DisplayName("실패 - 권한 없음")
-        void updateUserInfo_Fail_PermissionDenied() {
-            User otherUser = new User("other@example.com", "password", "other", "p.jpg");
-            ReflectionTestUtils.setField(otherUser, "userId", 2L);
-            UserUpdateRequestDto requestDto = new UserUpdateRequestDto("newNickname",
-                    "newProfile.jpg");
-            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
-
-            assertThrows(AuthenticationException.class,
-                    () -> userService.updateUserInfo(user.getUserId(), requestDto, otherUser));
-        }
-
-        @Test
         @DisplayName("실패 - 닉네임 중복")
         void updateUserInfo_Fail_NicknameDuplicated() {
             UserUpdateRequestDto requestDto = new UserUpdateRequestDto("newNickname",
                     "newProfile.jpg");
             User existingUser = new User("exist@example.com", "password", "newNickname", "p.jpg");
-            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
             given(userRepository.findByNickname(requestDto.nickname())).willReturn(
                     Optional.of(existingUser));
 
             assertThrows(NicknameDuplicateException.class,
-                    () -> userService.updateUserInfo(user.getUserId(), requestDto, user));
+                    () -> userService.updateUserInfo(requestDto, user));
         }
     }
 
@@ -254,13 +237,12 @@ class UserServiceTest {
         void updateUserPassword_Success() {
             UserPasswordUpdateRequestDto requestDto = new UserPasswordUpdateRequestDto(
                     "encodedPassword", "newPassword");
-            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
             given(passwordEncoder.matches(requestDto.currentPassword(),
                     user.getPassword())).willReturn(true);
             given(passwordEncoder.encode(requestDto.newPassword())).willReturn(
                     "newEncodedPassword");
 
-            userService.updateUserPassword(user.getUserId(), requestDto, user);
+            userService.updateUserPassword(requestDto, user);
 
             assertThat(user.getPassword()).isEqualTo("newEncodedPassword");
         }
@@ -270,12 +252,11 @@ class UserServiceTest {
         void updateUserPassword_Fail_InvalidPassword() {
             UserPasswordUpdateRequestDto requestDto = new UserPasswordUpdateRequestDto(
                     "wrongPassword", "newPassword");
-            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
             given(passwordEncoder.matches(requestDto.currentPassword(),
                     user.getPassword())).willReturn(false);
 
             assertThrows(InvalidPasswordException.class,
-                    () -> userService.updateUserPassword(user.getUserId(), requestDto, user));
+                    () -> userService.updateUserPassword(requestDto, user));
         }
     }
 
@@ -286,22 +267,9 @@ class UserServiceTest {
         @Test
         @DisplayName("성공")
         void deleteUser_Success() {
-            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
-
-            userService.deleteUser(user.getUserId(), user);
+            userService.deleteUser(user);
 
             verify(userRepository, times(1)).delete(user);
-        }
-
-        @Test
-        @DisplayName("실패 - 권한 없음")
-        void deleteUser_Fail_PermissionDenied() {
-            User otherUser = new User("other@example.com", "password", "other", "p.jpg");
-            ReflectionTestUtils.setField(otherUser, "userId", 2L);
-            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
-
-            assertThrows(AuthenticationException.class,
-                    () -> userService.deleteUser(user.getUserId(), otherUser));
         }
     }
 }
