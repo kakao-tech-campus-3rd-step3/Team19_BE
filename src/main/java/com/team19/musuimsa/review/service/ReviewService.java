@@ -13,7 +13,6 @@ import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.repository.UserRepository;
-import java.nio.file.AccessDeniedException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -43,12 +42,12 @@ public class ReviewService {
 
     // 리뷰 수정
     public ReviewResponse updateReview(Long reviewId, UpdateReviewRequest request, User user)
-            throws AccessDeniedException {
+            throws UserAccessDeniedException {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFoundException(reviewId));
 
         if (!review.isWriter(user)) {
-            throw new UserAccessDeniedException();
+            throw new UserAccessDeniedException("본인의 리뷰만 수정할 수 있습니다.");
         }
 
         review.update(request.title(), request.content(), request.rating(), request.photoUrl());
@@ -58,12 +57,12 @@ public class ReviewService {
 
     // 리뷰 삭제
     public void deleteReview(Long reviewId, User user)
-            throws AccessDeniedException {
+            throws UserAccessDeniedException {
         Review review = reviewRepository.findById(reviewId).orElseThrow(
                 () -> new ReviewNotFoundException(reviewId));
 
         if (!review.isWriter(user)) {
-            throw new UserAccessDeniedException();
+            throw new UserAccessDeniedException("본인의 리뷰만 삭제할 수 있습니다.");
         }
 
         reviewRepository.delete(review);
