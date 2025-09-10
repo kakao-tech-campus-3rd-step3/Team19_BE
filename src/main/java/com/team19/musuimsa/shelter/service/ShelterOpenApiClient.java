@@ -3,7 +3,6 @@ package com.team19.musuimsa.shelter.service;
 import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -31,8 +30,7 @@ public class ShelterOpenApiClient {
     @Value("${musuimsa.shelter.api.format}")
     private String format;
 
-    @Qualifier("shelterWebClient")
-    private final WebClient shelterWebClient;
+    private final WebClient webClient;
 
     public ExternalResponse fetchPage(int pageNo) {
         URI uri = UriComponentsBuilder
@@ -45,7 +43,7 @@ public class ShelterOpenApiClient {
                 .build(true)
                 .toUri();
 
-        return shelterWebClient.get()
+        return webClient.get()
                 .uri(uri)
                 .retrieve()
                 .bodyToMono(ExternalResponse.class)
