@@ -14,7 +14,7 @@ public class RefreshToken {
 
     public static final String BEARER_TYPE = "Bearer ";
 
-    @Column(name = "refresh_token", nullable = false)
+    @Column(name = "refresh_token")
     private String token;
 
     private RefreshToken(String token) {
