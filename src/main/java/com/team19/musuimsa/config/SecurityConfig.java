@@ -54,12 +54,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 회원가입과 로그인 API는 모두 허용
                         .requestMatchers("/api/users/signup", "/api/users/login",
-                                "/api/users/reissue", "/shelters/{shelterId}/reviews").permitAll()
+                                "/api/users/reissue", "/api/shelters/{shelterId}/reviews")
+                        .permitAll()
                         // 특정 사용자를 조회하는 GET 요청은 허용
                         .requestMatchers(HttpMethod.GET, "/api/users/{userId}").permitAll()
                         // 그 외의 모든 /api/users/** 요청은 인증된 사용자만 접근 가능
-                        .requestMatchers("/api/users/**", "/reviews/{reviewId}",
-                                "/reviews/{reviewId}", "/users/me/reviews")
+                        .requestMatchers("/api/users/**", "/api/reviews/{reviewId}",
+                                "/api/reviews/{reviewId}", "/api/users/me/reviews")
                         .authenticated()
 
                         // 나머지 요청은 일단 모두 허용 (추후에 필요에 따라 변경 가능)
