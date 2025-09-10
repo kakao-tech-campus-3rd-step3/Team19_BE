@@ -1,4 +1,4 @@
-package com.team19.musuimsa.review;
+package com.team19.musuimsa.review.Repository;
 
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
