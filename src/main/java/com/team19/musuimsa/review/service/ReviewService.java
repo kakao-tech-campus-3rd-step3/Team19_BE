@@ -6,7 +6,6 @@ import com.team19.musuimsa.exception.notfound.ShelterNotFoundException;
 import com.team19.musuimsa.exception.notfound.UserNotFoundException;
 import com.team19.musuimsa.review.domain.Review;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
-import com.team19.musuimsa.review.dto.CreateReviewResponse;
 import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
 import com.team19.musuimsa.review.repository.ReviewRepository;
@@ -14,7 +13,6 @@ import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.repository.UserRepository;
-import java.nio.file.AccessDeniedException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,7 +28,7 @@ public class ReviewService {
     private final UserRepository userRepository;
 
     // 리뷰 생성
-    public CreateReviewResponse createReview(Long shelterId, CreateReviewRequest request,
+    public ReviewResponse createReview(Long shelterId, CreateReviewRequest request,
             User user) {
         Shelter shelter = shelterRepository.findById(shelterId)
                 .orElseThrow(() -> new ShelterNotFoundException(shelterId));
@@ -39,17 +37,17 @@ public class ReviewService {
 
         reviewRepository.save(review);
 
-        return CreateReviewResponse.from(review);
+        return ReviewResponse.from(review);
     }
 
     // 리뷰 수정
     public ReviewResponse updateReview(Long reviewId, UpdateReviewRequest request, User user)
-            throws AccessDeniedException {
+            throws UserAccessDeniedException {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFoundException(reviewId));
 
-        if (!review.getUser().getUserId().equals(user.getUserId())) {
-            throw new UserAccessDeniedException();
+        if (!review.isWriter(user)) {
+            throw new UserAccessDeniedException("본인의 리뷰만 수정할 수 있습니다.");
         }
 
         review.update(request.title(), request.content(), request.rating(), request.photoUrl());
@@ -59,15 +57,26 @@ public class ReviewService {
 
     // 리뷰 삭제
     public void deleteReview(Long reviewId, User user)
-            throws AccessDeniedException {
+            throws UserAccessDeniedException {
         Review review = reviewRepository.findById(reviewId).orElseThrow(
                 () -> new ReviewNotFoundException(reviewId));
 
-        if (!review.getUser().getUserId().equals(user.getUserId())) {
-            throw new UserAccessDeniedException();
+        if (!review.isWriter(user)) {
+            throw new UserAccessDeniedException("본인의 리뷰만 삭제할 수 있습니다.");
         }
 
         reviewRepository.delete(review);
+    }
+
+    // 리뷰 단건 조회
+    @Transactional(readOnly = true)
+    public ReviewResponse getReview(Long reviewId) {
+
+        Review review = reviewRepository.findById(reviewId).orElseThrow(
+                () -> new ReviewNotFoundException(reviewId)
+        );
+
+        return ReviewResponse.from(review);
     }
 
     // 쉼터별 리뷰 조회
