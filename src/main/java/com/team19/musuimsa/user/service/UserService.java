@@ -113,44 +113,32 @@ public class UserService {
         return UserResponseDto.from(user);
     }
 
-    public UserResponseDto updateUserInfo(Long userId, UserUpdateRequestDto userUpdateRequestDto,
+    public UserResponseDto updateUserInfo(UserUpdateRequestDto userUpdateRequestDto,
             User loginUser) {
-        User user = getUserById(userId);
-
-        user.validateUserPermission(loginUser, "자신의 정보만 수정할 수 있습니다.");
-
         String newNickname = userUpdateRequestDto.nickname();
-        if (newNickname != null && !newNickname.equals(user.getNickname())) {
+
+        if (newNickname != null && !newNickname.equals(loginUser.getNickname())) {
             userRepository.findByNickname(newNickname).ifPresent(existingUser -> {
                 throw new NicknameDuplicateException(newNickname);
             });
         }
 
-        user.updateUser(newNickname, userUpdateRequestDto.profileImageUrl());
+        loginUser.updateUser(newNickname, userUpdateRequestDto.profileImageUrl());
 
-        return UserResponseDto.from(user);
+        return UserResponseDto.from(loginUser);
     }
 
-    public void updateUserPassword(Long userId, UserPasswordUpdateRequestDto requestDto,
-            User loginUser) {
-        User user = getUserById(userId);
-
-        user.validateUserPermission(loginUser, "자신의 비밀번호만 변경할 수 있습니다.");
-
-        if (!passwordEncoder.matches(requestDto.currentPassword(), user.getPassword())) {
+    public void updateUserPassword(UserPasswordUpdateRequestDto requestDto, User loginUser) {
+        if (!passwordEncoder.matches(requestDto.currentPassword(), loginUser.getPassword())) {
             throw new InvalidPasswordException();
         }
 
         String newEncodedPassword = passwordEncoder.encode(requestDto.newPassword());
-        user.updatePassword(newEncodedPassword);
+        loginUser.updatePassword(newEncodedPassword);
     }
 
-    public void deleteUser(Long userId, User loginUser) {
-        User user = getUserById(userId);
-
-        user.validateUserPermission(loginUser, "자신만 탈퇴할 수 있습니다.");
-
-        userRepository.delete(user);
+    public void deleteUser(User loginUser) {
+        userRepository.delete(loginUser);
     }
 
     private void checkDuplicateUser(SignUpRequestDto signUpRequestDto) {
