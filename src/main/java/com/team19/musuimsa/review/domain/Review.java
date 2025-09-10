@@ -1,6 +1,6 @@
 package com.team19.musuimsa.review.domain;
 
-import com.team19.musuimsa.dateTime.BaseEntity;
+import com.team19.musuimsa.audit.BaseEntity;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.user.domain.User;
@@ -69,6 +69,10 @@ public class Review extends BaseEntity {
         if (photoUrl != null) {
             this.photoUrl = photoUrl;
         }
+    }
+
+    public boolean isWriter(User user) {
+        return this.user.getUserId().equals(user.getUserId());
     }
 
 }

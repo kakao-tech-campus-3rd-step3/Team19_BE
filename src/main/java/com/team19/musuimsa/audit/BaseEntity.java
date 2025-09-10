@@ -1,4 +1,4 @@
-package com.team19.musuimsa.dateTime;
+package com.team19.musuimsa.audit;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
