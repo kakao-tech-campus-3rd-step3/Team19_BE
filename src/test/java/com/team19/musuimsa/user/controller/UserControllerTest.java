@@ -168,7 +168,8 @@ class UserControllerTest {
         @DisplayName("성공")
         void login_Success() throws Exception {
             LoginRequestDto requestDto = new LoginRequestDto("test@example.com", "password");
-            TokenResponseDto tokenResponseDto = new TokenResponseDto("access-token", "refresh-token");
+            TokenResponseDto tokenResponseDto = new TokenResponseDto("access-token",
+                    "refresh-token");
             given(userService.login(any(LoginRequestDto.class))).willReturn(tokenResponseDto);
 
             mockMvc.perform(post("/api/users/login")
@@ -256,10 +257,10 @@ class UserControllerTest {
         UserUpdateRequestDto requestDto = new UserUpdateRequestDto("newNickname", "newProfile.jpg");
         UserResponseDto updatedUser = new UserResponseDto(1L, "test@example.com", "newNickname",
                 "newProfile.jpg");
-        given(userService.updateUserInfo(anyLong(), any(UserUpdateRequestDto.class),
+        given(userService.updateUserInfo(any(UserUpdateRequestDto.class),
                 any(User.class))).willReturn(updatedUser);
 
-        mockMvc.perform(patch("/api/users/1")
+        mockMvc.perform(patch("/api/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isOk())
@@ -277,10 +278,10 @@ class UserControllerTest {
             UserPasswordUpdateRequestDto requestDto = new UserPasswordUpdateRequestDto(
                     "currentPassword", "newPassword");
             doNothing().when(userService)
-                    .updateUserPassword(anyLong(), any(UserPasswordUpdateRequestDto.class),
+                    .updateUserPassword(any(UserPasswordUpdateRequestDto.class),
                             any(User.class));
 
-            mockMvc.perform(patch("/api/users/1/password")
+            mockMvc.perform(patch("/api/users/me/password")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(requestDto)))
                     .andExpect(status().isOk())
@@ -293,7 +294,7 @@ class UserControllerTest {
             UserPasswordUpdateRequestDto requestDto = new UserPasswordUpdateRequestDto("",
                     "newPassword");
 
-            mockMvc.perform(patch("/api/users/1/password")
+            mockMvc.perform(patch("/api/users/me/password")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(requestDto)))
                     .andExpect(status().isBadRequest());
@@ -305,7 +306,7 @@ class UserControllerTest {
             UserPasswordUpdateRequestDto requestDto = new UserPasswordUpdateRequestDto(
                     "currentPassword", "");
 
-            mockMvc.perform(patch("/api/users/1/password")
+            mockMvc.perform(patch("/api/users/me/password")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(requestDto)))
                     .andExpect(status().isBadRequest());
@@ -316,9 +317,9 @@ class UserControllerTest {
     @Test
     @DisplayName("회원 탈퇴 API 테스트")
     void deleteUser() throws Exception {
-        doNothing().when(userService).deleteUser(anyLong(), any(User.class));
+        doNothing().when(userService).deleteUser(any(User.class));
 
-        mockMvc.perform(delete("/api/users/1"))
+        mockMvc.perform(delete("/api/users/me"))
                 .andExpect(status().isNoContent());
     }
 }

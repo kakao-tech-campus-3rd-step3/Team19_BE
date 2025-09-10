@@ -64,8 +64,17 @@ public class UserController {
             @RequestHeader("Authorization-Refresh") String refreshToken
     ) {
         TokenResponseDto tokenResponseDto = userService.reissueToken(refreshToken);
-        
+
         return ResponseEntity.ok(tokenResponseDto);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDto> getMyInfo(
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        UserResponseDto userInfo = userService.getUserInfo(userDetails.getUser().getUserId());
+
+        return ResponseEntity.ok(userInfo);
     }
 
     @GetMapping("/{userId}")
@@ -77,35 +86,32 @@ public class UserController {
         return ResponseEntity.ok(userInfo);
     }
 
-    @PatchMapping("/{userId}")
+    @PatchMapping("/me")
     public ResponseEntity<UserResponseDto> updateUserInfo(
-            @PathVariable Long userId,
             @RequestBody UserUpdateRequestDto userUpdateRequestDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        UserResponseDto updatedUser = userService.updateUserInfo(userId, userUpdateRequestDto,
+        UserResponseDto updatedUser = userService.updateUserInfo(userUpdateRequestDto,
                 userDetails.getUser());
 
         return ResponseEntity.ok(updatedUser);
     }
 
-    @PatchMapping("/{userId}/password")
+    @PatchMapping("/me/password")
     public ResponseEntity<String> updateUserPassword(
-            @PathVariable Long userId,
             @Valid @RequestBody UserPasswordUpdateRequestDto requestDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        userService.updateUserPassword(userId, requestDto, userDetails.getUser());
+        userService.updateUserPassword(requestDto, userDetails.getUser());
 
         return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
     }
 
-    @DeleteMapping("/{userId}")
+    @DeleteMapping("/me")
     public ResponseEntity<Void> deleteUser(
-            @PathVariable Long userId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        userService.deleteUser(userId, userDetails.getUser());
+        userService.deleteUser(userDetails.getUser());
 
         return ResponseEntity.noContent().build();
     }
