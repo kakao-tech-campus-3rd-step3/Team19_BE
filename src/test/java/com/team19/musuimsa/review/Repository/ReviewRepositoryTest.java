@@ -36,10 +36,9 @@ public class ReviewRepositoryTest {
         User user = new User("aran@email.com", "1234", "윤", "image.url");
         userRepository.save(user);
 
-        Shelter shelter = new Shelter(1000L, "임시 쉼터", "photo.url", "주소", BigDecimal.TEN,
-                BigDecimal.TWO, 1, 2, 3,
-                false,
-                LocalTime.MAX, LocalTime.NOON, LocalTime.MIDNIGHT, LocalTime.MIN, 5, 10);
+        Shelter shelter = new Shelter(1000L, "임시 쉼터", "address", BigDecimal.TEN,
+                BigDecimal.TWO, LocalTime.MAX, LocalTime.NOON, LocalTime.MIDNIGHT, LocalTime.MIN, 5,
+                true, 1, 2, 3, 4, "photo.url");
 
         shelterRepository.save(shelter);
 

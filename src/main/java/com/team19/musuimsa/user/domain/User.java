@@ -1,6 +1,5 @@
 package com.team19.musuimsa.user.domain;
 
-import com.team19.musuimsa.exception.auth.UserAccessDeniedException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -64,9 +63,10 @@ public class User {
         this.refreshToken = null;
     }
 
-    public void validateUserPermission(User loginUser) {
-        if (!this.userId.equals(loginUser.getUserId())) {
-            throw new UserAccessDeniedException();
-        }
-    }
+    // 나중에 사용할 때 주석 해제
+//    public void validateUserPermission(User loginUser) {
+//        if (!this.userId.equals(loginUser.getUserId())) {
+//            throw new UserAccessDeniedException();
+//        }
+//    }
 }
