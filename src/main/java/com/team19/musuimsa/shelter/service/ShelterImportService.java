@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -23,154 +22,114 @@ import java.util.Optional;
 @Transactional
 public class ShelterImportService {
 
-    private final ShelterOpenApiClient client;
+    private final ShelterOpenApiClient shelterOpenApiClient;
     private final ShelterRepository shelterRepository;
 
-    // 저장 없이 특정 페이지만 변환해서 반환(정상 응답/매핑 확인용)
-    public List<Shelter> previewPage(int pageNo) {
-        ExternalResponse res = client.fetchPage(pageNo);
-        List<ExternalShelterItem> items = safeItems(res);
-        List<Shelter> mapped = new ArrayList<>();
-        for (ExternalShelterItem i : items) {
-            toShelter(i).ifPresent(mapped::add);
-        }
-        return mapped;
-    }
-
-    // 전체 임포트 1회 (업서트)
     public int importOnce() {
-        int page = 1, saved = 0;
+        int page = 1;
+        int saved = 0;
+
         while (true) {
-            List<Shelter> batch = new ArrayList<>();
+            long t0 = System.nanoTime();
             try {
-                ExternalResponse res = client.fetchPage(page);
-                List<ExternalShelterItem> items = safeItems(res);
-                if (items.isEmpty()) break;
+                log.info("[Shelter Import] ==== START page={} ====", page);
 
-                for (ExternalShelterItem i : items) toShelter(i).ifPresent(batch::add);
-                shelterRepository.saveAll(batch);
-                saved += batch.size();
-
-                int total = Optional.ofNullable(res.totalCount()).orElse(0);
-                int pageSize = Optional.ofNullable(res.numOfRows()).orElse(client.pageSize());
-                int lastPage = (int) Math.ceil(total / (double) client.pageSize());
-                log.info("[Shelter Import] page {}/{} saved {}", page, lastPage, batch.size());
-                if (page >= lastPage) {
+                ExternalResponse res = shelterOpenApiClient.fetchPage(page);
+                if (res == null) {
+                    log.warn("[Shelter Import] page={} 응답이 null 입니다.", page);
                     break;
                 }
+                log.debug("[Shelter Import] page={} header={}, numOfRows={}, totalCount={}",
+                        page, res.header(), res.numOfRows(), res.totalCount());
+
+                List<ExternalShelterItem> items = safeItems(res);
+                log.info("[Shelter Import] page={} 수신 아이템 수={}", page, items.size());
+
+                // DTO-엔티티 매핑 (필수값 검증 + 스킵 카운트 포함)
+                List<Shelter> batch = new ArrayList<>();
+                int skipped = 0;
+                for (ExternalShelterItem item : items) {
+                    Optional<Shelter> opt = toShelter(item);
+                    if (opt.isPresent()) {
+                        batch.add(opt.get());
+                    } else {
+                        skipped++;
+                    }
+                }
+                log.info("[Shelter Import] page={} 매핑 결과: 저장 대상={} 스킵={}", page, batch.size(), skipped);
+
+                shelterRepository.saveAll(batch);
+                saved += batch.size();
+                log.info("[Shelter Import] page={} saveAll 완료 (누적 저장 수={})", page, saved);
+
+                // 페이지네이션 진행 판단
+                int total = Optional.ofNullable(res.totalCount()).orElse(0);
+                int rows = Optional.ofNullable(res.numOfRows()).orElse(0);
+                int lastPage = (rows > 0) ? (int) Math.ceil(total / (double) rows) : page;
+                log.debug("[Shelter Import] page={} 페이지네이션: total={}, rows={}, lastPage={}", page, total, rows, lastPage);
+
+                long elapsedMs = (System.nanoTime() - t0) / 1_000_000;
+                log.info("[Shelter Import] ==== END page={} ({} ms) ====", page, elapsedMs);
+
+                if (page >= lastPage) break;
                 page++;
 
             } catch (ExternalApiException e) {
-                log.error("[Shelter Import] API 호출 실패 (page={}): {}", page, e.getMessage());
+                log.error("[Shelter Import] API 호출 실패 (page={}): {}", page, e.getMessage(), e);
+                break;
+            } catch (Exception e) {
+                log.error("[Shelter Import] 처리 중 예외 (page={}): {}", page, e.getMessage(), e);
                 break;
             }
         }
+        log.info("[Shelter Import] 종료. 총 저장 수={}", saved);
         return saved;
     }
 
+
+    // 응답 body null-safe 추출
     private static List<ExternalShelterItem> safeItems(ExternalResponse res) {
-        return (res == null || res.body() == null) ? List.of() : res.body();
+        if (res == null || res.body() == null) {
+            return List.of();
+        }
+        return res.body();
     }
 
+    // 쉼터 매핑
     private Optional<Shelter> toShelter(ExternalShelterItem i) {
-        try {
-            Long id = parseLong(i.RSTR_FCLTY_NO());
-            if (id == null) {
-                return Optional.empty();
-            }
-
-            BigDecimal la = parseBigDecimal(i.LA());
-            BigDecimal lo = parseBigDecimal(i.LO());
-            if (!validCoord(la, lo)) {
-                return Optional.empty();
-            }
-
-            return Optional.of(Shelter.builder()
-                    .shelterId(id)
-                    .name(nz(i.RSTR_NM(), "무더위 쉼터"))
-                    .address(nz(i.RN_DTL_ADRES(), ""))
-                    .latitude(la)
-                    .longitude(lo)
-                    .capacity(parseInt(i.USE_PSBL_NMPR()))
-                    .fanCount(parseInt(i.COLR_HOLD_ELFN()))
-                    .airConditionerCount(parseInt(i.COLR_HOLD_ARCDTN()))
-                    .weekdayOpenTime(parseTime(i.WKDAY_OPER_BEGIN_TIME()))
-                    .weekdayCloseTime(parseTime(i.WKDAY_OPER_END_TIME()))
-                    .weekendOpenTime(parseTime(i.WKEND_HDAY_OPER_BEGIN_TIME()))
-                    .weekendCloseTime(parseTime(i.WKEND_HDAY_OPER_END_TIME()))
-                    .isOutdoors("002".equalsIgnoreCase(nz(i.FCLTY_TY(), "")))
-                    .photoUrl(nz(i.PHOTO_URL(), null))
-                    .totalRating(0)
-                    .reviewCount(0)
-                    .build());
-        } catch (Exception e) {
-            log.warn("Skip invalid row: {}", i, e);
-            return Optional.empty();
-        }
+        return Optional.of(Shelter.builder()
+                .shelterId(i.rstrFcltyNo())
+                .name(i.rstrNm())
+                .address(i.rnDtlAdres())
+                .latitude(i.la())
+                .longitude(i.lo())
+                .capacity(i.usePsblNmpr())
+                .fanCount(i.colrHoldElefn())
+                .airConditionerCount(i.colrHoldArcdtn())
+                .weekdayOpenTime(parseTime(i.wkdayOperBeginTime()))
+                .weekdayCloseTime(parseTime(i.wkdayOperEndTime()))
+                .weekendOpenTime(parseTime(i.wkendHdayOperBeginTime()))
+                .weekendCloseTime(parseTime(i.wkendHdayOperEndTime()))
+                .isOutdoors("002".equals(i.fcltyTy()))
+                .photoUrl(null)
+                .build());
     }
 
-    private static boolean validCoord(BigDecimal la, BigDecimal lo) {
-        if (la == null || lo == null)
-            return false;
-
-        if (la.compareTo(new BigDecimal("-90")) < 0 || la.compareTo(new BigDecimal("90")) > 0)
-            return false;
-
-        if (lo.compareTo(new BigDecimal("-180")) < 0 || lo.compareTo(new BigDecimal("180")) > 0)
-            return false;
-
-        if (la.compareTo(BigDecimal.ZERO) == 0 && lo.compareTo(BigDecimal.ZERO) == 0)
-            return false;
-
-        return true;
-    }
-
-    private static String nz(String s, String def) {
-        return (s == null || s.isBlank()) ? def : s;
-    }
-
-    private static BigDecimal parseBigDecimal(String s) {
-        try {
-            return (s == null || s.isBlank()) ? null : new BigDecimal(s.trim());
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-
-    private static Integer parseInt(String s) {
-        try {
-            return (s == null || s.isBlank()) ? null : Integer.parseInt(s.trim());
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private static Long parseLong(String s) {
-        try {
-            return (s == null || s.isBlank()) ? null : Long.parseLong(s.trim());
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    // "0930", "9:30", "09:30:00" 등 파싱
+    // String 시간 파싱
     private static LocalTime parseTime(String raw) {
-        if (raw == null || raw.isBlank()) {
+        if (raw == null) {
             return null;
         }
 
-        String v = raw.replaceAll("[^0-9]", "");
-        try {
-            if (v.length() == 4) {
-                return LocalTime.parse(v, DateTimeFormatter.ofPattern("HHmm"));
-            }
-            if (v.length() == 6) {
-                return LocalTime.parse(v, DateTimeFormatter.ofPattern("HHmmss"));
-            }
-            return LocalTime.parse(raw);
-        } catch (Exception e) {
+        String digits = raw.replaceAll("[^0-9]", "");
+        if (digits.isBlank()) {
             return null;
         }
+
+        if (digits.length() == 3) {
+            digits = "0" + digits;
+        }
+
+        return LocalTime.parse(digits, DateTimeFormatter.ofPattern("HHmm"));
     }
 }
