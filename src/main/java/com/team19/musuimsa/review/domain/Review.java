@@ -71,4 +71,8 @@ public class Review extends BaseEntity {
         }
     }
 
+    public boolean isWriter(User user) {
+        return this.user.getUserId().equals(user.getUserId());
+    }
+
 }

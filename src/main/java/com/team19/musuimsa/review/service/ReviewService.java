@@ -47,7 +47,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFoundException(reviewId));
 
-        if (!review.getUser().getUserId().equals(user.getUserId())) {
+        if (!review.isWriter(user)) {
             throw new UserAccessDeniedException();
         }
 
@@ -62,7 +62,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId).orElseThrow(
                 () -> new ReviewNotFoundException(reviewId));
 
-        if (!review.getUser().getUserId().equals(user.getUserId())) {
+        if (!review.isWriter(user)) {
             throw new UserAccessDeniedException();
         }
 
