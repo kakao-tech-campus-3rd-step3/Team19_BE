@@ -34,4 +34,7 @@ jobs:
 
       # 4단계: Gradle로 빌드 및 테스트 실행
       - name: Build with Gradle
+        env:
+          JWT_SECRET_KEY: "dummy-key-for-ci"
+          SHELTER_API_SERVICE_KEY: "dummy-key-for-ci"
         run: ./gradlew build # 프로젝트를 빌드합니다. 이 과정에서 테스트도 자동으로 함께 실행됩니다.
