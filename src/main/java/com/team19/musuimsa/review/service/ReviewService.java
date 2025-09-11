@@ -46,9 +46,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFoundException(reviewId));
 
-        if (!review.isWriter(user)) {
-            throw new UserAccessDeniedException("본인의 리뷰만 수정할 수 있습니다.");
-        }
+        validateWriter(review, user);
 
         review.update(request.content(), request.rating(), request.photoUrl());
 
@@ -61,9 +59,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId).orElseThrow(
                 () -> new ReviewNotFoundException(reviewId));
 
-        if (!review.isWriter(user)) {
-            throw new UserAccessDeniedException("본인의 리뷰만 삭제할 수 있습니다.");
-        }
+        validateWriter(review, user);
 
         reviewRepository.delete(review);
     }
@@ -103,6 +99,13 @@ public class ReviewService {
         return reviews.stream()
                 .map(ReviewResponse::from)
                 .toList();
+    }
+
+    // 리뷰에 접근하려는 사용자 검증
+    private void validateWriter(Review review, User user) throws UserAccessDeniedException {
+        if (!review.isWriter(user)) {
+            throw new UserAccessDeniedException("본인의 리뷰에만 접근할 수 있습니다.");
+        }
     }
 
 }
