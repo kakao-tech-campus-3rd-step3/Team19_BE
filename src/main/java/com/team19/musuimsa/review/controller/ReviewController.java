@@ -1,12 +1,12 @@
 package com.team19.musuimsa.review.controller;
 
+import com.team19.musuimsa.exception.auth.UserAccessDeniedException;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
 import com.team19.musuimsa.review.service.ReviewService;
 import com.team19.musuimsa.user.domain.User;
 import java.net.URI;
-import java.nio.file.AccessDeniedException;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,7 +29,7 @@ public class ReviewController {
         this.reviewService = reviewService;
     }
 
-    // 리뷰 생성
+    // 리뷰 작성
     @PostMapping("/shelters/{shelterId}/reviews")
     public ResponseEntity<ReviewResponse> createReview(
             @RequestBody CreateReviewRequest request, @PathVariable Long shelterId,
@@ -46,7 +46,7 @@ public class ReviewController {
     @PatchMapping("/reviews/{reviewId}")
     public ResponseEntity<ReviewResponse> updateReview(@PathVariable Long reviewId,
             @RequestBody UpdateReviewRequest request, @AuthenticationPrincipal User user)
-            throws AccessDeniedException {
+            throws UserAccessDeniedException {
 
         ReviewResponse response = reviewService.updateReview(reviewId, request, user);
 
@@ -57,7 +57,7 @@ public class ReviewController {
     @DeleteMapping("/reviews/{reviewId}")
     public ResponseEntity<Void> deleteReview(@PathVariable Long reviewId,
             @AuthenticationPrincipal User user)
-            throws AccessDeniedException {
+            throws UserAccessDeniedException {
 
         reviewService.deleteReview(reviewId, user);
 
