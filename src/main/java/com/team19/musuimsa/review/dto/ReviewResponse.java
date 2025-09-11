@@ -11,6 +11,7 @@ public record ReviewResponse(
         String content,
         int rating,
         String photoUrl,
+        String profileImageUrl,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -20,6 +21,7 @@ public record ReviewResponse(
                 review.getReviewId(), review.getShelter().getShelterId(),
                 review.getUser().getUserId(), review.getUser().getNickname(),
                 review.getContent(), review.getRating(), review.getPhotoUrl(),
+                review.getUser().getProfileImageUrl(),
                 review.getCreatedAt(), review.getUpdatedAt()
         );
     }
