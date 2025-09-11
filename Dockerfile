@@ -24,4 +24,4 @@ COPY --from=builder /app/build/libs/*.jar ./app.jar
 
 # 컨테이너가 시작될 때 아래 명령어를 실행합니다.
 # prod 프로필을 활성화해서 서버를 실행합니다.
-ENTRYPOINT ["java", "-jar", "-Dspring.profiles.active=prod", "app.jar"]
+ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
