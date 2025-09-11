@@ -1,6 +1,6 @@
 package com.team19.musuimsa.review.service;
 
-import com.team19.musuimsa.exception.auth.UserAccessDeniedException;
+import com.team19.musuimsa.exception.forbidden.UserAccessDeniedException;
 import com.team19.musuimsa.exception.notfound.ReviewNotFoundException;
 import com.team19.musuimsa.exception.notfound.ShelterNotFoundException;
 import com.team19.musuimsa.exception.notfound.UserNotFoundException;

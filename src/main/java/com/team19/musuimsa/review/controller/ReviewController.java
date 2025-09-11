@@ -1,6 +1,6 @@
 package com.team19.musuimsa.review.controller;
 
-import com.team19.musuimsa.exception.auth.UserAccessDeniedException;
+import com.team19.musuimsa.exception.forbidden.UserAccessDeniedException;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
