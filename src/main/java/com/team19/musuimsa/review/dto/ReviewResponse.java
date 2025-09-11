@@ -8,7 +8,6 @@ public record ReviewResponse(
         Long shelterId,
         Long userId,
         String nickname,
-        String title,
         String content,
         int rating,
         String photoUrl,
@@ -19,7 +18,7 @@ public record ReviewResponse(
     public static ReviewResponse from(Review review) {
         return new ReviewResponse(
                 review.getReviewId(), review.getShelter().getShelterId(),
-                review.getUser().getUserId(), review.getUser().getNickname(), review.getTitle(),
+                review.getUser().getUserId(), review.getUser().getNickname(),
                 review.getContent(), review.getRating(), review.getPhotoUrl(),
                 review.getCreatedAt(), review.getUpdatedAt()
         );

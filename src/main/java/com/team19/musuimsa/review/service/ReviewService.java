@@ -50,7 +50,7 @@ public class ReviewService {
             throw new UserAccessDeniedException("본인의 리뷰만 수정할 수 있습니다.");
         }
 
-        review.update(request.title(), request.content(), request.rating(), request.photoUrl());
+        review.update(request.content(), request.rating(), request.photoUrl());
 
         return ReviewResponse.from(review);
     }

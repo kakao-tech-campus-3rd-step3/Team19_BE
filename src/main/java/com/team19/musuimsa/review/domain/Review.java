@@ -39,9 +39,6 @@ public class Review extends BaseEntity {
 
     private String photoUrl;
 
-    @Column(nullable = false)
-    private String title;
-
     @Column(nullable = false, columnDefinition = "text")
     private String content;
 
@@ -49,15 +46,11 @@ public class Review extends BaseEntity {
     private int rating;
 
     public static Review of(Shelter shelter, User user, CreateReviewRequest request) {
-        return new Review(null, shelter, user, request.photoUrl(), request.title(),
+        return new Review(null, shelter, user, request.photoUrl(),
                 request.content(), request.rating());
     }
 
-    public void update(String title, String content, Integer rating, String photoUrl) {
-        if (title != null) {
-            this.title = title;
-        }
-
+    public void update(String content, Integer rating, String photoUrl) {
         if (content != null) {
             this.content = content;
         }
