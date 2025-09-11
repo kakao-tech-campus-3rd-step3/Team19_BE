@@ -1,4 +1,4 @@
-# --- 1단계: 빌드 환경 (요리하는 주방) ---
+# --- 1단계: 빌드 환경 ---
 # Java 21 JDK 이미지를 'builder'라는 별명으로 사용합니다.
 FROM eclipse-temurin:21-jdk as builder
 
@@ -12,7 +12,7 @@ COPY . .
 RUN ./gradlew build
 
 
-# --- 2단계: 최종 실행 환경 (손님에게 나갈 도시락) ---
+# --- 2단계: 최종 실행 환경 ---
 # Java 21 JRE 이미지를 사용합니다. (실행에 필요한 최소한의 요소만 있어 가볍습니다)
 FROM eclipse-temurin:21-jre-jammy
 
