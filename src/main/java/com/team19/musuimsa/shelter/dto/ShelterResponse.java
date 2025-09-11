@@ -6,6 +6,7 @@ public record ShelterResponse(
         String address,
         Double latitude,
         Double longitude,
+        String distance,
         OperatingHoursResponse operatingHoursResponse,
         Integer capacity,
         Boolean isOutdoors,

@@ -6,6 +6,7 @@ public record NearbyShelterResponse(
         String address,
         Double latitude,
         Double longitude,
+        String distance,
         Boolean isOutdoors,
         OperatingHoursResponse operatingHoursResponse,
         Double averageRating,
