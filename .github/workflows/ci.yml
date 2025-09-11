@@ -37,5 +37,5 @@ jobs:
         env:
           # dummy-for-ci
           JWT_SECRET_KEY: "dGhpcy1pcy1hLWR1bW15LWtleS1mb3ItY2ktYnVpbGQtb25seS1hbmQtbm90LXJlYWwK"
-          SHELTER_API_SERVICE_KEY: "dummy-key-for-ci"
+          MUSUIMSA_SHELTER_API_SERVICE_KEY: "dummy-key-for-ci"
         run: ./gradlew build # 프로젝트를 빌드합니다. 이 과정에서 테스트도 자동으로 함께 실행됩니다.
