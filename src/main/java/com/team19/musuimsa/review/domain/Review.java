@@ -67,7 +67,7 @@ public class Review extends BaseEntity {
 
     // 리뷰 소유자인지 검증
     public void assertOwnedBy(User user) throws UserAccessDeniedException {
-        if (this.user.getUserId().equals(user.getUserId())) {
+        if (!this.user.getUserId().equals(user.getUserId())) {
             throw new UserAccessDeniedException("본인의 리뷰에만 접근할 수 있습니다.");
         }
     }
