@@ -4,14 +4,15 @@ public record ShelterResponse(
         Long shelterId,
         String name,
         String address,
-        Double latitude,
-        Double longitude,
+        double latitude,
+        double longitude,
+        String distance,
         OperatingHoursResponse operatingHoursResponse,
-        Integer capacity,
-        Boolean isOutdoors,
+        int capacity,
+        boolean isOutdoors,
         CoolingEquipment coolingEquipment,
-        Integer totalRating,
-        Integer reviewCount,
+        int totalRating,
+        int reviewCount,
         String photoUrl
 ) {
     public record CoolingEquipment(
