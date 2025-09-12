@@ -43,15 +43,14 @@ public class ReviewRepositoryTest {
         shelterRepository.save(shelter);
 
         // when
-        CreateReviewRequest request = new CreateReviewRequest("리뷰제목입니다.", "리뷰내용입니다.", 5,
-                "phtoo.url");
+        CreateReviewRequest request = new CreateReviewRequest("리뷰제목입니다.", 5, "photo.url");
 
         Review review = Review.of(shelter, user, request);
 
         // then
         assertThat(review.getReviewId()).isNull();
 
-        var actual = reviewRepository.save(review);
+        Review actual = reviewRepository.save(review);
 
         assertThat(actual.getReviewId()).isNotNull();
     }

@@ -1,6 +1,7 @@
 package com.team19.musuimsa.review.domain;
 
 import com.team19.musuimsa.audit.BaseEntity;
+import com.team19.musuimsa.exception.forbidden.UserAccessDeniedException;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.user.domain.User;
@@ -39,9 +40,6 @@ public class Review extends BaseEntity {
 
     private String photoUrl;
 
-    @Column(nullable = false)
-    private String title;
-
     @Column(nullable = false, columnDefinition = "text")
     private String content;
 
@@ -49,15 +47,11 @@ public class Review extends BaseEntity {
     private int rating;
 
     public static Review of(Shelter shelter, User user, CreateReviewRequest request) {
-        return new Review(null, shelter, user, request.photoUrl(), request.title(),
+        return new Review(null, shelter, user, request.photoUrl(),
                 request.content(), request.rating());
     }
 
-    public void update(String title, String content, Integer rating, String photoUrl) {
-        if (title != null) {
-            this.title = title;
-        }
-
+    public void update(String content, Integer rating, String photoUrl) {
         if (content != null) {
             this.content = content;
         }
@@ -71,8 +65,10 @@ public class Review extends BaseEntity {
         }
     }
 
-    public boolean isWriter(User user) {
-        return this.user.getUserId().equals(user.getUserId());
+    // 리뷰 소유자인지 검증
+    public void assertOwnedBy(User user) {
+        if (!this.user.getUserId().equals(user.getUserId())) {
+            throw new UserAccessDeniedException("본인의 리뷰에만 접근할 수 있습니다.");
+        }
     }
-
 }

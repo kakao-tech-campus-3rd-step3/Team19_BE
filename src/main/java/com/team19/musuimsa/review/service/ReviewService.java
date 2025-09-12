@@ -1,6 +1,6 @@
 package com.team19.musuimsa.review.service;
 
-import com.team19.musuimsa.exception.auth.UserAccessDeniedException;
+import com.team19.musuimsa.exception.forbidden.UserAccessDeniedException;
 import com.team19.musuimsa.exception.notfound.ReviewNotFoundException;
 import com.team19.musuimsa.exception.notfound.ShelterNotFoundException;
 import com.team19.musuimsa.exception.notfound.UserNotFoundException;
@@ -46,11 +46,9 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFoundException(reviewId));
 
-        if (!review.isWriter(user)) {
-            throw new UserAccessDeniedException("본인의 리뷰만 수정할 수 있습니다.");
-        }
+        review.assertOwnedBy(user);
 
-        review.update(request.title(), request.content(), request.rating(), request.photoUrl());
+        review.update(request.content(), request.rating(), request.photoUrl());
 
         return ReviewResponse.from(review);
     }
@@ -61,9 +59,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId).orElseThrow(
                 () -> new ReviewNotFoundException(reviewId));
 
-        if (!review.isWriter(user)) {
-            throw new UserAccessDeniedException("본인의 리뷰만 삭제할 수 있습니다.");
-        }
+        review.assertOwnedBy(user);
 
         reviewRepository.delete(review);
     }
@@ -104,5 +100,4 @@ public class ReviewService {
                 .map(ReviewResponse::from)
                 .toList();
     }
-
 }
