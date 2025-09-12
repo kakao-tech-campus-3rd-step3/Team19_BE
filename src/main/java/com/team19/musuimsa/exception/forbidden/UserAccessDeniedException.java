@@ -1,6 +1,6 @@
 package com.team19.musuimsa.exception.forbidden;
 
-import java.nio.file.AccessDeniedException;
+import org.springframework.security.access.AccessDeniedException;
 
 public class UserAccessDeniedException extends AccessDeniedException {
 

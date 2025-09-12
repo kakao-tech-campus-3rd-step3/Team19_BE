@@ -1,6 +1,5 @@
 package com.team19.musuimsa.review.controller;
 
-import com.team19.musuimsa.exception.forbidden.UserAccessDeniedException;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
@@ -45,8 +44,7 @@ public class ReviewController {
     // 리뷰 수정
     @PatchMapping("/reviews/{reviewId}")
     public ResponseEntity<ReviewResponse> updateReview(@PathVariable Long reviewId,
-            @RequestBody UpdateReviewRequest request, @AuthenticationPrincipal User user)
-            throws UserAccessDeniedException {
+            @RequestBody UpdateReviewRequest request, @AuthenticationPrincipal User user) {
 
         ReviewResponse response = reviewService.updateReview(reviewId, request, user);
 
@@ -56,8 +54,7 @@ public class ReviewController {
     // 리뷰 삭제
     @DeleteMapping("/reviews/{reviewId}")
     public ResponseEntity<Void> deleteReview(@PathVariable Long reviewId,
-            @AuthenticationPrincipal User user)
-            throws UserAccessDeniedException {
+            @AuthenticationPrincipal User user) {
 
         reviewService.deleteReview(reviewId, user);
 
