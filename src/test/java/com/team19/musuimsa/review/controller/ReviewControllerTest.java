@@ -13,44 +13,47 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.team19.musuimsa.exception.handler.GlobalExceptionHandler;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
 import com.team19.musuimsa.review.service.ReviewService;
 import com.team19.musuimsa.user.domain.User;
-import com.team19.musuimsa.user.repository.UserRepository;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.bind.support.WebDataBinderFactory;
+import org.springframework.web.context.request.NativeWebRequest;
+import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.method.support.ModelAndViewContainer;
 
-@SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
-@Transactional
-class ReviewControllerTest {
+@ExtendWith(MockitoExtension.class)
+public class ReviewControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
-    @Autowired
-    private UserRepository userRepository;
-
-    @MockBean
+    @Mock
     private ReviewService reviewService;
+
+    @InjectMocks
+    private ReviewController reviewController;
 
     private User user;
     private ReviewResponse response;
@@ -62,17 +65,47 @@ class ReviewControllerTest {
         shelterId = 10L;
         reviewId = 100L;
 
-        user = userRepository.save(new User("aran@email.com", "1234", "별명", "프사.url"));
-
-        // SecurityContext에 수동으로 User 객체 주입
-        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user,
-                null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
-        SecurityContextHolder.getContext().setAuthentication(auth);
+        user = new User("aran@email.com", "1234", "별명", "프사.url");
 
         response = new ReviewResponse(reviewId, shelterId, user.getUserId(),
                 "아란", "시원하네요", 5,
                 "photo.url", "profile.url",
                 LocalDateTime.now(), LocalDateTime.now());
+
+        objectMapper.registerModule(new JavaTimeModule());
+
+        MappingJackson2HttpMessageConverter jacksonConverter = new MappingJackson2HttpMessageConverter();
+        jacksonConverter.setObjectMapper(objectMapper);
+
+        mockMvc = MockMvcBuilders.standaloneSetup(reviewController)
+                .setCustomArgumentResolvers(new MockAuthenticationPrincipalArgumentResolver(user))
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .setMessageConverters(jacksonConverter,
+                        new StringHttpMessageConverter(StandardCharsets.UTF_8))
+                .build();
+    }
+
+    // @AuthenticationPrincipal에 사용자 객체를 주입하기 위한 커스텀 ArgumentResolver
+    private static class MockAuthenticationPrincipalArgumentResolver implements
+            HandlerMethodArgumentResolver {
+
+        private final User user;
+
+        public MockAuthenticationPrincipalArgumentResolver(User user) {
+            this.user = user;
+        }
+
+        @Override
+        public boolean supportsParameter(MethodParameter parameter) {
+            return parameter.getParameterAnnotation(AuthenticationPrincipal.class) != null &&
+                    parameter.getParameterType().equals(User.class);
+        }
+
+        @Override
+        public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
+                NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
+            return user;
+        }
     }
 
     @Test
