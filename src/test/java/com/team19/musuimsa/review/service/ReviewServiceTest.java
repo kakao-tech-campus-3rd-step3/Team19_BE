@@ -19,7 +19,6 @@ import com.team19.musuimsa.review.repository.ReviewRepository;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.user.domain.User;
-import com.team19.musuimsa.user.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.Optional;
@@ -39,8 +38,6 @@ public class ReviewServiceTest {
     @Mock
     ReviewRepository reviewRepository;
     @Mock
-    UserRepository userRepository;
-    @Mock
     ShelterRepository shelterRepository;
 
     @InjectMocks
@@ -50,13 +47,11 @@ public class ReviewServiceTest {
     private User user;
     private Review review;
     private Long shelterId;
-    private Long userId;
     private Long reviewId;
 
     @BeforeEach
     void setup() {
         shelterId = 10L;
-        userId = 100L;
         reviewId = 1L;
 
         shelter = new Shelter(shelterId, "무더위쉼터", "충대정문앞", BigDecimal.TEN, BigDecimal.TWO,
