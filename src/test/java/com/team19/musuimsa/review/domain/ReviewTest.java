@@ -69,7 +69,7 @@ public class ReviewTest {
     @Test
     @DisplayName("리뷰 수정 성공")
     void reviewUpdateSuccess() {
-        // givnen
+        // given
         CreateReviewRequest request = new CreateReviewRequest("수정 전 리뷰입니다.", 5, "수정 전 이미지");
         Review review = Review.of(shelter, user, request);
 
