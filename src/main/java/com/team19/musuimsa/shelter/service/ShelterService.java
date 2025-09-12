@@ -31,11 +31,11 @@ public class ShelterService {
     }
 
     public ShelterResponse getShelter(Long shelterId, double latitude, double longitude) {
-        Shelter s = shelterRepository.findById(shelterId)
+        Shelter shelter = shelterRepository.findById(shelterId)
                 .orElseThrow(() -> new ShelterNotFoundException(shelterId));
 
-        String distance = ShelterDtoUtils.distanceFrom(latitude, longitude, s);
+        String distance = ShelterDtoUtils.distanceFrom(latitude, longitude, shelter);
 
-        return ShelterDtoUtils.toDetailDto(s, distance);
+        return ShelterDtoUtils.toDetailDto(shelter, distance);
     }
 }

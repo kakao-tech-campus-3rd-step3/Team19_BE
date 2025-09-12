@@ -38,10 +38,10 @@ public final class ShelterDtoUtils {
         return formatDistance(haversineMeters(lat1, lng1, lat2, lng2));
     }
 
-    public static String distanceFrom(double userLat, double userLng, Shelter s) {
+    public static String distanceFrom(double userLat, double userLng, Shelter shelter) {
         return distanceBetween(
                 userLat, userLng,
-                s.getLatitude().doubleValue(), s.getLongitude().doubleValue()
+                shelter.getLatitude().doubleValue(), shelter.getLongitude().doubleValue()
         );
     }
 
@@ -62,42 +62,42 @@ public final class ShelterDtoUtils {
         return total.doubleValue() / count;
     }
 
-    public static NearbyShelterResponse toNearbyDto(Shelter s, String distance) {
+    public static NearbyShelterResponse toNearbyDto(Shelter shelter, String distance) {
         return new NearbyShelterResponse(
-                s.getShelterId(),
-                s.getName(),
-                s.getAddress(),
-                s.getLatitude().doubleValue(),
-                s.getLongitude().doubleValue(),
+                shelter.getShelterId(),
+                shelter.getName(),
+                shelter.getAddress(),
+                shelter.getLatitude().doubleValue(),
+                shelter.getLongitude().doubleValue(),
                 distance,
-                s.getIsOutdoors(),
+                shelter.getIsOutdoors(),
                 new OperatingHoursResponse(
-                        formatHours(s.getWeekdayOpenTime(), s.getWeekdayCloseTime()),
-                        formatHours(s.getWeekendOpenTime(), s.getWeekendCloseTime())
+                        formatHours(shelter.getWeekdayOpenTime(), shelter.getWeekdayCloseTime()),
+                        formatHours(shelter.getWeekendOpenTime(), shelter.getWeekendCloseTime())
                 ),
-                average(s.getTotalRating(), s.getReviewCount()),
-                s.getPhotoUrl()
+                average(shelter.getTotalRating(), shelter.getReviewCount()),
+                shelter.getPhotoUrl()
         );
     }
 
-    public static ShelterResponse toDetailDto(Shelter s, String distance) {
+    public static ShelterResponse toDetailDto(Shelter shelter, String distance) {
         return new ShelterResponse(
-                s.getShelterId(),
-                s.getName(),
-                s.getAddress(),
-                s.getLatitude().doubleValue(),
-                s.getLongitude().doubleValue(),
+                shelter.getShelterId(),
+                shelter.getName(),
+                shelter.getAddress(),
+                shelter.getLatitude().doubleValue(),
+                shelter.getLongitude().doubleValue(),
                 distance,
                 new OperatingHoursResponse(
-                        formatHours(s.getWeekdayOpenTime(), s.getWeekdayCloseTime()),
-                        formatHours(s.getWeekendOpenTime(), s.getWeekendCloseTime())
+                        formatHours(shelter.getWeekdayOpenTime(), shelter.getWeekdayCloseTime()),
+                        formatHours(shelter.getWeekendOpenTime(), shelter.getWeekendCloseTime())
                 ),
-                s.getCapacity(),
-                s.getIsOutdoors(),
-                new ShelterResponse.CoolingEquipment(s.getFanCount(), s.getAirConditionerCount()),
-                s.getTotalRating(),
-                s.getReviewCount(),
-                s.getPhotoUrl()
+                shelter.getCapacity(),
+                shelter.getIsOutdoors(),
+                new ShelterResponse.CoolingEquipment(shelter.getFanCount(), shelter.getAirConditionerCount()),
+                shelter.getTotalRating(),
+                shelter.getReviewCount(),
+                shelter.getPhotoUrl()
         );
     }
 }
