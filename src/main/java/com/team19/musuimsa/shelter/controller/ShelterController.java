@@ -27,7 +27,11 @@ public class ShelterController {
 
     // 쉼터 상세 조회
     @GetMapping("/{shelterId}")
-    public ResponseEntity<ShelterResponse> getShelter(@PathVariable Long shelterId) {
-        return ResponseEntity.ok(shelterService.getShelter(shelterId));
+    public ResponseEntity<ShelterResponse> getShelter(
+            @PathVariable Long shelterId,
+            @RequestParam double latitude,
+            @RequestParam double longitude
+    ) {
+        return ResponseEntity.ok(shelterService.getShelter(shelterId, latitude, longitude));
     }
 }

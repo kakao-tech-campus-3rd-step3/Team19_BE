@@ -39,12 +39,14 @@ class ShelterControllerTest {
     void getNearby_returnsList() throws Exception {
         List<NearbyShelterResponse> stub = List.of(
                 new NearbyShelterResponse(
-                        1L, "종로 무더위 쉼터", "서울 종로구 세종대로 175", 37.5665, 126.9780, true,
+                        1L, "종로 무더위 쉼터", "서울 종로구 세종대로 175",
+                        37.5665, 126.9780, "0m", true,
                         new OperatingHoursResponse("09:00~18:00", "10:00~16:00"),
                         4.5, "https://example.com/shelter1.jpg"
                 ),
                 new NearbyShelterResponse(
-                        2L, "을지로 무더위 쉼터", "서울 중구 을지로 45", 37.5651, 126.9895, false,
+                        2L, "을지로 무더위 쉼터", "서울 중구 을지로 45",
+                        37.5651, 126.9895, "1.1km", false,
                         new OperatingHoursResponse("09:00~18:00", "10:00~16:00"),
                         3.8, "https://example.com/shelter2.jpg"
                 )
@@ -65,6 +67,7 @@ class ShelterControllerTest {
                 .andExpect(jsonPath("$[0].address", is("서울 종로구 세종대로 175")))
                 .andExpect(jsonPath("$[0].latitude", is(37.5665)))
                 .andExpect(jsonPath("$[0].longitude", is(126.9780)))
+                .andExpect(jsonPath("$[0].distance", is("0m")))
                 .andExpect(jsonPath("$[0].isOutdoors", is(true)))
                 .andExpect(jsonPath("$[0].operatingHoursResponse.weekday", is("09:00~18:00")))
                 .andExpect(jsonPath("$[0].operatingHoursResponse.weekend", is("10:00~16:00")))
@@ -76,6 +79,7 @@ class ShelterControllerTest {
                 .andExpect(jsonPath("$[1].address", is("서울 중구 을지로 45")))
                 .andExpect(jsonPath("$[1].latitude", is(37.5651)))
                 .andExpect(jsonPath("$[1].longitude", is(126.9895)))
+                .andExpect(jsonPath("$[1].distance", is("1.1km")))
                 .andExpect(jsonPath("$[1].isOutdoors", is(false)))
                 .andExpect(jsonPath("$[1].operatingHoursResponse.weekday", is("09:00~18:00")))
                 .andExpect(jsonPath("$[1].operatingHoursResponse.weekend", is("10:00~16:00")))
@@ -87,21 +91,25 @@ class ShelterControllerTest {
     @Test
     void getDetail_returnsOne() throws Exception {
         ShelterResponse dto = new ShelterResponse(
-                1L, "종로 무더위쉼터", "서울 종로구 세종대로 175", 37.5665, 126.9780,
+                1L, "종로 무더위쉼터", "서울 종로구 세종대로 175", 37.5665, 126.9780, "0m",
                 new OperatingHoursResponse("09:00~18:00", "10:00~16:00"),
                 50, true,
                 new ShelterResponse.CoolingEquipment(3, 1),
                 14, 5, "https://example.com/shelter1.jpg"
         );
-        Mockito.when(shelterService.getShelter(eq(1L))).thenReturn(dto);
+
+        Mockito.when(shelterService.getShelter(eq(1L), eq(37.5), eq(127.0))).thenReturn(dto);
 
         mockMvc.perform(get("/api/shelters/{shelterId}", 1L)
+                        .param("latitude", "37.5")
+                        .param("longitude", "127.0")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name", is("종로 무더위쉼터")))
                 .andExpect(jsonPath("$.address", is("서울 종로구 세종대로 175")))
                 .andExpect(jsonPath("$.latitude", is(37.5665)))
                 .andExpect(jsonPath("$.longitude", is(126.9780)))
+                .andExpect(jsonPath("$.distance", is("0m")))
                 .andExpect(jsonPath("$.operatingHoursResponse.weekday", is("09:00~18:00")))
                 .andExpect(jsonPath("$.operatingHoursResponse.weekend", is("10:00~16:00")))
                 .andExpect(jsonPath("$.capacity", is(50)))
