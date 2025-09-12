@@ -56,7 +56,7 @@ public final class ShelterDtoUtils {
     }
 
     public static double average(Integer total, Integer count) {
-        if (total == null || count == null || count == 0) {
+        if (count == 0) {
             return 0.0;
         }
         return total.doubleValue() / count;

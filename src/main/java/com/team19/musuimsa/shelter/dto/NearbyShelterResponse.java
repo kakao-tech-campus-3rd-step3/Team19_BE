@@ -4,12 +4,12 @@ public record NearbyShelterResponse(
         Long shelterId,
         String name,
         String address,
-        Double latitude,
-        Double longitude,
+        double latitude,
+        double longitude,
         String distance,
-        Boolean isOutdoors,
+        boolean isOutdoors,
         OperatingHoursResponse operatingHoursResponse,
-        Double averageRating,
+        double averageRating,
         String photoUrl
 ) {
 }

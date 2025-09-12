@@ -103,12 +103,11 @@ class ShelterDtoUtilsTest {
                 .isEqualTo("09:00~18:00");
     }
 
-    @DisplayName("average - total 또는 count가 null/0이면 0.0이 반환된다. ")
+    @DisplayName("average - total 또는 count가 0이면 0.0이 반환된다. ")
     @Test
     void average_returnsZero_onInvalidInputs() {
         assertSoftly(softly -> {
-            assertThat(ShelterDtoUtils.average(null, 1)).isEqualTo(0.0);
-            assertThat(ShelterDtoUtils.average(10, null)).isEqualTo(0.0);
+            assertThat(ShelterDtoUtils.average(0, 1)).isEqualTo(0.0);
             assertThat(ShelterDtoUtils.average(10, 0)).isEqualTo(0.0);
         });
     }
