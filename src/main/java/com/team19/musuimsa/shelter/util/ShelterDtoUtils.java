@@ -22,16 +22,13 @@ public final class ShelterDtoUtils {
         return R * c;
     }
 
-    public static String formatDistance(Double meters) {
-        if (meters == null) {
-            return null;
-        }
-        int m = (int) Math.round(meters);
-        if (m < 1000) {
-            return m + "m";
+    public static String formatDistance(double meters) {
+        if (meters <= 0) {
+            return "0.0km";
         }
 
-        return String.format(java.util.Locale.US, "%.1fkm", m / 1000.0);
+        double km = meters / 1000.0;
+        return String.format(java.util.Locale.US, "%.1fkm", km);
     }
 
     public static String distanceBetween(double lat1, double lng1, double lat2, double lng2) {

@@ -91,7 +91,7 @@ class ShelterServiceTest {
             assertThat(dto1.address()).isEqualTo("서울 종로구 세종대로 175");
             assertThat(dto1.latitude()).isEqualTo(37.5665);
             assertThat(dto1.longitude()).isEqualTo(126.9780);
-            assertThat(dto1.distance()).isEqualTo("0m");
+            assertThat(dto1.distance()).isEqualTo("0.0km");
             assertThat(dto1.operatingHoursResponse().weekday()).isEqualTo("09:00~18:00");
             assertThat(dto1.operatingHoursResponse().weekend()).isEqualTo("10:00~16:00");
             assertThat(dto1.isOutdoors()).isEqualTo(true);
@@ -163,7 +163,7 @@ class ShelterServiceTest {
             assertThat(dto.address()).isEqualTo("서울 종로구 세종대로 175");
             assertThat(dto.latitude()).isEqualTo(37.5665);
             assertThat(dto.longitude()).isEqualTo(126.9780);
-            assertThat(dto.distance()).isEqualTo("0m");
+            assertThat(dto.distance()).isEqualTo("0.0km");
             assertThat(dto.operatingHoursResponse().weekday()).isEqualTo("09:00~18:00");
             assertThat(dto.operatingHoursResponse().weekend()).isEqualTo("10:00~16:00");
             assertThat(dto.capacity()).isEqualTo(50);
