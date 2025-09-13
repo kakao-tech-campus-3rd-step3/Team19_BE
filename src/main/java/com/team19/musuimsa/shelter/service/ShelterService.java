@@ -20,16 +20,22 @@ public class ShelterService {
     private final ShelterRepository shelterRepository;
 
     public List<NearbyShelterResponse> findNearbyShelters(double latitude, double longitude) {
-        return shelterRepository.findNearbyShelters(latitude, longitude, DEFAULT_RADIUS)
-                .stream()
-                .map(ShelterDtoUtils::toNearbyDto)
+        List<Shelter> shelters = shelterRepository.findNearbyShelters(latitude, longitude, DEFAULT_RADIUS);
+
+        return shelters.stream()
+                .map(s -> ShelterDtoUtils.toNearbyDto(
+                        s,
+                        ShelterDtoUtils.distanceFrom(latitude, longitude, s)
+                ))
                 .toList();
     }
 
-    public ShelterResponse getShelter(Long shelterId) {
-        Shelter s = shelterRepository.findById(shelterId)
+    public ShelterResponse getShelter(Long shelterId, double latitude, double longitude) {
+        Shelter shelter = shelterRepository.findById(shelterId)
                 .orElseThrow(() -> new ShelterNotFoundException(shelterId));
 
-        return ShelterDtoUtils.toDetailDto(s);
+        String distance = ShelterDtoUtils.distanceFrom(latitude, longitude, shelter);
+
+        return ShelterDtoUtils.toDetailDto(shelter, distance);
     }
 }

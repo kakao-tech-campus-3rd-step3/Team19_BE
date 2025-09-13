@@ -34,6 +34,10 @@ class ShelterServiceTest {
     @Test
     @DisplayName("findNearbyShelters - 엔티티 리스트를 NearbyShelterResponse로 매핑한다. ")
     void findNearbyShelters_mapsEntitiesToDtos() {
+        // given
+        double userLat = 37.5665;
+        double userLng = 126.9780;
+
         Shelter s1 = Shelter.builder()
                 .shelterId(1L)
                 .name("종로 무더위 쉼터")
@@ -72,10 +76,12 @@ class ShelterServiceTest {
                 .photoUrl("https://example.com/shelter2.jpg")
                 .build();
 
-        when(repository.findNearbyShelters(37.5665, 126.9780, 1000)).thenReturn(List.of(s1, s2));
+        when(repository.findNearbyShelters(userLat, userLng, 1000)).thenReturn(List.of(s1, s2));
 
-        List<NearbyShelterResponse> list = service.findNearbyShelters(37.5665, 126.9780);
+        // when
+        List<NearbyShelterResponse> list = service.findNearbyShelters(userLat, userLng);
 
+        // then
         assertThat(list).hasSize(2);
 
         NearbyShelterResponse dto1 = list.get(0);
@@ -85,6 +91,7 @@ class ShelterServiceTest {
             assertThat(dto1.address()).isEqualTo("서울 종로구 세종대로 175");
             assertThat(dto1.latitude()).isEqualTo(37.5665);
             assertThat(dto1.longitude()).isEqualTo(126.9780);
+            assertThat(dto1.distance()).isEqualTo("0.0km");
             assertThat(dto1.operatingHoursResponse().weekday()).isEqualTo("09:00~18:00");
             assertThat(dto1.operatingHoursResponse().weekend()).isEqualTo("10:00~16:00");
             assertThat(dto1.isOutdoors()).isEqualTo(true);
@@ -99,6 +106,8 @@ class ShelterServiceTest {
             assertThat(dto2.address()).isEqualTo("서울 중구 을지로 45");
             assertThat(dto2.latitude()).isEqualTo(37.5651);
             assertThat(dto2.longitude()).isEqualTo(126.9895);
+            assertThat(dto2.distance()).endsWith("km");
+            assertThat(dto2.distance()).startsWith("1.");
             assertThat(dto2.operatingHoursResponse().weekday()).isEqualTo("09:00~18:00");
             assertThat(dto2.operatingHoursResponse().weekend()).isEqualTo("10:00~16:00");
             assertThat(dto2.isOutdoors()).isEqualTo(false);
@@ -112,13 +121,17 @@ class ShelterServiceTest {
     void getShelter_throws_whenNotFound() {
         when(repository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.getShelter(99L))
+        assertThatThrownBy(() -> service.getShelter(99L, 37.0, 127.0))
                 .isInstanceOf(ShelterNotFoundException.class);
     }
 
     @DisplayName("getShelter - 존재하면 ShelterResponse로 매핑된다. ")
     @Test
     void getShelter_returnsDetailDto() {
+        // given
+        double userLat = 37.5665;
+        double userLng = 126.9780;
+
         Shelter s = Shelter.builder()
                 .shelterId(1L)
                 .name("종로 무더위 쉼터")
@@ -140,13 +153,17 @@ class ShelterServiceTest {
 
         when(repository.findById(1L)).thenReturn(Optional.of(s));
 
-        ShelterResponse dto = service.getShelter(1L);
+        // when
+        ShelterResponse dto = service.getShelter(1L, userLat, userLng);
+
+        // then
         assertSoftly(softly -> {
             assertThat(dto.shelterId()).isEqualTo(1L);
             assertThat(dto.name()).isEqualTo("종로 무더위 쉼터");
             assertThat(dto.address()).isEqualTo("서울 종로구 세종대로 175");
             assertThat(dto.latitude()).isEqualTo(37.5665);
             assertThat(dto.longitude()).isEqualTo(126.9780);
+            assertThat(dto.distance()).isEqualTo("0.0km");
             assertThat(dto.operatingHoursResponse().weekday()).isEqualTo("09:00~18:00");
             assertThat(dto.operatingHoursResponse().weekend()).isEqualTo("10:00~16:00");
             assertThat(dto.capacity()).isEqualTo(50);
