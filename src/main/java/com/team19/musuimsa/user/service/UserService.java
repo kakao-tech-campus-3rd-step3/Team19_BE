@@ -117,9 +117,10 @@ public class UserService {
             User loginUser) {
         String newNickname = userUpdateRequest.nickname();
 
-        // 기존 회원 정보 같이 넘겨주면 코드 수정 필요
-        if (newNickname != null && userRepository.existsByNickname(newNickname)) {
-            throw new NicknameDuplicateException(newNickname);
+        if (newNickname != null && !newNickname.equals(loginUser.getNickname())) {
+            userRepository.findByNickname(newNickname).ifPresent(existingUer -> {
+                throw new NicknameDuplicateException(newNickname);
+            });
         }
 
         loginUser.updateUser(newNickname, userUpdateRequest.profileImageUrl());
