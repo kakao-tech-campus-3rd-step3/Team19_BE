@@ -110,28 +110,4 @@ class UserTest {
 
         assertThat(user.getPassword()).isEqualTo(newPassword);
     }
-
-    /* 추후 작성
-
-    @Nested
-    @DisplayName("사용자 권한 검증(validateUserPermission) 테스트")
-    class ValidateUserPermissionTest {
-
-        @Test
-        @DisplayName("성공 - 동일한 사용자일 경우 예외가 발생하지 않는다.")
-        void validateUserPermission_Success() {
-
-            assertDoesNotThrow(() -> user.validateUserPermission(sameUser));
-        }
-
-        @Test
-        @DisplayName("실패 - 다른 사용자일 경우 UserAccessDeniedException 예외가 발생한다.")
-        void validateUserPermission_Fail() {
-
-            assertThatThrownBy(() -> user.validateUserPermission(otherUser))
-                    .isInstanceOf(UserAccessDeniedException.class);
-        }
-    }
-
-    */
 }
