@@ -14,6 +14,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -44,6 +46,8 @@ public class Review extends BaseEntity {
     private String content;
 
     @Column(nullable = false)
+    @Min(1)
+    @Max(5)
     private int rating;
 
     public static Review of(Shelter shelter, User user, CreateReviewRequest request) {
@@ -68,7 +72,7 @@ public class Review extends BaseEntity {
     // 리뷰 소유자인지 검증
     public void assertOwnedBy(User user) {
         if (!this.user.getUserId().equals(user.getUserId())) {
-            throw new UserAccessDeniedException("본인의 리뷰에만 접근할 수 있습니다.");
+            throw new UserAccessDeniedException();
         }
     }
 }
