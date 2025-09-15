@@ -13,12 +13,12 @@ import com.team19.musuimsa.exception.auth.LoginFailedException;
 import com.team19.musuimsa.exception.conflict.EmailDuplicateException;
 import com.team19.musuimsa.exception.conflict.NicknameDuplicateException;
 import com.team19.musuimsa.user.domain.User;
-import com.team19.musuimsa.user.dto.LoginRequestDto;
-import com.team19.musuimsa.user.dto.SignUpRequestDto;
-import com.team19.musuimsa.user.dto.TokenResponseDto;
-import com.team19.musuimsa.user.dto.UserPasswordUpdateRequestDto;
-import com.team19.musuimsa.user.dto.UserResponseDto;
-import com.team19.musuimsa.user.dto.UserUpdateRequestDto;
+import com.team19.musuimsa.user.dto.LoginRequest;
+import com.team19.musuimsa.user.dto.SignUpRequest;
+import com.team19.musuimsa.user.dto.TokenResponse;
+import com.team19.musuimsa.user.dto.UserPasswordUpdateRequest;
+import com.team19.musuimsa.user.dto.UserResponse;
+import com.team19.musuimsa.user.dto.UserUpdateRequest;
 import com.team19.musuimsa.user.repository.UserRepository;
 import com.team19.musuimsa.util.JwtUtil;
 import io.jsonwebtoken.Claims;
@@ -66,7 +66,7 @@ class UserServiceTest {
         @Test
         @DisplayName("성공")
         void signUp_Success() {
-            SignUpRequestDto requestDto = new SignUpRequestDto("test@example.com", "password123",
+            SignUpRequest requestDto = new SignUpRequest("test@example.com", "password123",
                     "testUser", "");
             given(userRepository.findByEmail(requestDto.email())).willReturn(Optional.empty());
             given(userRepository.findByNickname(requestDto.nickname())).willReturn(
@@ -83,7 +83,7 @@ class UserServiceTest {
         @Test
         @DisplayName("실패 - 이메일 중복")
         void signUp_Fail_EmailDuplicated() {
-            SignUpRequestDto requestDto = new SignUpRequestDto("test@example.com", "password123",
+            SignUpRequest requestDto = new SignUpRequest("test@example.com", "password123",
                     "newuser", "");
             given(userRepository.findByEmail(requestDto.email())).willReturn(Optional.of(user));
 
@@ -93,7 +93,7 @@ class UserServiceTest {
         @Test
         @DisplayName("실패 - 닉네임 중복")
         void signUp_Fail_NicknameDuplicated() {
-            SignUpRequestDto requestDto = new SignUpRequestDto("new@example.com", "password123",
+            SignUpRequest requestDto = new SignUpRequest("new@example.com", "password123",
                     "testUser", "");
             given(userRepository.findByEmail(requestDto.email())).willReturn(Optional.empty());
             given(userRepository.findByNickname(requestDto.nickname())).willReturn(
@@ -110,7 +110,7 @@ class UserServiceTest {
         @Test
         @DisplayName("성공")
         void login_Success() {
-            LoginRequestDto requestDto = new LoginRequestDto("test@example.com", "password123");
+            LoginRequest requestDto = new LoginRequest("test@example.com", "password123");
             String fullRefreshToken = "Bearer refreshToken";
 
             given(userRepository.findByEmail(requestDto.email())).willReturn(Optional.of(user));
@@ -119,11 +119,11 @@ class UserServiceTest {
             given(jwtUtil.createAccessToken(user.getEmail())).willReturn("accessToken");
             given(jwtUtil.createRefreshToken(user.getEmail())).willReturn(fullRefreshToken);
 
-            TokenResponseDto tokenResponseDto = userService.login(requestDto);
+            TokenResponse tokenResponse = userService.login(requestDto);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(tokenResponseDto.accessToken()).isEqualTo("accessToken");
-                softly.assertThat(tokenResponseDto.refreshToken()).isEqualTo(fullRefreshToken);
+                softly.assertThat(tokenResponse.accessToken()).isEqualTo("accessToken");
+                softly.assertThat(tokenResponse.refreshToken()).isEqualTo(fullRefreshToken);
                 softly.assertThat(user.getRefreshToken().getToken()).isEqualTo(fullRefreshToken);
             });
         }
@@ -131,7 +131,7 @@ class UserServiceTest {
         @Test
         @DisplayName("실패 - 존재하지 않는 이메일")
         void login_Fail_UserNotFound() {
-            LoginRequestDto requestDto = new LoginRequestDto("wrong@example.com", "password123");
+            LoginRequest requestDto = new LoginRequest("wrong@example.com", "password123");
             given(userRepository.findByEmail(requestDto.email())).willReturn(Optional.empty());
 
             assertThrows(LoginFailedException.class, () -> userService.login(requestDto));
@@ -140,7 +140,7 @@ class UserServiceTest {
         @Test
         @DisplayName("실패 - 비밀번호 불일치")
         void login_Fail_PasswordMismatch() {
-            LoginRequestDto requestDto = new LoginRequestDto("test@example.com", "wrongpassword");
+            LoginRequest requestDto = new LoginRequest("test@example.com", "wrongpassword");
             given(userRepository.findByEmail(requestDto.email())).willReturn(Optional.of(user));
             given(passwordEncoder.matches(requestDto.password(), user.getPassword())).willReturn(
                     false);
@@ -170,11 +170,11 @@ class UserServiceTest {
             given(jwtUtil.createAccessToken(user.getEmail())).willReturn(newAccessToken);
             given(jwtUtil.createRefreshToken(user.getEmail())).willReturn(newRefreshToken);
 
-            TokenResponseDto tokenResponseDto = userService.reissueToken(oldRefreshToken);
+            TokenResponse tokenResponse = userService.reissueToken(oldRefreshToken);
 
             SoftAssertions.assertSoftly(softly -> {
-                softly.assertThat(tokenResponseDto.accessToken()).isEqualTo(newAccessToken);
-                softly.assertThat(tokenResponseDto.refreshToken()).isEqualTo(newRefreshToken);
+                softly.assertThat(tokenResponse.accessToken()).isEqualTo(newAccessToken);
+                softly.assertThat(tokenResponse.refreshToken()).isEqualTo(newRefreshToken);
                 softly.assertThat(user.getRefreshToken().getToken()).isEqualTo(newRefreshToken);
             });
         }
@@ -200,12 +200,12 @@ class UserServiceTest {
         @Test
         @DisplayName("성공")
         void updateUserInfo_Success() {
-            UserUpdateRequestDto requestDto = new UserUpdateRequestDto("newNickname",
+            UserUpdateRequest requestDto = new UserUpdateRequest("newNickname",
                     "newProfile.jpg");
             given(userRepository.findByNickname(requestDto.nickname())).willReturn(
                     Optional.empty());
 
-            UserResponseDto responseDto = userService.updateUserInfo(requestDto,
+            UserResponse responseDto = userService.updateUserInfo(requestDto,
                     user);
 
             SoftAssertions.assertSoftly(softly -> {
@@ -217,7 +217,7 @@ class UserServiceTest {
         @Test
         @DisplayName("실패 - 닉네임 중복")
         void updateUserInfo_Fail_NicknameDuplicated() {
-            UserUpdateRequestDto requestDto = new UserUpdateRequestDto("newNickname",
+            UserUpdateRequest requestDto = new UserUpdateRequest("newNickname",
                     "newProfile.jpg");
             User existingUser = new User("exist@example.com", "password", "newNickname", "p.jpg");
             given(userRepository.findByNickname(requestDto.nickname())).willReturn(
@@ -235,7 +235,7 @@ class UserServiceTest {
         @Test
         @DisplayName("성공")
         void updateUserPassword_Success() {
-            UserPasswordUpdateRequestDto requestDto = new UserPasswordUpdateRequestDto(
+            UserPasswordUpdateRequest requestDto = new UserPasswordUpdateRequest(
                     "encodedPassword", "newPassword");
             given(passwordEncoder.matches(requestDto.currentPassword(),
                     user.getPassword())).willReturn(true);
@@ -250,7 +250,7 @@ class UserServiceTest {
         @Test
         @DisplayName("실패 - 현재 비밀번호 불일치")
         void updateUserPassword_Fail_InvalidPassword() {
-            UserPasswordUpdateRequestDto requestDto = new UserPasswordUpdateRequestDto(
+            UserPasswordUpdateRequest requestDto = new UserPasswordUpdateRequest(
                     "wrongPassword", "newPassword");
             given(passwordEncoder.matches(requestDto.currentPassword(),
                     user.getPassword())).willReturn(false);

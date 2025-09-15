@@ -2,7 +2,7 @@ package com.team19.musuimsa.user.dto;
 
 import jakarta.validation.constraints.NotBlank;
 
-public record UserPasswordUpdateRequestDto(
+public record UserPasswordUpdateRequest(
         @NotBlank(message = "현재 비밀번호는 필수 입력값입니다.")
         String currentPassword,
 
