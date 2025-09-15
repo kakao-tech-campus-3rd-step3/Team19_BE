@@ -45,7 +45,7 @@ public class Review extends BaseEntity {
     @Column(nullable = false, columnDefinition = "text")
     private String content;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT")
     @Min(1)
     @Max(5)
     private int rating;
