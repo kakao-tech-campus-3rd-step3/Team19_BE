@@ -1,10 +1,8 @@
 package com.team19.musuimsa.exception.forbidden;
 
-import org.springframework.security.access.AccessDeniedException;
+public class UserAccessDeniedException extends ForbiddenException {
 
-public class UserAccessDeniedException extends AccessDeniedException {
-
-    public UserAccessDeniedException(String message) {
-        super(message);
+    public UserAccessDeniedException() {
+        super("본인의 리뷰에만 접근할 수 있습니다.");
     }
 }

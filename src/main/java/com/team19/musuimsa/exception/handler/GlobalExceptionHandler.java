@@ -5,13 +5,14 @@ import com.team19.musuimsa.exception.auth.InvalidPasswordException;
 import com.team19.musuimsa.exception.conflict.DataConflictException;
 import com.team19.musuimsa.exception.dto.ErrorResponseDto;
 import com.team19.musuimsa.exception.external.ExternalApiException;
+import com.team19.musuimsa.exception.forbidden.ForbiddenException;
+import com.team19.musuimsa.exception.invalid.InvalidException;
 import com.team19.musuimsa.exception.notfound.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -82,6 +83,30 @@ public class GlobalExceptionHandler {
         );
     }
 
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponseDto> handleForbiddenException(
+            ForbiddenException ex,
+            HttpServletRequest request) {
+
+        return handleException(
+                HttpStatus.FORBIDDEN,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(InvalidException.class)
+    public ResponseEntity<ErrorResponseDto> handleInvalidException(
+            InvalidException ex,
+            HttpServletRequest request) {
+
+        return handleException(
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDto> handleMethodArgumentNotValidException(
             MethodArgumentNotValidException ex,
@@ -108,16 +133,6 @@ public class GlobalExceptionHandler {
         return handleException(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "서버 내부 오류가 발생했습니다.",
-                request.getRequestURI()
-        );
-    }
-
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponseDto> handleAccessDeniedException(
-            AccessDeniedException ex, HttpServletRequest request) {
-        return handleException(
-                HttpStatus.FORBIDDEN,
-                ex.getMessage(),
                 request.getRequestURI()
         );
     }
