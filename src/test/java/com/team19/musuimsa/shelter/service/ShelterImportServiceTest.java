@@ -80,11 +80,7 @@ class ShelterImportServiceTest {
 
         // 첫 페이지는 정상, 두 번째에서 예외
         when(client.fetchPage(1)).thenReturn(page1);
-        when(client.fetchPage(2))
-                .thenThrow(new ExternalApiException(
-                        "GET /DSSP-IF-10942?pageNo=2",
-                        new RuntimeException()
-                ));
+        when(client.fetchPage(2)).thenThrow(new ExternalApiException("GET /DSSP-IF-10942?pageNo=2"));
 
         int saved = service.importOnce();
         assertThat(saved).isEqualTo(1);
