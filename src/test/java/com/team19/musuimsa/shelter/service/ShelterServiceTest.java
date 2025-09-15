@@ -1,11 +1,10 @@
-package com.team19.musuimsa.shleter.service;
+package com.team19.musuimsa.shelter.service;
 
 import com.team19.musuimsa.exception.notfound.ShelterNotFoundException;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.dto.NearbyShelterResponse;
 import com.team19.musuimsa.shelter.dto.ShelterResponse;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
-import com.team19.musuimsa.shelter.service.ShelterService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

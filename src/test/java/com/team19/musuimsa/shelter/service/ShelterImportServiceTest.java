@@ -1,11 +1,9 @@
-package com.team19.musuimsa.shleter.service;
+package com.team19.musuimsa.shelter.service;
 
 import com.team19.musuimsa.exception.external.ExternalApiException;
 import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
-import com.team19.musuimsa.shelter.service.ShelterImportService;
-import com.team19.musuimsa.shelter.service.ShelterOpenApiClient;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
