@@ -8,6 +8,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.team19.musuimsa.exception.forbidden.UserAccessDeniedException;
@@ -19,8 +20,10 @@ import com.team19.musuimsa.review.repository.ReviewRepository;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.user.domain.User;
+import com.team19.musuimsa.user.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,6 +42,8 @@ public class ReviewServiceTest {
     ReviewRepository reviewRepository;
     @Mock
     ShelterRepository shelterRepository;
+    @Mock
+    UserRepository userRepository;
 
     @InjectMocks
     ReviewService reviewService;
@@ -71,6 +76,7 @@ public class ReviewServiceTest {
 
         given(shelterRepository.findById(any(Long.class))).willReturn(Optional.of(shelter));
         given(reviewRepository.save(any(Review.class))).willReturn(review);
+        stubUpdateReviewsOfShelterWith(review);
 
         // when
         ReviewResponse response = reviewService.createReview(shelterId, request, user);
@@ -80,7 +86,7 @@ public class ReviewServiceTest {
         assertThat(response.content()).isEqualTo(request.content());
         assertThat(response.rating()).isEqualTo(request.rating());
 
-        verify(shelterRepository).findById(shelterId);
+        verify(shelterRepository, times(2)).findById(shelterId);
         verify(reviewRepository).save(any(Review.class));
     }
 
@@ -99,6 +105,7 @@ public class ReviewServiceTest {
                 "수정된 사진");
 
         given(reviewRepository.findById(eq(id))).willReturn(Optional.of(reviewSpy));
+        stubUpdateReviewsOfShelterWith(reviewSpy);
 
         // when
         ReviewResponse response = reviewService.updateReview(id, updateRequest, user);
@@ -131,5 +138,15 @@ public class ReviewServiceTest {
                 .isInstanceOf(UserAccessDeniedException.class);
 
         verify(reviewRepository).findById(eq(reviewId));
+    }
+
+    /**
+     * updateReviewsOfShelter에서 필요한 공통 스텁을 세팅
+     */
+    private void stubUpdateReviewsOfShelterWith(Review targetReview) {
+        given(shelterRepository.findById(eq(shelterId))).willReturn(Optional.of(shelter));
+        given(reviewRepository.countByShelter(eq(shelter))).willReturn(1L);
+        given(reviewRepository.findByShelterOrderByCreatedAtDesc(eq(shelter)))
+                .willReturn(List.of(targetReview));
     }
 }
