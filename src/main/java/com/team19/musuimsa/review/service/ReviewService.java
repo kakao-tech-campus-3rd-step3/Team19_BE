@@ -37,6 +37,8 @@ public class ReviewService {
 
         reviewRepository.save(review);
 
+        updateReviewsOfShelter(shelterId);
+
         return ReviewResponse.from(review);
     }
 
@@ -50,6 +52,9 @@ public class ReviewService {
 
         review.update(request.content(), request.rating(), request.photoUrl());
 
+        Long shelterId = review.getShelter().getShelterId();
+        updateReviewsOfShelter(shelterId);
+
         return ReviewResponse.from(review);
     }
 
@@ -62,6 +67,9 @@ public class ReviewService {
         review.assertOwnedBy(user);
 
         reviewRepository.delete(review);
+
+        Long shelterId = review.getShelter().getShelterId();
+        updateReviewsOfShelter(shelterId);
     }
 
     // 리뷰 단건 조회
@@ -99,5 +107,33 @@ public class ReviewService {
         return reviews.stream()
                 .map(ReviewResponse::from)
                 .toList();
+    }
+
+    private void updateReviewsOfShelter(Long shelterId) {
+        Shelter shelter = shelterRepository.findById(shelterId)
+                .orElseThrow(() -> new ShelterNotFoundException(shelterId));
+
+        Integer totalReview = (int) reviewRepository.countByShelter(shelter);
+
+        if (totalReview != shelter.getReviewCount()) {
+            shelter.updateReviewCount(totalReview);
+        }
+
+        int ratingSum = reviewRepository.findByShelterOrderByCreatedAtDesc(shelter)
+                .stream()
+                .mapToInt(review -> (int) review.getRating())
+                .sum();
+
+        Integer newTotalRating;
+
+        if (totalReview != 0) {
+            newTotalRating = ratingSum / totalReview;
+        } else {
+            throw new ArithmeticException("총 리뷰 수가 0입니다.");
+        }
+
+        if (newTotalRating != shelter.getTotalRating()) {
+            shelter.updateTotalRating(newTotalRating);
+        }
     }
 }
