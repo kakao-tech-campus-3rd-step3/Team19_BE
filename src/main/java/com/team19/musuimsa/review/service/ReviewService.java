@@ -1,6 +1,6 @@
 package com.team19.musuimsa.review.service;
 
-import com.team19.musuimsa.exception.forbidden.UserAccessDeniedException;
+import com.team19.musuimsa.exception.forbidden.ReviewAccessDeniedException;
 import com.team19.musuimsa.exception.notfound.ReviewNotFoundException;
 import com.team19.musuimsa.exception.notfound.ShelterNotFoundException;
 import com.team19.musuimsa.exception.notfound.UserNotFoundException;
@@ -44,7 +44,7 @@ public class ReviewService {
 
     // 리뷰 수정
     public ReviewResponse updateReview(Long reviewId, UpdateReviewRequest request, User user)
-            throws UserAccessDeniedException {
+            throws ReviewAccessDeniedException {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFoundException(reviewId));
 
@@ -60,7 +60,7 @@ public class ReviewService {
 
     // 리뷰 삭제
     public void deleteReview(Long reviewId, User user)
-            throws UserAccessDeniedException {
+            throws ReviewAccessDeniedException {
         Review review = reviewRepository.findById(reviewId).orElseThrow(
                 () -> new ReviewNotFoundException(reviewId));
 

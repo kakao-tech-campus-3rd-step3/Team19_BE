@@ -1,7 +1,7 @@
 package com.team19.musuimsa.review.domain;
 
 import com.team19.musuimsa.audit.BaseEntity;
-import com.team19.musuimsa.exception.forbidden.UserAccessDeniedException;
+import com.team19.musuimsa.exception.forbidden.ReviewAccessDeniedException;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.user.domain.User;
@@ -72,7 +72,7 @@ public class Review extends BaseEntity {
     // 리뷰 소유자인지 검증
     public void assertOwnedBy(User user) {
         if (!this.user.getUserId().equals(user.getUserId())) {
-            throw new UserAccessDeniedException();
+            throw new ReviewAccessDeniedException();
         }
     }
 }

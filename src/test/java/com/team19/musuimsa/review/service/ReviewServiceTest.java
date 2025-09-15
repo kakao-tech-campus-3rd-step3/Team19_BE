@@ -11,7 +11,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.team19.musuimsa.exception.forbidden.UserAccessDeniedException;
+import com.team19.musuimsa.exception.forbidden.ReviewAccessDeniedException;
 import com.team19.musuimsa.review.domain.Review;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.review.dto.ReviewResponse;
@@ -92,7 +92,7 @@ public class ReviewServiceTest {
 
     @Test
     @DisplayName("리뷰 수정 성공")
-    void updateReviewSuccess() throws UserAccessDeniedException {
+    void updateReviewSuccess() throws ReviewAccessDeniedException {
         // given
         Long id = 1L;
         CreateReviewRequest request = new CreateReviewRequest("시원하네요", 5, "리뷰사진");
@@ -120,7 +120,7 @@ public class ReviewServiceTest {
 
     @Test
     @DisplayName("리뷰 삭제 실패 - 403 반환")
-    void deleteReviewFail() throws UserAccessDeniedException {
+    void deleteReviewFail() throws ReviewAccessDeniedException {
         //given
         CreateReviewRequest request = new CreateReviewRequest("시원하네요", 5, "리뷰사진");
         review = Review.of(shelter, user, request);
@@ -128,14 +128,14 @@ public class ReviewServiceTest {
 
         User other = new User("other@email.com", "1234", "Not 작성자", "profile.image");
 
-        doThrow(new UserAccessDeniedException())
+        doThrow(new ReviewAccessDeniedException())
                 .when(reviewSpy).assertOwnedBy(other);
 
         given(reviewRepository.findById(eq(reviewId))).willReturn(Optional.of(reviewSpy));
 
         // when & then
         assertThatThrownBy(() -> reviewService.deleteReview(reviewId, other))
-                .isInstanceOf(UserAccessDeniedException.class);
+                .isInstanceOf(ReviewAccessDeniedException.class);
 
         verify(reviewRepository).findById(eq(reviewId));
     }
