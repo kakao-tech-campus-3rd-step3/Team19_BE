@@ -121,7 +121,7 @@ public class ReviewServiceTest {
 
         User other = new User("other@email.com", "1234", "Not 작성자", "profile.image");
 
-        doThrow(new UserAccessDeniedException("본인의 리뷰에만 접근할 수 있습니다."))
+        doThrow(new UserAccessDeniedException())
                 .when(reviewSpy).assertOwnedBy(other);
 
         given(reviewRepository.findById(eq(reviewId))).willReturn(Optional.of(reviewSpy));
