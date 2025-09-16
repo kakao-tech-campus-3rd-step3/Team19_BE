@@ -87,8 +87,7 @@ public class ReviewServiceTest {
         assertThat(response.content()).isEqualTo(request.content());
         assertThat(response.rating()).isEqualTo(request.rating());
 
-        verify(shelterRepository, times(2)).findById(
-                shelterId);  // create 과정에서: (1) 저장용 findById, (2) 집계 갱신용 findById → 총 2회
+        verify(shelterRepository, times(1)).findById(shelterId);
         verify(reviewRepository).save(any(Review.class));
         verify(reviewRepository).aggregateByShelterId(eq(shelterId));
     }

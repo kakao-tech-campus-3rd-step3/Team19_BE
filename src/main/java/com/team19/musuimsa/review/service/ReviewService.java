@@ -38,7 +38,7 @@ public class ReviewService {
 
         reviewRepository.save(review);
 
-        updateReviewsOfShelter(shelterId);
+        updateReviewsOfShelter(shelter);
 
         return ReviewResponse.from(review);
     }
@@ -53,7 +53,11 @@ public class ReviewService {
         review.update(request.content(), request.rating(), request.photoUrl());
 
         Long shelterId = review.getShelter().getShelterId();
-        updateReviewsOfShelter(shelterId);
+
+        Shelter shelter = shelterRepository.findById(shelterId)
+                .orElseThrow(() -> new ShelterNotFoundException(shelterId));
+
+        updateReviewsOfShelter(shelter);
 
         return ReviewResponse.from(review);
     }
@@ -68,7 +72,11 @@ public class ReviewService {
         reviewRepository.delete(review);
 
         Long shelterId = review.getShelter().getShelterId();
-        updateReviewsOfShelter(shelterId);
+
+        Shelter shelter = shelterRepository.findById(shelterId)
+                .orElseThrow(() -> new ShelterNotFoundException(shelterId));
+
+        updateReviewsOfShelter(shelter);
     }
 
     // 리뷰 단건 조회
@@ -108,11 +116,9 @@ public class ReviewService {
                 .toList();
     }
 
-    private void updateReviewsOfShelter(Long shelterId) {
-        Shelter shelter = shelterRepository.findById(shelterId)
-                .orElseThrow(() -> new ShelterNotFoundException(shelterId));
-
-        ShelterReviewCountAndSum dto = reviewRepository.aggregateByShelterId(shelterId);
+    private void updateReviewsOfShelter(Shelter shelter) {
+        ShelterReviewCountAndSum dto = reviewRepository.aggregateByShelterId(
+                shelter.getShelterId());
 
         int newCount = Math.toIntExact(dto.reviewCount());
         int newSum = Math.toIntExact(dto.totalRating());
