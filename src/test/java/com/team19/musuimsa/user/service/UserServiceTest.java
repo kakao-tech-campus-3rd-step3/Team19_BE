@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -198,8 +199,8 @@ class UserServiceTest {
     class UpdateUserInfoTest {
 
         @Test
-        @DisplayName("성공")
-        void updateUserInfo_Success() {
+        @DisplayName("성공 - 닉네임과 프로필 이미지 모두 변경")
+        void updateUserInfo_Success_AllFields() {
             UserUpdateRequest requestDto = new UserUpdateRequest("newNickname",
                     "newProfile.jpg");
             given(userRepository.findByNickname(requestDto.nickname())).willReturn(
@@ -212,6 +213,71 @@ class UserServiceTest {
                 softly.assertThat(responseDto.nickname()).isEqualTo("newNickname");
                 softly.assertThat(responseDto.profileImageUrl()).isEqualTo("newProfile.jpg");
             });
+        }
+
+        @Test
+        @DisplayName("성공 - 닉네임만 변경")
+        void updateUserInfo_Success_OnlyNickname() {
+            UserUpdateRequest requestDto = new UserUpdateRequest("newNickname",
+                    user.getProfileImageUrl());
+            given(userRepository.findByNickname(requestDto.nickname())).willReturn(
+                    Optional.empty());
+
+            UserResponse responseDto = userService.updateUserInfo(requestDto,
+                    user);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(responseDto.nickname()).isEqualTo("newNickname");
+                softly.assertThat(responseDto.profileImageUrl())
+                        .isEqualTo(user.getProfileImageUrl());
+            });
+        }
+
+        @Test
+        @DisplayName("성공 - 프로필 이미지만 변경")
+        void updateUserInfo_Success_OnlyProfileImage() {
+            UserUpdateRequest requestDto = new UserUpdateRequest(user.getNickname(),
+                    "newProfile.jpg");
+
+            UserResponse responseDto = userService.updateUserInfo(requestDto,
+                    user);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(responseDto.nickname()).isEqualTo(user.getNickname());
+                softly.assertThat(responseDto.profileImageUrl()).isEqualTo("newProfile.jpg");
+            });
+            verify(userRepository, never()).findByNickname(any());
+        }
+
+        @Test
+        @DisplayName("성공 - 변경 사항 없음")
+        void updateUserInfo_Success_NoChanges() {
+            UserUpdateRequest requestDto = new UserUpdateRequest(user.getNickname(),
+                    user.getProfileImageUrl());
+
+            UserResponse responseDto = userService.updateUserInfo(requestDto, user);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(responseDto.nickname()).isEqualTo(user.getNickname());
+                softly.assertThat(responseDto.profileImageUrl())
+                        .isEqualTo(user.getProfileImageUrl());
+            });
+            verify(userRepository, never()).findByNickname(any());
+        }
+
+        @Test
+        @DisplayName("성공 - null 또는 빈 값으로 요청 시 기존 정보 유지")
+        void updateUserInfo_Success_NullAndEmptyValues() {
+            UserUpdateRequest requestDto = new UserUpdateRequest(null, "");
+
+            UserResponse responseDto = userService.updateUserInfo(requestDto, user);
+
+            SoftAssertions.assertSoftly(softly -> {
+                softly.assertThat(responseDto.nickname()).isEqualTo(user.getNickname());
+                softly.assertThat(responseDto.profileImageUrl())
+                        .isEqualTo(user.getProfileImageUrl());
+            });
+            verify(userRepository, never()).findByNickname(any());
         }
 
         @Test
