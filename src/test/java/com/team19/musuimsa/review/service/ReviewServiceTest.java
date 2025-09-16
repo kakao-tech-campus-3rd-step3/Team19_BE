@@ -15,6 +15,7 @@ import com.team19.musuimsa.exception.forbidden.ReviewAccessDeniedException;
 import com.team19.musuimsa.review.domain.Review;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.review.dto.ReviewResponse;
+import com.team19.musuimsa.review.dto.ShelterReviewCountAndSum;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
 import com.team19.musuimsa.review.repository.ReviewRepository;
 import com.team19.musuimsa.shelter.domain.Shelter;
@@ -23,7 +24,6 @@ import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.LocalTime;
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -76,7 +76,8 @@ public class ReviewServiceTest {
 
         given(shelterRepository.findById(any(Long.class))).willReturn(Optional.of(shelter));
         given(reviewRepository.save(any(Review.class))).willReturn(review);
-        stubUpdateReviewsOfShelterWith(review);
+
+        stubAggregateForShelter(1L, 5L);
 
         // when
         ReviewResponse response = reviewService.createReview(shelterId, request, user);
@@ -86,8 +87,10 @@ public class ReviewServiceTest {
         assertThat(response.content()).isEqualTo(request.content());
         assertThat(response.rating()).isEqualTo(request.rating());
 
-        verify(shelterRepository, times(2)).findById(shelterId);
+        verify(shelterRepository, times(2)).findById(
+                shelterId);  // create 과정에서: (1) 저장용 findById, (2) 집계 갱신용 findById → 총 2회
         verify(reviewRepository).save(any(Review.class));
+        verify(reviewRepository).aggregateByShelterId(eq(shelterId));
     }
 
     @Test
@@ -99,13 +102,16 @@ public class ReviewServiceTest {
         review = Review.of(shelter, user, request);
         Review reviewSpy = spy(review);
 
-        doNothing().when(reviewSpy).assertOwnedBy(user);
+        doNothing().when(reviewSpy).assertOwnedBy(user);  // 소유자 검증 패스
 
         UpdateReviewRequest updateRequest = new UpdateReviewRequest("생각해보니 별로 안 시원해서 1점 드립니다.", 1,
                 "수정된 사진");
 
         given(reviewRepository.findById(eq(id))).willReturn(Optional.of(reviewSpy));
-        stubUpdateReviewsOfShelterWith(reviewSpy);
+        given(shelterRepository.findById(eq(shelterId))).willReturn(Optional.of(shelter));
+
+        given(reviewRepository.aggregateByShelterId(eq(shelterId)))
+                .willReturn(new ShelterReviewCountAndSum(1L, 1L));      // 수정 후 리뷰 개수1, 총점 1
 
         // when
         ReviewResponse response = reviewService.updateReview(id, updateRequest, user);
@@ -116,12 +122,13 @@ public class ReviewServiceTest {
         assertThat(response.rating()).isEqualTo(updateRequest.rating());
 
         verify(reviewRepository).findById(eq(id));
+        verify(reviewRepository).aggregateByShelterId(eq(shelterId));
     }
 
     @Test
     @DisplayName("리뷰 삭제 실패 - 403 반환")
     void deleteReviewFail() throws ReviewAccessDeniedException {
-        //given
+        // given
         CreateReviewRequest request = new CreateReviewRequest("시원하네요", 5, "리뷰사진");
         review = Review.of(shelter, user, request);
         Review reviewSpy = spy(review);
@@ -140,13 +147,10 @@ public class ReviewServiceTest {
         verify(reviewRepository).findById(eq(reviewId));
     }
 
-    /**
-     * updateReviewsOfShelter에서 필요한 공통 스텁을 세팅
-     */
-    private void stubUpdateReviewsOfShelterWith(Review targetReview) {
+    // 집계(count, sum)를 한 번에 스텁한다.
+    private void stubAggregateForShelter(long count, long sum) {
         given(shelterRepository.findById(eq(shelterId))).willReturn(Optional.of(shelter));
-        given(reviewRepository.countByShelter(eq(shelter))).willReturn(1L);
-        given(reviewRepository.findByShelterOrderByCreatedAtDesc(eq(shelter)))
-                .willReturn(List.of(targetReview));
+        given(reviewRepository.aggregateByShelterId(eq(shelterId)))
+                .willReturn(new ShelterReviewCountAndSum(count, sum));
     }
 }
