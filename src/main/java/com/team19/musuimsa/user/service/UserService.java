@@ -16,6 +16,7 @@ import com.team19.musuimsa.user.dto.UserResponse;
 import com.team19.musuimsa.user.dto.UserUpdateRequest;
 import com.team19.musuimsa.user.repository.UserRepository;
 import com.team19.musuimsa.util.JwtUtil;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -113,17 +114,25 @@ public class UserService {
         return UserResponse.from(user);
     }
 
-    public UserResponse updateUserInfo(UserUpdateRequest userUpdateRequest,
-            User loginUser) {
+    public UserResponse updateUserInfo(UserUpdateRequest userUpdateRequest, User loginUser) {
         String newNickname = userUpdateRequest.nickname();
+        String newProfileImageUrl = userUpdateRequest.profileImageUrl();
 
-        if (newNickname != null && !newNickname.equals(loginUser.getNickname())) {
+        boolean isNicknameSame = Objects.equals(newNickname, loginUser.getNickname());
+        boolean isProfileImageUrlSame = Objects.equals(newProfileImageUrl,
+                loginUser.getProfileImageUrl());
+
+        if (isNicknameSame && isProfileImageUrlSame) {
+            return UserResponse.from(loginUser);
+        }
+
+        if (!isNicknameSame && newNickname != null && !newNickname.isEmpty()) {
             userRepository.findByNickname(newNickname).ifPresent(existingUer -> {
                 throw new NicknameDuplicateException(newNickname);
             });
         }
 
-        loginUser.updateUser(newNickname, userUpdateRequest.profileImageUrl());
+        loginUser.updateUser(newNickname, newProfileImageUrl);
 
         return UserResponse.from(loginUser);
     }
