@@ -129,7 +129,7 @@ public class ReviewService {
         if (totalReview != 0) {
             newTotalRating = ratingSum / totalReview;
         } else {
-            throw new ArithmeticException("총 리뷰 수가 0입니다.");
+            newTotalRating = 0;
         }
 
         if (newTotalRating != shelter.getTotalRating()) {
