@@ -6,6 +6,7 @@ import com.team19.musuimsa.exception.notfound.UserNotFoundException;
 import com.team19.musuimsa.review.domain.Review;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.review.dto.ReviewResponse;
+import com.team19.musuimsa.review.dto.ShelterReviewCountAndSum;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
 import com.team19.musuimsa.review.repository.ReviewRepository;
 import com.team19.musuimsa.shelter.domain.Shelter;
@@ -13,6 +14,7 @@ import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.repository.UserRepository;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -110,27 +112,16 @@ public class ReviewService {
         Shelter shelter = shelterRepository.findById(shelterId)
                 .orElseThrow(() -> new ShelterNotFoundException(shelterId));
 
-        Integer totalReview = (int) reviewRepository.countByShelter(shelter);
+        ShelterReviewCountAndSum dto = reviewRepository.aggregateByShelterId(shelterId);
 
-        if (totalReview != shelter.getReviewCount()) {
-            shelter.updateReviewCount(totalReview);
+        int newCount = Math.toIntExact(dto.reviewCount());
+        int newSum = Math.toIntExact(dto.totalRating());
+
+        if (!Objects.equals(shelter.getReviewCount(), newCount)) {
+            shelter.updateReviewCount(newCount);
         }
-
-        int ratingSum = reviewRepository.findByShelterOrderByCreatedAtDesc(shelter)
-                .stream()
-                .mapToInt(review -> (int) review.getRating())
-                .sum();
-
-        Integer newTotalRating;
-
-        if (totalReview != 0) {
-            newTotalRating = ratingSum / totalReview;
-        } else {
-            newTotalRating = 0;
-        }
-
-        if (newTotalRating != shelter.getTotalRating()) {
-            shelter.updateTotalRating(newTotalRating);
+        if (!Objects.equals(shelter.getTotalRating(), newSum)) {
+            shelter.updateTotalRating(newSum);
         }
     }
 }
