@@ -8,14 +8,15 @@ import com.team19.musuimsa.exception.conflict.NicknameDuplicateException;
 import com.team19.musuimsa.exception.notfound.UserNotFoundException;
 import com.team19.musuimsa.user.domain.RefreshToken;
 import com.team19.musuimsa.user.domain.User;
-import com.team19.musuimsa.user.dto.LoginRequestDto;
-import com.team19.musuimsa.user.dto.SignUpRequestDto;
-import com.team19.musuimsa.user.dto.TokenResponseDto;
-import com.team19.musuimsa.user.dto.UserPasswordUpdateRequestDto;
-import com.team19.musuimsa.user.dto.UserResponseDto;
-import com.team19.musuimsa.user.dto.UserUpdateRequestDto;
+import com.team19.musuimsa.user.dto.LoginRequest;
+import com.team19.musuimsa.user.dto.SignUpRequest;
+import com.team19.musuimsa.user.dto.TokenResponse;
+import com.team19.musuimsa.user.dto.UserPasswordUpdateRequest;
+import com.team19.musuimsa.user.dto.UserResponse;
+import com.team19.musuimsa.user.dto.UserUpdateRequest;
 import com.team19.musuimsa.user.repository.UserRepository;
 import com.team19.musuimsa.util.JwtUtil;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,20 +33,20 @@ public class UserService {
 
     private static final String DEFAULT_PROFILE_IMAGE_URL = "https://wikis.krsocsci.org/images/a/aa/%EA%B8%B0%EB%B3%B8_%ED%94%84%EB%A1%9C%ED%95%84.png";
 
-    public Long signUp(SignUpRequestDto signUpRequestDto) {
-        checkDuplicateUser(signUpRequestDto);
+    public Long signUp(SignUpRequest signUpRequest) {
+        checkDuplicateUser(signUpRequest);
 
-        String encodedPassword = passwordEncoder.encode(signUpRequestDto.password());
+        String encodedPassword = passwordEncoder.encode(signUpRequest.password());
 
-        String profileImageUrl = signUpRequestDto.profileImageUrl();
+        String profileImageUrl = signUpRequest.profileImageUrl();
         if (profileImageUrl == null || profileImageUrl.isEmpty()) {
             profileImageUrl = DEFAULT_PROFILE_IMAGE_URL;
         }
 
         User user = new User(
-                signUpRequestDto.email(),
+                signUpRequest.email(),
                 encodedPassword,
-                signUpRequestDto.nickname(),
+                signUpRequest.nickname(),
                 profileImageUrl
         );
 
@@ -54,7 +55,7 @@ public class UserService {
         return savedUser.getUserId();
     }
 
-    public TokenResponseDto login(LoginRequestDto loginRequestDto) {
+    public TokenResponse login(LoginRequest loginRequestDto) {
         User user = userRepository.findByEmail(loginRequestDto.email())
                 .orElseThrow(LoginFailedException::new);
 
@@ -67,7 +68,7 @@ public class UserService {
 
         user.updateRefreshToken(refreshToken);
 
-        return new TokenResponseDto(accessToken, refreshToken);
+        return new TokenResponse(accessToken, refreshToken);
     }
 
     public void logout(User loginUser) {
@@ -75,7 +76,7 @@ public class UserService {
         user.invalidateRefreshToken();
     }
 
-    public TokenResponseDto reissueToken(String refreshToken) {
+    public TokenResponse reissueToken(String refreshToken) {
         // "Bearer " 접두사 제거
         RefreshToken token = RefreshToken.from(refreshToken);
         String pureToken = token.getPureToken();
@@ -103,32 +104,40 @@ public class UserService {
         String newRefreshToken = jwtUtil.createRefreshToken(email);
         user.updateRefreshToken(newRefreshToken);
 
-        return new TokenResponseDto(newAccessToken, newRefreshToken);
+        return new TokenResponse(newAccessToken, newRefreshToken);
     }
 
     @Transactional(readOnly = true)
-    public UserResponseDto getUserInfo(Long userId) {
+    public UserResponse getUserInfo(Long userId) {
         User user = getUserById(userId);
 
-        return UserResponseDto.from(user);
+        return UserResponse.from(user);
     }
 
-    public UserResponseDto updateUserInfo(UserUpdateRequestDto userUpdateRequestDto,
-            User loginUser) {
-        String newNickname = userUpdateRequestDto.nickname();
+    public UserResponse updateUserInfo(UserUpdateRequest userUpdateRequest, User loginUser) {
+        String newNickname = userUpdateRequest.nickname();
+        String newProfileImageUrl = userUpdateRequest.profileImageUrl();
 
-        if (newNickname != null && !newNickname.equals(loginUser.getNickname())) {
-            userRepository.findByNickname(newNickname).ifPresent(existingUser -> {
+        boolean isNicknameSame = Objects.equals(newNickname, loginUser.getNickname());
+        boolean isProfileImageUrlSame = Objects.equals(newProfileImageUrl,
+                loginUser.getProfileImageUrl());
+
+        if (isNicknameSame && isProfileImageUrlSame) {
+            return UserResponse.from(loginUser);
+        }
+
+        if (!isNicknameSame && newNickname != null && !newNickname.isEmpty()) {
+            userRepository.findByNickname(newNickname).ifPresent(existingUer -> {
                 throw new NicknameDuplicateException(newNickname);
             });
         }
 
-        loginUser.updateUser(newNickname, userUpdateRequestDto.profileImageUrl());
+        loginUser.updateUser(newNickname, newProfileImageUrl);
 
-        return UserResponseDto.from(loginUser);
+        return UserResponse.from(loginUser);
     }
 
-    public void updateUserPassword(UserPasswordUpdateRequestDto requestDto, User loginUser) {
+    public void updateUserPassword(UserPasswordUpdateRequest requestDto, User loginUser) {
         if (!passwordEncoder.matches(requestDto.currentPassword(), loginUser.getPassword())) {
             throw new InvalidPasswordException();
         }
@@ -141,13 +150,13 @@ public class UserService {
         userRepository.delete(loginUser);
     }
 
-    private void checkDuplicateUser(SignUpRequestDto signUpRequestDto) {
-        userRepository.findByEmail(signUpRequestDto.email()).ifPresent(user -> {
-            throw new EmailDuplicateException(signUpRequestDto.email());
+    private void checkDuplicateUser(SignUpRequest signUpRequest) {
+        userRepository.findByEmail(signUpRequest.email()).ifPresent(user -> {
+            throw new EmailDuplicateException(signUpRequest.email());
         });
 
-        userRepository.findByNickname(signUpRequestDto.nickname()).ifPresent(user -> {
-            throw new NicknameDuplicateException(signUpRequestDto.nickname());
+        userRepository.findByNickname(signUpRequest.nickname()).ifPresent(user -> {
+            throw new NicknameDuplicateException(signUpRequest.nickname());
         });
     }
 

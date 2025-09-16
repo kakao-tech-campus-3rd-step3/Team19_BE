@@ -1,12 +1,12 @@
 package com.team19.musuimsa.user.controller;
 
 import com.team19.musuimsa.security.UserDetailsImpl;
-import com.team19.musuimsa.user.dto.LoginRequestDto;
-import com.team19.musuimsa.user.dto.SignUpRequestDto;
-import com.team19.musuimsa.user.dto.TokenResponseDto;
-import com.team19.musuimsa.user.dto.UserPasswordUpdateRequestDto;
-import com.team19.musuimsa.user.dto.UserResponseDto;
-import com.team19.musuimsa.user.dto.UserUpdateRequestDto;
+import com.team19.musuimsa.user.dto.LoginRequest;
+import com.team19.musuimsa.user.dto.SignUpRequest;
+import com.team19.musuimsa.user.dto.TokenResponse;
+import com.team19.musuimsa.user.dto.UserPasswordUpdateRequest;
+import com.team19.musuimsa.user.dto.UserResponse;
+import com.team19.musuimsa.user.dto.UserUpdateRequest;
 import com.team19.musuimsa.user.service.UserService;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -32,9 +32,9 @@ public class UserController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signUpUser(
-            @Valid @RequestBody SignUpRequestDto signUpRequestDto
+            @Valid @RequestBody SignUpRequest signUpRequest
     ) {
-        Long userId = userService.signUp(signUpRequestDto);
+        Long userId = userService.signUp(signUpRequest);
 
         URI location = URI.create("/api/users/" + userId);
 
@@ -42,12 +42,12 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponseDto> loginUser(
-            @Valid @RequestBody LoginRequestDto loginRequestDto
+    public ResponseEntity<TokenResponse> loginUser(
+            @Valid @RequestBody LoginRequest loginRequest
     ) {
-        TokenResponseDto tokenResponseDto = userService.login(loginRequestDto);
+        TokenResponse tokenResponse = userService.login(loginRequest);
 
-        return ResponseEntity.ok(tokenResponseDto);
+        return ResponseEntity.ok(tokenResponse);
     }
 
     @PostMapping("/logout")
@@ -60,38 +60,38 @@ public class UserController {
     }
 
     @PostMapping("/reissue")
-    public ResponseEntity<TokenResponseDto> reissueTokens(
+    public ResponseEntity<TokenResponse> reissueTokens(
             @RequestHeader("Authorization-Refresh") String refreshToken
     ) {
-        TokenResponseDto tokenResponseDto = userService.reissueToken(refreshToken);
+        TokenResponse tokenResponse = userService.reissueToken(refreshToken);
 
-        return ResponseEntity.ok(tokenResponseDto);
+        return ResponseEntity.ok(tokenResponse);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserResponseDto> getMyInfo(
+    public ResponseEntity<UserResponse> getMyInfo(
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        UserResponseDto userInfo = userService.getUserInfo(userDetails.getUser().getUserId());
+        UserResponse userInfo = userService.getUserInfo(userDetails.getUser().getUserId());
 
         return ResponseEntity.ok(userInfo);
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserResponseDto> getUserInfo(
+    public ResponseEntity<UserResponse> getUserInfo(
             @PathVariable Long userId
     ) {
-        UserResponseDto userInfo = userService.getUserInfo(userId);
+        UserResponse userInfo = userService.getUserInfo(userId);
 
         return ResponseEntity.ok(userInfo);
     }
 
     @PatchMapping("/me")
-    public ResponseEntity<UserResponseDto> updateUserInfo(
-            @RequestBody UserUpdateRequestDto userUpdateRequestDto,
+    public ResponseEntity<UserResponse> updateUserInfo(
+            @RequestBody UserUpdateRequest userUpdateRequest,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        UserResponseDto updatedUser = userService.updateUserInfo(userUpdateRequestDto,
+        UserResponse updatedUser = userService.updateUserInfo(userUpdateRequest,
                 userDetails.getUser());
 
         return ResponseEntity.ok(updatedUser);
@@ -99,7 +99,7 @@ public class UserController {
 
     @PatchMapping("/me/password")
     public ResponseEntity<String> updateUserPassword(
-            @Valid @RequestBody UserPasswordUpdateRequestDto requestDto,
+            @Valid @RequestBody UserPasswordUpdateRequest requestDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         userService.updateUserPassword(requestDto, userDetails.getUser());

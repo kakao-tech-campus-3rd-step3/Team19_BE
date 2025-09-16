@@ -16,12 +16,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team19.musuimsa.exception.handler.GlobalExceptionHandler;
 import com.team19.musuimsa.security.UserDetailsImpl;
 import com.team19.musuimsa.user.domain.User;
-import com.team19.musuimsa.user.dto.LoginRequestDto;
-import com.team19.musuimsa.user.dto.SignUpRequestDto;
-import com.team19.musuimsa.user.dto.TokenResponseDto;
-import com.team19.musuimsa.user.dto.UserPasswordUpdateRequestDto;
-import com.team19.musuimsa.user.dto.UserResponseDto;
-import com.team19.musuimsa.user.dto.UserUpdateRequestDto;
+import com.team19.musuimsa.user.dto.LoginRequest;
+import com.team19.musuimsa.user.dto.SignUpRequest;
+import com.team19.musuimsa.user.dto.TokenResponse;
+import com.team19.musuimsa.user.dto.UserPasswordUpdateRequest;
+import com.team19.musuimsa.user.dto.UserResponse;
+import com.team19.musuimsa.user.dto.UserUpdateRequest;
 import com.team19.musuimsa.user.service.UserService;
 import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
@@ -98,9 +98,9 @@ class UserControllerTest {
         @Test
         @DisplayName("성공")
         void signUp_Success() throws Exception {
-            SignUpRequestDto requestDto = new SignUpRequestDto("test@example.com", "password123",
+            SignUpRequest requestDto = new SignUpRequest("test@example.com", "password123",
                     "nickname", "");
-            given(userService.signUp(any(SignUpRequestDto.class))).willReturn(1L);
+            given(userService.signUp(any(SignUpRequest.class))).willReturn(1L);
 
             mockMvc.perform(post("/api/users/signup")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -113,7 +113,7 @@ class UserControllerTest {
         @Test
         @DisplayName("실패 - 유효하지 않은 이메일 형식")
         void signUp_Fail_InvalidEmail() throws Exception {
-            SignUpRequestDto requestDto = new SignUpRequestDto("test", "password123",
+            SignUpRequest requestDto = new SignUpRequest("test", "password123",
                     "nickname", "");
 
             mockMvc.perform(post("/api/users/signup")
@@ -125,7 +125,7 @@ class UserControllerTest {
         @Test
         @DisplayName("실패 - 비밀번호가 8자 미만")
         void signUp_Fail_PasswordTooShort() throws Exception {
-            SignUpRequestDto requestDto = new SignUpRequestDto("test@example.com", "pass",
+            SignUpRequest requestDto = new SignUpRequest("test@example.com", "pass",
                     "nickname", "");
 
             mockMvc.perform(post("/api/users/signup")
@@ -137,7 +137,7 @@ class UserControllerTest {
         @Test
         @DisplayName("실패 - 비밀번호가 20자 초과")
         void signUp_Fail_PasswordTooLong() throws Exception {
-            SignUpRequestDto requestDto = new SignUpRequestDto("test@example.com",
+            SignUpRequest requestDto = new SignUpRequest("test@example.com",
                     "password1234567890123", "nickname", "");
 
             mockMvc.perform(post("/api/users/signup")
@@ -149,7 +149,7 @@ class UserControllerTest {
         @Test
         @DisplayName("실패 - 닉네임이 비어있음")
         void signUp_Fail_BlankNickname() throws Exception {
-            SignUpRequestDto requestDto = new SignUpRequestDto("test@example.com", "password123",
+            SignUpRequest requestDto = new SignUpRequest("test@example.com", "password123",
                     "", "");
 
             mockMvc.perform(post("/api/users/signup")
@@ -167,10 +167,10 @@ class UserControllerTest {
         @Test
         @DisplayName("성공")
         void login_Success() throws Exception {
-            LoginRequestDto requestDto = new LoginRequestDto("test@example.com", "password");
-            TokenResponseDto tokenResponseDto = new TokenResponseDto("access-token",
+            LoginRequest requestDto = new LoginRequest("test@example.com", "password");
+            TokenResponse tokenResponse = new TokenResponse("access-token",
                     "refresh-token");
-            given(userService.login(any(LoginRequestDto.class))).willReturn(tokenResponseDto);
+            given(userService.login(any(LoginRequest.class))).willReturn(tokenResponse);
 
             mockMvc.perform(post("/api/users/login")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -183,7 +183,7 @@ class UserControllerTest {
         @Test
         @DisplayName("실패 - 이메일이 비어있음")
         void login_Fail_BlankEmail() throws Exception {
-            LoginRequestDto requestDto = new LoginRequestDto("", "password");
+            LoginRequest requestDto = new LoginRequest("", "password");
 
             mockMvc.perform(post("/api/users/login")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -194,7 +194,7 @@ class UserControllerTest {
         @Test
         @DisplayName("실패 - 유효하지 않은 이메일 형식")
         void login_Fail_InvalidEmail() throws Exception {
-            LoginRequestDto requestDto = new LoginRequestDto("test", "password");
+            LoginRequest requestDto = new LoginRequest("test", "password");
 
             mockMvc.perform(post("/api/users/login")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -205,7 +205,7 @@ class UserControllerTest {
         @Test
         @DisplayName("실패 - 비밀번호가 비어있음")
         void login_Fail_BlankPassword() throws Exception {
-            LoginRequestDto requestDto = new LoginRequestDto("test@example.com", "");
+            LoginRequest requestDto = new LoginRequest("test@example.com", "");
 
             mockMvc.perform(post("/api/users/login")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -228,9 +228,9 @@ class UserControllerTest {
     @Test
     @DisplayName("토큰 재발급 API 테스트")
     void reissueTokens() throws Exception {
-        TokenResponseDto tokenResponseDto = new TokenResponseDto("new-access-token",
+        TokenResponse tokenResponse = new TokenResponse("new-access-token",
                 "new-refresh-token");
-        given(userService.reissueToken(any(String.class))).willReturn(tokenResponseDto);
+        given(userService.reissueToken(any(String.class))).willReturn(tokenResponse);
 
         mockMvc.perform(post("/api/users/reissue")
                         .header("Authorization-Refresh", "Bearer refresh-token"))
@@ -242,8 +242,8 @@ class UserControllerTest {
     @Test
     @DisplayName("회원 정보 조회 API 테스트")
     void getUserInfo() throws Exception {
-        UserResponseDto userResponseDto = UserResponseDto.from(testUser);
-        given(userService.getUserInfo(anyLong())).willReturn(userResponseDto);
+        UserResponse userResponse = UserResponse.from(testUser);
+        given(userService.getUserInfo(anyLong())).willReturn(userResponse);
 
         mockMvc.perform(get("/api/users/1"))
                 .andExpect(status().isOk())
@@ -254,10 +254,10 @@ class UserControllerTest {
     @Test
     @DisplayName("회원 정보 수정 API 테스트")
     void updateUserInfo() throws Exception {
-        UserUpdateRequestDto requestDto = new UserUpdateRequestDto("newNickname", "newProfile.jpg");
-        UserResponseDto updatedUser = new UserResponseDto(1L, "test@example.com", "newNickname",
+        UserUpdateRequest requestDto = new UserUpdateRequest("newNickname", "newProfile.jpg");
+        UserResponse updatedUser = new UserResponse(1L, "test@example.com", "newNickname",
                 "newProfile.jpg");
-        given(userService.updateUserInfo(any(UserUpdateRequestDto.class),
+        given(userService.updateUserInfo(any(UserUpdateRequest.class),
                 any(User.class))).willReturn(updatedUser);
 
         mockMvc.perform(patch("/api/users/me")
@@ -275,10 +275,10 @@ class UserControllerTest {
         @Test
         @DisplayName("성공")
         void updateUserPassword_Success() throws Exception {
-            UserPasswordUpdateRequestDto requestDto = new UserPasswordUpdateRequestDto(
+            UserPasswordUpdateRequest requestDto = new UserPasswordUpdateRequest(
                     "currentPassword", "newPassword");
             doNothing().when(userService)
-                    .updateUserPassword(any(UserPasswordUpdateRequestDto.class),
+                    .updateUserPassword(any(UserPasswordUpdateRequest.class),
                             any(User.class));
 
             mockMvc.perform(patch("/api/users/me/password")
@@ -291,7 +291,7 @@ class UserControllerTest {
         @Test
         @DisplayName("실패 - 현재 비밀번호가 비어있음")
         void updateUserPassword_Fail_BlankCurrentPassword() throws Exception {
-            UserPasswordUpdateRequestDto requestDto = new UserPasswordUpdateRequestDto("",
+            UserPasswordUpdateRequest requestDto = new UserPasswordUpdateRequest("",
                     "newPassword");
 
             mockMvc.perform(patch("/api/users/me/password")
@@ -303,7 +303,7 @@ class UserControllerTest {
         @Test
         @DisplayName("실패 - 새 비밀번호가 비어있음")
         void updateUserPassword_Fail_BlankNewPassword() throws Exception {
-            UserPasswordUpdateRequestDto requestDto = new UserPasswordUpdateRequestDto(
+            UserPasswordUpdateRequest requestDto = new UserPasswordUpdateRequest(
                     "currentPassword", "");
 
             mockMvc.perform(patch("/api/users/me/password")
