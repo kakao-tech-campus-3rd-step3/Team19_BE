@@ -1,11 +1,13 @@
 package com.team19.musuimsa.shelter.service;
 
+import com.team19.musuimsa.exception.external.ExternalApiException;
 import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
@@ -30,7 +32,7 @@ public class ShelterOpenApiClient {
     @Value("${musuimsa.shelter.api.format}")
     private String format;
 
-    private final WebClient webClient;
+    private final RestClient restClient;
 
     public ExternalResponse fetchPage(int pageNo) {
         URI uri = UriComponentsBuilder
@@ -43,10 +45,12 @@ public class ShelterOpenApiClient {
                 .build(true)
                 .toUri();
 
-        return webClient.get()
+        return restClient.get()
                 .uri(uri)
                 .retrieve()
-                .bodyToMono(ExternalResponse.class)
-                .block();
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    throw new ExternalApiException(req.getURI().toString());
+                })
+                .body(ExternalResponse.class);
     }
 }
