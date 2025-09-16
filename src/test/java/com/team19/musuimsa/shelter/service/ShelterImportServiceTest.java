@@ -1,11 +1,9 @@
-package com.team19.musuimsa.shleter.service;
+package com.team19.musuimsa.shelter.service;
 
 import com.team19.musuimsa.exception.external.ExternalApiException;
 import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
-import com.team19.musuimsa.shelter.service.ShelterImportService;
-import com.team19.musuimsa.shelter.service.ShelterOpenApiClient;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -82,11 +80,7 @@ class ShelterImportServiceTest {
 
         // 첫 페이지는 정상, 두 번째에서 예외
         when(client.fetchPage(1)).thenReturn(page1);
-        when(client.fetchPage(2))
-                .thenThrow(new ExternalApiException(
-                        "GET /DSSP-IF-10942?pageNo=2",
-                        new RuntimeException()
-                ));
+        when(client.fetchPage(2)).thenThrow(new ExternalApiException("GET /DSSP-IF-10942?pageNo=2"));
 
         int saved = service.importOnce();
         assertThat(saved).isEqualTo(1);

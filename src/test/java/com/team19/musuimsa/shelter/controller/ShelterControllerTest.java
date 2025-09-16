@@ -1,6 +1,5 @@
-package com.team19.musuimsa.shleter.controller;
+package com.team19.musuimsa.shelter.controller;
 
-import com.team19.musuimsa.shelter.controller.ShelterController;
 import com.team19.musuimsa.shelter.dto.NearbyShelterResponse;
 import com.team19.musuimsa.shelter.dto.OperatingHoursResponse;
 import com.team19.musuimsa.shelter.dto.ShelterResponse;

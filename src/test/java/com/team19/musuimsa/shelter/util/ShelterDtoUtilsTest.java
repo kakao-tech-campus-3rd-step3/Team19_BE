@@ -1,7 +1,6 @@
-package com.team19.musuimsa.shleter.util;
+package com.team19.musuimsa.shelter.util;
 
 import com.team19.musuimsa.shelter.domain.Shelter;
-import com.team19.musuimsa.shelter.util.ShelterDtoUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
