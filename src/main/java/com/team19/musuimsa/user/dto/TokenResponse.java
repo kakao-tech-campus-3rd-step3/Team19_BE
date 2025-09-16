@@ -1,6 +1,6 @@
 package com.team19.musuimsa.user.dto;
 
-public record TokenResponseDto(
+public record TokenResponse(
         String accessToken,
         String refreshToken
 ) {

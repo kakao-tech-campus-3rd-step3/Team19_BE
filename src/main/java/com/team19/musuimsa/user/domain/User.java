@@ -62,11 +62,4 @@ public class User {
     public void invalidateRefreshToken() {
         this.refreshToken = null;
     }
-
-    // 나중에 사용할 때 주석 해제
-//    public void validateUserPermission(User loginUser) {
-//        if (!this.userId.equals(loginUser.getUserId())) {
-//            throw new UserAccessDeniedException();
-//        }
-//    }
 }
