@@ -21,7 +21,6 @@ import com.team19.musuimsa.review.repository.ReviewRepository;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.user.domain.User;
-import com.team19.musuimsa.user.repository.UserRepository;
 import java.math.BigDecimal;
 import java.time.LocalTime;
 import java.util.Optional;
@@ -42,8 +41,6 @@ public class ReviewServiceTest {
     ReviewRepository reviewRepository;
     @Mock
     ShelterRepository shelterRepository;
-    @Mock
-    UserRepository userRepository;
 
     @InjectMocks
     ReviewService reviewService;
