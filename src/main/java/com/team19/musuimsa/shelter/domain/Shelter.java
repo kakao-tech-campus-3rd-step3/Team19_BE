@@ -1,16 +1,10 @@
 package com.team19.musuimsa.shelter.domain;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalTime;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
@@ -70,6 +64,9 @@ public class Shelter {
 
     @Column(length = 255)
     private String photoUrl;
+
+    @Version
+    private Long version;
 
     public void updateTotalRating(Integer totalRating) {
         this.totalRating = totalRating;
