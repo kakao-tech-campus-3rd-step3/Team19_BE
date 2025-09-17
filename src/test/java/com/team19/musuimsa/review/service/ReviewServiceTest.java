@@ -8,12 +8,14 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.team19.musuimsa.exception.forbidden.UserAccessDeniedException;
+import com.team19.musuimsa.exception.forbidden.ReviewAccessDeniedException;
 import com.team19.musuimsa.review.domain.Review;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.review.dto.ReviewResponse;
+import com.team19.musuimsa.review.dto.ShelterReviewCountAndSum;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
 import com.team19.musuimsa.review.repository.ReviewRepository;
 import com.team19.musuimsa.shelter.domain.Shelter;
@@ -72,6 +74,8 @@ public class ReviewServiceTest {
         given(shelterRepository.findById(any(Long.class))).willReturn(Optional.of(shelter));
         given(reviewRepository.save(any(Review.class))).willReturn(review);
 
+        stubAggregateForShelter(1L, 5L);
+
         // when
         ReviewResponse response = reviewService.createReview(shelterId, request, user);
 
@@ -80,25 +84,30 @@ public class ReviewServiceTest {
         assertThat(response.content()).isEqualTo(request.content());
         assertThat(response.rating()).isEqualTo(request.rating());
 
-        verify(shelterRepository).findById(shelterId);
+        verify(shelterRepository, times(1)).findById(shelterId);
         verify(reviewRepository).save(any(Review.class));
+        verify(reviewRepository).aggregateByShelterId(eq(shelterId));
     }
 
     @Test
     @DisplayName("리뷰 수정 성공")
-    void updateReviewSuccess() throws UserAccessDeniedException {
+    void updateReviewSuccess() throws ReviewAccessDeniedException {
         // given
         Long id = 1L;
         CreateReviewRequest request = new CreateReviewRequest("시원하네요", 5, "리뷰사진");
         review = Review.of(shelter, user, request);
         Review reviewSpy = spy(review);
 
-        doNothing().when(reviewSpy).assertOwnedBy(user);
+        doNothing().when(reviewSpy).assertOwnedBy(user);  // 소유자 검증 패스
 
         UpdateReviewRequest updateRequest = new UpdateReviewRequest("생각해보니 별로 안 시원해서 1점 드립니다.", 1,
                 "수정된 사진");
 
         given(reviewRepository.findById(eq(id))).willReturn(Optional.of(reviewSpy));
+        given(shelterRepository.findById(eq(shelterId))).willReturn(Optional.of(shelter));
+
+        given(reviewRepository.aggregateByShelterId(eq(shelterId)))
+                .willReturn(new ShelterReviewCountAndSum(1L, 1L));      // 수정 후 리뷰 개수1, 총점 1
 
         // when
         ReviewResponse response = reviewService.updateReview(id, updateRequest, user);
@@ -109,27 +118,35 @@ public class ReviewServiceTest {
         assertThat(response.rating()).isEqualTo(updateRequest.rating());
 
         verify(reviewRepository).findById(eq(id));
+        verify(reviewRepository).aggregateByShelterId(eq(shelterId));
     }
 
     @Test
     @DisplayName("리뷰 삭제 실패 - 403 반환")
-    void deleteReviewFail() throws UserAccessDeniedException {
-        //given
+    void deleteReviewFail() throws ReviewAccessDeniedException {
+        // given
         CreateReviewRequest request = new CreateReviewRequest("시원하네요", 5, "리뷰사진");
         review = Review.of(shelter, user, request);
         Review reviewSpy = spy(review);
 
         User other = new User("other@email.com", "1234", "Not 작성자", "profile.image");
 
-        doThrow(new UserAccessDeniedException("본인의 리뷰에만 접근할 수 있습니다."))
+        doThrow(new ReviewAccessDeniedException())
                 .when(reviewSpy).assertOwnedBy(other);
 
         given(reviewRepository.findById(eq(reviewId))).willReturn(Optional.of(reviewSpy));
 
         // when & then
         assertThatThrownBy(() -> reviewService.deleteReview(reviewId, other))
-                .isInstanceOf(UserAccessDeniedException.class);
+                .isInstanceOf(ReviewAccessDeniedException.class);
 
         verify(reviewRepository).findById(eq(reviewId));
+    }
+
+    // 집계(count, sum)를 한 번에 스텁한다.
+    private void stubAggregateForShelter(long count, long sum) {
+        given(shelterRepository.findById(eq(shelterId))).willReturn(Optional.of(shelter));
+        given(reviewRepository.aggregateByShelterId(eq(shelterId)))
+                .willReturn(new ShelterReviewCountAndSum(count, sum));
     }
 }
