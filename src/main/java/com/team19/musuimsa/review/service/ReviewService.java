@@ -27,7 +27,7 @@ import java.util.Objects;
 @Transactional
 public class ReviewService {
 
-    private static final int RETRY = 3;
+    private static final int MAX_RETRY = 3;
 
     private final ReviewRepository reviewRepository;
     private final ShelterRepository shelterRepository;
@@ -127,12 +127,12 @@ public class ReviewService {
     }
 
     private void refreshShelterStatsWithRetry(Shelter shelter) {
-        for (int i = 0; i < RETRY; i++) {
+        for (int i = 0; i < MAX_RETRY; i++) {
             try {
                 updateReviewsOfShelter(shelter);
                 return;
             } catch (OptimisticLockingFailureException e) {
-                if (i == RETRY - 1) {
+                if (i == MAX_RETRY - 1) {
                     throw new OptimisticLockConflictException();
                 }
 
