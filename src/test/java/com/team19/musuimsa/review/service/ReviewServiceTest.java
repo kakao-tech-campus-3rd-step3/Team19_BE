@@ -1,16 +1,6 @@
 package com.team19.musuimsa.review.service;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
+import com.team19.musuimsa.exception.conflict.OptimisticLockConflictException;
 import com.team19.musuimsa.exception.forbidden.ReviewAccessDeniedException;
 import com.team19.musuimsa.review.domain.Review;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
@@ -21,9 +11,6 @@ import com.team19.musuimsa.review.repository.ReviewRepository;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.user.domain.User;
-import java.math.BigDecimal;
-import java.time.LocalTime;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,7 +18,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalTime;
+import java.util.Optional;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @Transactional
@@ -56,10 +55,24 @@ public class ReviewServiceTest {
         shelterId = 10L;
         reviewId = 1L;
 
-        shelter = new Shelter(shelterId, "무더위쉼터", "충대정문앞", BigDecimal.TEN, BigDecimal.TWO,
-                LocalTime.MAX,
-                LocalTime.MIDNIGHT, LocalTime.MIN, LocalTime.NOON, 50, false, 10, 3, 4, 5,
-                "photo.url");
+        shelter = Shelter.builder()
+                .shelterId(shelterId)
+                .name("무더위쉼터")
+                .address("충대정문앞")
+                .latitude(BigDecimal.TEN)
+                .longitude(BigDecimal.TWO)
+                .weekdayOpenTime(LocalTime.MAX)
+                .weekdayCloseTime(LocalTime.MIDNIGHT)
+                .weekendOpenTime(LocalTime.MIN)
+                .weekendCloseTime(LocalTime.NOON)
+                .capacity(50)
+                .isOutdoors(false)
+                .fanCount(10)
+                .airConditionerCount(3)
+                .totalRating(4)
+                .reviewCount(5)
+                .photoUrl("photo.url")
+                .build();
 
         user = new User("aran@email.com", "1234", "별명", "프사.url");
     }
@@ -104,7 +117,6 @@ public class ReviewServiceTest {
                 "수정된 사진");
 
         given(reviewRepository.findById(eq(id))).willReturn(Optional.of(reviewSpy));
-        given(shelterRepository.findById(eq(shelterId))).willReturn(Optional.of(shelter));
 
         given(reviewRepository.aggregateByShelterId(eq(shelterId)))
                 .willReturn(new ShelterReviewCountAndSum(1L, 1L));      // 수정 후 리뷰 개수1, 총점 1
@@ -145,8 +157,65 @@ public class ReviewServiceTest {
 
     // 집계(count, sum)를 한 번에 스텁한다.
     private void stubAggregateForShelter(long count, long sum) {
-        given(shelterRepository.findById(eq(shelterId))).willReturn(Optional.of(shelter));
         given(reviewRepository.aggregateByShelterId(eq(shelterId)))
                 .willReturn(new ShelterReviewCountAndSum(count, sum));
     }
+
+    @Test
+    @DisplayName("낙관적 락 충돌 발생 시 재시도 후 성공")
+    void optimisticLock_retry_then_success() {
+        // given
+        CreateReviewRequest request = new CreateReviewRequest("좋아요", 5, "img");
+        review = Review.of(shelter, user, request);
+
+        given(shelterRepository.findById(eq(shelterId))).willReturn(Optional.of(shelter));
+        given(reviewRepository.save(any(Review.class))).willReturn(review);
+        given(reviewRepository.aggregateByShelterId(eq(shelterId)))
+                .willReturn(new ShelterReviewCountAndSum(1L, 5L));
+
+        // saveAndFlush: 1,2회는 충돌 → 3회째 성공
+        given(shelterRepository.saveAndFlush(any(Shelter.class)))
+                .willThrow(new ObjectOptimisticLockingFailureException(Shelter.class, shelterId))
+                .willThrow(new ObjectOptimisticLockingFailureException(Shelter.class, shelterId))
+                .willReturn(shelter);
+
+        // when
+        ReviewResponse resp = reviewService.createReview(shelterId, request, user);
+
+        // then
+        assertThat(resp).isNotNull();
+        assertThat(resp.content()).isEqualTo("좋아요");
+        assertThat(resp.rating()).isEqualTo(5);
+
+        // saveAndFlush가 총 3회 호출되었는지(2회 실패 + 1회 성공)
+        verify(shelterRepository, times(3)).saveAndFlush(any(Shelter.class));
+        verify(reviewRepository, times(3)).aggregateByShelterId(eq(shelterId));
+    }
+
+    @Test
+    @DisplayName("낙관적 락 3회 충돌 시 OptimisticLockConflictException 발생")
+    void optimisticLock_retry_exhausted_then_fail() {
+        // given
+        CreateReviewRequest request = new CreateReviewRequest("좋아요", 5, "img");
+        review = Review.of(shelter, user, request);
+
+        given(shelterRepository.findById(eq(shelterId))).willReturn(Optional.of(shelter));
+        given(reviewRepository.save(any(Review.class))).willReturn(review);
+        given(reviewRepository.aggregateByShelterId(eq(shelterId)))
+                .willReturn(new ShelterReviewCountAndSum(1L, 5L));
+
+        // 3회 모두 충돌
+        given(shelterRepository.saveAndFlush(any(Shelter.class)))
+                .willThrow(new ObjectOptimisticLockingFailureException(Shelter.class, shelterId))
+                .willThrow(new ObjectOptimisticLockingFailureException(Shelter.class, shelterId))
+                .willThrow(new ObjectOptimisticLockingFailureException(Shelter.class, shelterId));
+
+        // when & then
+        assertThatThrownBy(() -> reviewService.createReview(shelterId, request, user))
+                .isInstanceOf(OptimisticLockConflictException.class);
+
+        verify(shelterRepository, times(3)).saveAndFlush(any(Shelter.class));
+        verify(reviewRepository, times(3)).aggregateByShelterId(eq(shelterId));
+    }
+
 }

@@ -1,14 +1,9 @@
 package com.team19.musuimsa.review.domain;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.repository.UserRepository;
-import java.math.BigDecimal;
-import java.time.LocalTime;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +13,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalTime;
+import java.util.List;
+
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @Transactional
 @SpringBootTest
@@ -31,9 +32,24 @@ public class ReviewTest {
 
     @BeforeEach
     void setup() {
-        shelter = new Shelter(10L, "무더위쉼터", "충대정문앞", BigDecimal.TEN, BigDecimal.TWO, LocalTime.MAX,
-                LocalTime.MIDNIGHT, LocalTime.MIN, LocalTime.NOON, 50, false, 10, 3, 4, 5,
-                "photo.url");
+        shelter = Shelter.builder()
+                .shelterId(10L)
+                .name("무더위쉼터")
+                .address("충대정문앞")
+                .latitude(BigDecimal.TEN)
+                .longitude(BigDecimal.TWO)
+                .weekdayOpenTime(LocalTime.MAX)
+                .weekdayCloseTime(LocalTime.MIDNIGHT)
+                .weekendOpenTime(LocalTime.MIN)
+                .weekendCloseTime(LocalTime.NOON)
+                .capacity(50)
+                .isOutdoors(false)
+                .fanCount(10)
+                .airConditionerCount(3)
+                .totalRating(4)
+                .reviewCount(5)
+                .photoUrl("photo.url")
+                .build();
 
         user = userRepository.save(new User("aran@email.com", "1234", "별명", "프사.url"));
 
