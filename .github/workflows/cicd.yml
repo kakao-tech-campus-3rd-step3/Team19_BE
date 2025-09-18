@@ -81,8 +81,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu/app
+            # 불필요하게 용량을 차지하는 옛날 이미지들을 삭제합니다.
+            sudo docker image prune -f
             sudo docker login -u AWS -p $(aws ecr get-login-password --region ${{ secrets.AWS_REGION }}) ${{ secrets.AWS_ECR_URI }}
             sudo docker pull ${{ secrets.AWS_ECR_URI }}:latest
             sudo docker-compose up -d
-            # 불필요하게 용량을 차지하는 옛날 이미지들을 삭제합니다.
-            sudo docker image prune -f
