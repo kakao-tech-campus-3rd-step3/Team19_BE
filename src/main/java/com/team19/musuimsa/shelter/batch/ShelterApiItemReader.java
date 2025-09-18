@@ -1,4 +1,4 @@
-package com.team19.musuimsa.batch;
+package com.team19.musuimsa.shelter.batch;
 
 import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
