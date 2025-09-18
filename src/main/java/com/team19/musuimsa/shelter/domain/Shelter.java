@@ -1,18 +1,19 @@
 package com.team19.musuimsa.shelter.domain;
 
+import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import java.math.BigDecimal;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalTime;
 
 @Entity
 @Getter
@@ -84,4 +85,40 @@ public class Shelter {
         this.reviewCount = reviewCount;
     }
 
+    public static Shelter toShelter(ExternalShelterItem i) {
+        return Shelter.builder()
+                .shelterId(i.rstrFcltyNo())
+                .name(i.rstrNm())
+                .address(i.rnDtlAdres())
+                .latitude(i.la())
+                .longitude(i.lo())
+                .capacity(i.usePsblNmpr())
+                .fanCount(i.colrHoldElefn())
+                .airConditionerCount(i.colrHoldArcdtn())
+                .weekdayOpenTime(parseTime(i.wkdayOperBeginTime()))
+                .weekdayCloseTime(parseTime(i.wkdayOperEndTime()))
+                .weekendOpenTime(parseTime(i.wkendHdayOperBeginTime()))
+                .weekendCloseTime(parseTime(i.wkendHdayOperEndTime()))
+                .isOutdoors("002".equals(i.fcltyTy()))
+                .photoUrl(null)
+                .build();
+    }
+
+    // String 시간 파싱
+    private static LocalTime parseTime(String raw) {
+        if (raw == null) {
+            return null;
+        }
+
+        String digits = raw.replaceAll("[^0-9]", "");
+        if (digits.isBlank()) {
+            return null;
+        }
+
+        if (digits.length() == 3) {
+            digits = "0" + digits;
+        }
+
+        return LocalTime.parse(digits, DateTimeFormatter.ofPattern("HHmm"));
+    }
 }
