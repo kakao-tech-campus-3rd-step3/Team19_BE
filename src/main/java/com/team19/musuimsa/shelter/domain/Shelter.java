@@ -71,7 +71,6 @@ public class Shelter {
 
     private Integer reviewCount;
 
-    @Column(length = 255)
     private String photoUrl;
 
     @Version
