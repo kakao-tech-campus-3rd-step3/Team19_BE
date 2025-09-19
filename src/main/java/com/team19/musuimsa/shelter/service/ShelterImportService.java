@@ -4,7 +4,8 @@ import com.team19.musuimsa.exception.external.ExternalApiException;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
-import com.team19.musuimsa.shelter.repository.ShelterRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -22,7 +22,10 @@ import java.util.List;
 public class ShelterImportService {
 
     private final ShelterOpenApiClient shelterOpenApiClient;
-    private final ShelterRepository shelterRepository;
+
+    @PersistenceContext
+    private final EntityManager entityManager;
+
 
     public int importOnce() {
         int page = 1;
@@ -41,19 +44,16 @@ public class ShelterImportService {
                 log.debug("[Shelter Import] page={} header={}, numOfRows={}, totalCount={}",
                         page, res.header(), res.numOfRows(), res.totalCount());
 
+                // DTO-엔티티 매핑
                 List<ExternalShelterItem> items = safeItems(res);
                 log.info("[Shelter Import] page={} 수신 아이템 수={}", page, items.size());
 
-                // DTO-엔티티 매핑
-                List<Shelter> batch = new ArrayList<>();
                 for (ExternalShelterItem item : items) {
-                    batch.add(toShelter(item));
+                    Shelter shelter = toShelter(item);
+                    entityManager.merge(shelter);
+                    saved++;
                 }
-                log.info("[Shelter Import] page={} 매핑 결과: 저장 대상={}", page, batch.size());
-
-                shelterRepository.saveAll(batch);
-                saved += batch.size();
-                log.info("[Shelter Import] page={} saveAll 완료 (누적 저장 수={})", page, saved);
+                log.info("[Shelter Import] page={} merge 완료 (누적 저장 수={})", page, saved);
 
                 // 페이지네이션 진행 판단
                 int total = res.totalCount() == null ? 0 : res.totalCount();
