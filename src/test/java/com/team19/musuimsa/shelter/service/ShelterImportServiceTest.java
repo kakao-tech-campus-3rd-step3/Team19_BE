@@ -4,6 +4,7 @@ import com.team19.musuimsa.exception.external.ExternalApiException;
 import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,7 +13,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,6 +24,8 @@ class ShelterImportServiceTest {
     @Mock
     ShelterOpenApiClient client;
     @Mock
+    EntityManager entityManager;
+    @Mock
     ShelterRepository shelterRepository;
     @InjectMocks
     ShelterImportService service;
@@ -31,6 +33,8 @@ class ShelterImportServiceTest {
     @DisplayName("importOnce - 두 페이지를 돌아가며 저장된 전체 건수를 합산한다. ")
     @Test
     void importOnce_savesAcrossPages_andAccumulatesCount() {
+        when(entityManager.merge(any())).thenAnswer(inv -> inv.getArgument(0));
+
         ExternalResponse page1 = resp(2, 1, 3, List.of(
                 item(1001L, "A", "서울특별시", bd(37.1), bd(127.1),
                         10, 1, 2, "0900", "1800", "1000", "1700", "002"),
@@ -48,7 +52,8 @@ class ShelterImportServiceTest {
         int saved = service.importOnce();
         assertThat(saved).isEqualTo(3);
 
-        verify(shelterRepository, times(2)).saveAll(anyList());
+        verify(entityManager, times(3)).merge(any());
+        verifyNoInteractions(shelterRepository);
 
         verify(client).fetchPage(1);
         verify(client).fetchPage(2);
@@ -67,7 +72,8 @@ class ShelterImportServiceTest {
         int saved = service.importOnce();
         assertThat(saved).isEqualTo(0);
 
-        verify(shelterRepository).saveAll(Collections.emptyList());
+        verifyNoInteractions(entityManager);
+        verifyNoInteractions(shelterRepository);
     }
 
     @DisplayName("importOnce - 외부 API 예외 발생 시 중단하고 누적 저장 수를 반환한다. ")
@@ -85,8 +91,8 @@ class ShelterImportServiceTest {
         int saved = service.importOnce();
         assertThat(saved).isEqualTo(1);
 
-        verify(shelterRepository, times(1)).saveAll(any());
-
+        verify(entityManager, times(1)).merge(any());
+        verifyNoInteractions(shelterRepository);
     }
 
     private static BigDecimal bd(double v) {

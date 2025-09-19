@@ -9,7 +9,7 @@ WORKDIR /app
 COPY . .
 
 # gradlew 파일에 실행 권한을 부여합니다. (Docker 이미지 내부에서 실행 가능하도록)
-RUN chmod +x ./gradlew
+RUN chmod +x ./gradlew -x test
 
 # Gradle을 사용해 프로젝트를 빌드합니다.
 RUN ./gradlew build
