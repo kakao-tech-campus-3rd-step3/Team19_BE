@@ -65,7 +65,6 @@ jobs:
       # 3. Docker 이미지 빌드 및 ECR에 푸시
       - name: Build, tag, and push image to Amazon ECR
         env:
-          # 4단계에서 등록한 ECR URI 시크릿을 사용합니다.
           ECR_URI: ${{ secrets.AWS_ECR_URI }}
           IMAGE_TAG: latest # 이미지를 'latest' 태그로 푸시합니다.
         run: |
@@ -81,8 +80,19 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu/app
-            # 불필요하게 용량을 차지하는 옛날 이미지들을 삭제합니다.
-            sudo docker image prune -f
-            sudo docker login -u AWS -p $(aws ecr get-login-password --region ${{ secrets.AWS_REGION }}) ${{ secrets.AWS_ECR_URI }}
-            sudo docker pull ${{ secrets.AWS_ECR_URI }}:latest
+            # docker-compose.yml 파일이 사용할 환경 변수를 설정
+            export AWS_ECR_URI=${{ secrets.AWS_ECR_URI }}
+
+            # AWS ECR에 로그인하여 private 이미지를 받아올 수 있도록 인증
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_URI }}
+            
+            # docker-compose를 사용하여 애플리케이션을 안정적으로 배포
+            # down: 기존에 실행 중이던 컨테이너를 중지하고 삭제
+            # pull: docker-compose.yml에 정의된 최신 이미지를 받아옴
+            # up -d: 새로운 컨테이너를 백그라운드에서 실행
+            sudo docker-compose down
+            sudo docker-compose pull
             sudo docker-compose up -d
+
+            # 불필요하게 용량을 차지하는 모든 옛날 이미지들을 삭제
+            sudo docker image prune -af
