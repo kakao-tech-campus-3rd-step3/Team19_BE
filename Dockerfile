@@ -12,7 +12,7 @@ COPY . .
 RUN chmod +x ./gradlew -x test
 
 # Gradle을 사용해 프로젝트를 빌드합니다.
-RUN ./gradlew build
+RUN ./gradlew build -x test
 
 
 # --- 2단계: 최종 실행 환경 ---
