@@ -69,27 +69,4 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             order by r.createdAt desc
             """)
     List<ReviewResponse> findByUserIdWithShelterName(@Param("userId") Long userId);
-
-    @Query("""
-            select new com.team19.musuimsa.review.dto.ReviewResponse(
-                r.reviewId,
-                s.shelterId,
-                s.name,
-                u.userId,
-                u.nickname,
-                r.content,
-                r.rating,
-                r.photoUrl,
-                u.profileImageUrl,
-                r.createdAt,
-                r.updatedAt
-            )
-            from Review r
-            join r.shelter s
-            join r.user u
-            where r.reviewId = :reviewId
-            """)
-    java.util.Optional<ReviewResponse> findDetailByIdWithShelterName(
-            @Param("reviewId") Long reviewId);
-
 }
