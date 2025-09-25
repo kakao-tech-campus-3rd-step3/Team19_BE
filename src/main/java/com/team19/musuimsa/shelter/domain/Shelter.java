@@ -1,5 +1,7 @@
 package com.team19.musuimsa.shelter.domain;
 
+import static com.team19.musuimsa.batch.ShelterImportBatchConfig.parseTime;
+
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -8,7 +10,6 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.math.BigDecimal;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -103,23 +104,6 @@ public class Shelter {
                 .isOutdoors("002".equals(i.fcltyTy()))
                 .photoUrl(null)
                 .build();
-    }
-
-    public static LocalTime parseTime(String raw) {
-        if (raw == null) {
-            return null;
-        }
-
-        String digits = raw.replaceAll("[^0-9]", "");
-        if (digits.isBlank()) {
-            return null;
-        }
-
-        if (digits.length() == 3) {
-            digits = "0" + digits;
-        }
-
-        return LocalTime.parse(digits, DateTimeFormatter.ofPattern("HHmm"));
     }
 
     public boolean updateShelterInfo(ExternalShelterItem item, LocalTime weekdayOpen,

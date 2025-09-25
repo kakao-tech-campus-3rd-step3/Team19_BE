@@ -1,11 +1,10 @@
 package com.team19.musuimsa.batch;
 
-import static com.team19.musuimsa.shelter.domain.Shelter.parseTime;
-
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import jakarta.persistence.EntityManagerFactory;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +49,7 @@ public class ShelterImportBatchConfig {
             JpaPagingItemReader<Shelter> shelterItemReader,
             ItemProcessor<Shelter, Shelter> shelterItemProcessor,
             JpaItemWriter<Shelter> shelterItemWriter) {
-        return new StepBuilder("shelterImportStep", jobRepository)
+        return new StepBuilder("shelterUpdateStep", jobRepository)
                 .<Shelter, Shelter>chunk(CHUNK_SIZE, transactionManager)
                 .reader(shelterItemReader)
                 .processor(shelterItemProcessor)
@@ -98,5 +97,22 @@ public class ShelterImportBatchConfig {
         return new JpaItemWriterBuilder<Shelter>()
                 .entityManagerFactory(entityManagerFactory)
                 .build();
+    }
+
+    public static LocalTime parseTime(String raw) {
+        if (raw == null) {
+            return null;
+        }
+
+        String digits = raw.replaceAll("[^0-9]", "");
+        if (digits.isBlank()) {
+            return null;
+        }
+
+        if (digits.length() == 3) {
+            digits = "0" + digits;
+        }
+
+        return LocalTime.parse(digits, DateTimeFormatter.ofPattern("HHmm"));
     }
 }
