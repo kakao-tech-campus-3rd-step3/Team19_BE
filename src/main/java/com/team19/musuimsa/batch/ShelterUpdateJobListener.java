@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.JobExecution;
@@ -21,19 +20,19 @@ import org.springframework.stereotype.Component;
 public class ShelterUpdateJobListener implements JobExecutionListener {
 
     private final ShelterOpenApiClient shelterOpenApiClient;
-    @Getter
-    private Map<Long, ExternalShelterItem> externalShelterData;
 
     @Override
     public void beforeJob(JobExecution jobExecution) {
         log.info(">>>> Shelter Update Job START");
-        externalShelterData = fetchAllExternalShelterData();
+        Map<Long, ExternalShelterItem> externalShelterData = fetchAllExternalShelterData();
+
+        jobExecution.getExecutionContext().put("externalShelterData", externalShelterData);
+
         log.info(">>>> Fetched {} items from external API.", externalShelterData.size());
     }
 
     @Override
     public void afterJob(JobExecution jobExecution) {
-        externalShelterData.clear(); // 메모리 정리
         log.info("<<<< Shelter Update Job END");
     }
 

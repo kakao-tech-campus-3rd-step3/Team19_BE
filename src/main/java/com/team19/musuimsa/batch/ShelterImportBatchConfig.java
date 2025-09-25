@@ -20,6 +20,7 @@ import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.item.database.builder.JpaItemWriterBuilder;
 import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -70,8 +71,8 @@ public class ShelterImportBatchConfig {
 
     @Bean
     @StepScope
-    public ItemProcessor<Shelter, Shelter> shelterItemProcessor(ShelterUpdateJobListener listener) {
-        Map<Long, ExternalShelterItem> externalDataMap = listener.getExternalShelterData();
+    public ItemProcessor<Shelter, Shelter> shelterItemProcessor(
+            @Value("#{jobExecutionContext['externalShelterData']}") Map<Long, ExternalShelterItem> externalDataMap) {
         return shelter -> {
             ExternalShelterItem externalData = externalDataMap.get(shelter.getShelterId());
             if (externalData == null) {

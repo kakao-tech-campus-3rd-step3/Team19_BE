@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class ShelterImportService {
 
-    private final ShelterOpenApiClient shelterOpenApiClient;
+    private final ShelterOpenApiRestClient shelterOpenApiClient;
 
     @PersistenceContext
     private final EntityManager entityManager;
