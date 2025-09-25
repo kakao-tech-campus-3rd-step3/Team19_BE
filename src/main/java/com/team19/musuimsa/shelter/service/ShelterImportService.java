@@ -6,14 +6,11 @@ import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -49,7 +46,7 @@ public class ShelterImportService {
                 log.info("[Shelter Import] page={} 수신 아이템 수={}", page, items.size());
 
                 for (ExternalShelterItem item : items) {
-                    Shelter shelter = toShelter(item);
+                    Shelter shelter = Shelter.toShelter(item);
                     entityManager.merge(shelter);
                     saved++;
                 }
@@ -59,12 +56,15 @@ public class ShelterImportService {
                 int total = res.totalCount() == null ? 0 : res.totalCount();
                 int rows = res.numOfRows() == null ? 0 : res.numOfRows();
                 int lastPage = (rows > 0) ? (int) Math.ceil(total / (double) rows) : page;
-                log.debug("[Shelter Import] page={} 페이지네이션: total={}, rows={}, lastPage={}", page, total, rows, lastPage);
+                log.debug("[Shelter Import] page={} 페이지네이션: total={}, rows={}, lastPage={}", page,
+                        total, rows, lastPage);
 
                 long elapsedMs = (System.nanoTime() - t0) / 1_000_000;
                 log.info("[Shelter Import] ==== END page={} ({} ms) ====", page, elapsedMs);
 
-                if (page >= lastPage) break;
+                if (page >= lastPage) {
+                    break;
+                }
                 page++;
 
             } catch (ExternalApiException e) {
@@ -85,43 +85,5 @@ public class ShelterImportService {
             return List.of();
         }
         return res.body();
-    }
-
-    // 쉼터 매핑
-    private Shelter toShelter(ExternalShelterItem i) {
-        return Shelter.builder()
-                .shelterId(i.rstrFcltyNo())
-                .name(i.rstrNm())
-                .address(i.rnDtlAdres())
-                .latitude(i.la())
-                .longitude(i.lo())
-                .capacity(i.usePsblNmpr())
-                .fanCount(i.colrHoldElefn())
-                .airConditionerCount(i.colrHoldArcdtn())
-                .weekdayOpenTime(parseTime(i.wkdayOperBeginTime()))
-                .weekdayCloseTime(parseTime(i.wkdayOperEndTime()))
-                .weekendOpenTime(parseTime(i.wkendHdayOperBeginTime()))
-                .weekendCloseTime(parseTime(i.wkendHdayOperEndTime()))
-                .isOutdoors("002".equals(i.fcltyTy()))
-                .photoUrl(null)
-                .build();
-    }
-
-    // String 시간 파싱
-    private static LocalTime parseTime(String raw) {
-        if (raw == null) {
-            return null;
-        }
-
-        String digits = raw.replaceAll("[^0-9]", "");
-        if (digits.isBlank()) {
-            return null;
-        }
-
-        if (digits.length() == 3) {
-            digits = "0" + digits;
-        }
-
-        return LocalTime.parse(digits, DateTimeFormatter.ofPattern("HHmm"));
     }
 }
