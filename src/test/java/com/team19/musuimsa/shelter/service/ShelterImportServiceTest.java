@@ -1,22 +1,26 @@
 package com.team19.musuimsa.shelter.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
 import com.team19.musuimsa.exception.external.ExternalApiException;
 import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import jakarta.persistence.EntityManager;
+import java.math.BigDecimal;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.math.BigDecimal;
-import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ShelterImportServiceTest {
@@ -86,7 +90,8 @@ class ShelterImportServiceTest {
 
         // 첫 페이지는 정상, 두 번째에서 예외
         when(client.fetchPage(1)).thenReturn(page1);
-        when(client.fetchPage(2)).thenThrow(new ExternalApiException("GET /DSSP-IF-10942?pageNo=2"));
+        when(client.fetchPage(2)).thenThrow(
+                new ExternalApiException("GET /DSSP-IF-10942?pageNo=2"));
 
         int saved = service.importOnce();
         assertThat(saved).isEqualTo(1);
@@ -113,9 +118,9 @@ class ShelterImportServiceTest {
     }
 
     private static ExternalResponse resp(Integer numOfRows,
-                                         Integer pageNo,
-                                         Integer totalCount,
-                                         List<ExternalShelterItem> body
+            Integer pageNo,
+            Integer totalCount,
+            List<ExternalShelterItem> body
     ) {
         return new ExternalResponse(
                 new ExternalResponse.Header("OK", "00", null),
