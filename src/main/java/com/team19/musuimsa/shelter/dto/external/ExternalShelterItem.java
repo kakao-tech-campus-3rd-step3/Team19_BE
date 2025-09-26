@@ -2,7 +2,7 @@ package com.team19.musuimsa.shelter.dto.external;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -45,6 +45,7 @@ public record ExternalShelterItem(
 
         @JsonProperty("FCLTY_TY")
         String fcltyTy
-) {
+) implements Serializable {
+
 }
 

@@ -1,6 +1,7 @@
 package com.team19.musuimsa.review.repository;
 
 import com.team19.musuimsa.review.domain.Review;
+import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.review.dto.ShelterReviewCountAndSum;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.user.domain.User;
@@ -24,4 +25,48 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
                 where r.shelter.shelterId = :shelterId
             """)
     ShelterReviewCountAndSum aggregateByShelterId(@Param("shelterId") Long shelterId);
+
+    @Query("""
+            select new com.team19.musuimsa.review.dto.ReviewResponse(
+                r.reviewId,
+                s.shelterId,
+                s.name,
+                u.userId,
+                u.nickname,
+                r.content,
+                r.rating,
+                r.photoUrl,
+                u.profileImageUrl,
+                r.createdAt,
+                r.updatedAt
+            )
+            from Review r
+            join r.shelter s
+            join r.user u
+            where s.shelterId = :shelterId
+            order by r.createdAt desc
+            """)
+    List<ReviewResponse> findByShelterIdWithShelterName(@Param("shelterId") Long shelterId);
+
+    @Query("""
+            select new com.team19.musuimsa.review.dto.ReviewResponse(
+                r.reviewId,
+                s.shelterId,
+                s.name,
+                u.userId,
+                u.nickname,
+                r.content,
+                r.rating,
+                r.photoUrl,
+                u.profileImageUrl,
+                r.createdAt,
+                r.updatedAt
+            )
+            from Review r
+            join r.shelter s
+            join r.user u
+            where u.userId = :userId
+            order by r.createdAt desc
+            """)
+    List<ReviewResponse> findByUserIdWithShelterName(@Param("userId") Long userId);
 }

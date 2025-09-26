@@ -67,7 +67,7 @@ public class ReviewControllerTest {
 
         user = new User("aran@email.com", "1234", "별명", "프사.url");
 
-        response = new ReviewResponse(reviewId, shelterId, user.getUserId(),
+        response = new ReviewResponse(reviewId, shelterId, "무더위쉼터", user.getUserId(),
                 "아란", "시원하네요", 5,
                 "photo.url", "profile.url",
                 LocalDateTime.now(), LocalDateTime.now());
