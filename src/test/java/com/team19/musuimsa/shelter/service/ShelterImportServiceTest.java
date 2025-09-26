@@ -26,7 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ShelterImportServiceTest {
 
     @Mock
-    ShelterOpenApiRestClient client;
+    ShelterOpenApiClient client;
     @Mock
     EntityManager entityManager;
     @Mock
