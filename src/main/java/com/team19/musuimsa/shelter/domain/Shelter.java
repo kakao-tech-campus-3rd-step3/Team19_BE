@@ -25,6 +25,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "shelters")
 public class Shelter {
 
+    private static final String OUTDOOR_FACILITY_CODE = "002";
+
     // RSTR_FCLTY_NO
     @Id
     private Long shelterId;
@@ -101,7 +103,7 @@ public class Shelter {
                 .weekdayCloseTime(parseTime(i.wkdayOperEndTime()))
                 .weekendOpenTime(parseTime(i.wkendHdayOperBeginTime()))
                 .weekendCloseTime(parseTime(i.wkendHdayOperEndTime()))
-                .isOutdoors("002".equals(i.fcltyTy()))
+                .isOutdoors(OUTDOOR_FACILITY_CODE.equals(i.fcltyTy()))
                 .photoUrl(null)
                 .build();
     }
@@ -154,7 +156,7 @@ public class Shelter {
             this.weekendCloseTime = weekendClose;
             isChanged = true;
         }
-        boolean outdoors = "002".equals(item.fcltyTy());
+        boolean outdoors = OUTDOOR_FACILITY_CODE.equals(item.fcltyTy());
         if (!Objects.equals(this.isOutdoors, outdoors)) {
             this.isOutdoors = outdoors;
             isChanged = true;

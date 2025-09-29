@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Primary;
 // 1. spring.batch.job.enabled=false 프로퍼티 추가
 @SpringBootTest(properties = {"spring.batch.job.enabled=false"})
 @SpringBatchTest
-class ShelterImportBatchTest {
+class ShelterImportJobIntegrationTest {
 
     // 테스트 시에만 사용될 가짜(Fake) API 클라이언트 구현
     public static class FakeShelterOpenApiClient implements ShelterOpenApiClient {
