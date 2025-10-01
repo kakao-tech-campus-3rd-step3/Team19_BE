@@ -60,7 +60,7 @@ jobs:
       # 2. Amazon ECR 로그인
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
 
       # 3. Docker 이미지 빌드 및 ECR에 푸시
       - name: Build, tag, and push image to Amazon ECR
@@ -102,9 +102,9 @@ jobs:
               -e SPRING_PROFILES_ACTIVE=prod \
               -e jwt.secret.key=${{ secrets.JWT_SECRET_KEY }} \
               -e musuimsa.shelter.api.service-key=${{ secrets.MUSUIMSA_SHELTER_API_SERVICE_KEY }} \
-              -e DB_URL=${{ secrets.DB_URL }} \
-              -e DB_USERNAME=${{ secrets.DB_USERNAME }} \
-              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              -e spring.datasource.url=${{ secrets.DB_URL }} \
+              -e spring.datasource.username=${{ secrets.DB_USERNAME }} \
+              -e spring.datasource.password=${{ secrets.DB_PASSWORD }} \
               --restart unless-stopped \
               $AWS_ECR_URI:latest
             
