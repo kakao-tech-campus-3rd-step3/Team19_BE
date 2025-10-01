@@ -80,19 +80,28 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           script: |
             cd /home/ubuntu/app
-            # docker-compose.yml 파일이 사용할 환경 변수를 설정
-            export AWS_ECR_URI=${{ secrets.AWS_ECR_URI }}
-
-            # AWS ECR에 로그인하여 private 이미지를 받아올 수 있도록 인증
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ secrets.AWS_ECR_URI }}
             
-            # docker-compose를 사용하여 애플리케이션을 안정적으로 배포
-            # down: 기존에 실행 중이던 컨테이너를 중지하고 삭제
-            # pull: docker-compose.yml에 정의된 최신 이미지를 받아옴
-            # up -d: 새로운 컨테이너를 백그라운드에서 실행
-            sudo docker-compose down
-            sudo docker-compose pull
-            sudo docker-compose up -d
+            # 환경 변수 설정
+            export AWS_ECR_URI="${{ secrets.AWS_ECR_URI }}"
+            export AWS_REGION="${{ secrets.AWS_REGION }}"
 
-            # 불필요하게 용량을 차지하는 모든 옛날 이미지들을 삭제
-            sudo docker image prune -af
+            # ECR 로그인
+            aws ecr get-login-password --region $AWS_REGION | sudo docker login --username AWS --password-stdin $AWS_ECR_URI 
+            
+            # 기존 컨테이너 중지 및 삭제
+            sudo docker stop musuimsa-app || true
+            sudo docker rm musuimsa-app || true
+            
+            # 최신 이미지 pull
+            sudo docker pull $AWS_ECR_URI:latest
+            
+            # 새 컨테이너 실행
+            sudo docker run -d \
+              --name musuimsa-app \
+              -p 8080:8080 \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              --restart unless-stopped \
+              $AWS_ECR_URI:latest
+            
+            # 불필요한 이미지 정리
+            sudo docker image prune -af 
