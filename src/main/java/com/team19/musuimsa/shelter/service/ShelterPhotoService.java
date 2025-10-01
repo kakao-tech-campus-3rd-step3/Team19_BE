@@ -2,6 +2,7 @@ package com.team19.musuimsa.shelter.service;
 
 import com.team19.musuimsa.mapillary.MapillaryPhotoAgent;
 import com.team19.musuimsa.shelter.domain.Shelter;
+import com.team19.musuimsa.shelter.dto.BatchReport;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,30 +45,6 @@ public class ShelterPhotoService {
         shelter.updatePhotoUrl(url.get());
         shelterRepository.save(shelter);
         return true;
-    }
-
-    public static class BatchReport {
-        private final int processed;
-        private final int updated;
-        private final int failed;
-
-        public BatchReport(int processed, int updated, int failed) {
-            this.processed = processed;
-            this.updated = updated;
-            this.failed = failed;
-        }
-
-        public int getProcessed() {
-            return processed;
-        }
-
-        public int getUpdated() {
-            return updated;
-        }
-
-        public int getFailed() {
-            return failed;
-        }
     }
 
     // photoUrl이 비어있는 쉼터만 페이징으로 채우기
