@@ -31,20 +31,30 @@ public class ShelterPhotoService {
     }
 
     // Mapillary에서 가장 가까운 사진을 찾아 S3 업로드 후 photoUrl 저장
-    public boolean updatePhoto(Long shelterId) {
+    public Optional<String> updatePhotoAndReturnUrl(Long shelterId) {
         Shelter shelter = shelterRepository.findById(shelterId).orElse(null);
         if (shelter == null) {
-            return false;
+            return Optional.empty();
         }
 
-        Optional<String> url = mapillaryPhotoAgent.findAndStore(shelter.getLatitude(), shelter.getLongitude(), radiusM, shelter.getShelterId());
+        Optional<String> url = mapillaryPhotoAgent.findAndStore(
+                shelter.getLatitude(),
+                shelter.getLongitude(),
+                radiusM,
+                shelter.getShelterId()
+        );
+
         if (url.isEmpty()) {
-            return false;
+            return Optional.empty();
         }
 
         shelter.updatePhotoUrl(url.get());
         shelterRepository.save(shelter);
-        return true;
+        return url;
+    }
+
+    public boolean updatePhoto(Long shelterId) {
+        return updatePhotoAndReturnUrl(shelterId).isPresent();
     }
 
     // photoUrl이 비어있는 쉼터만 페이징으로 채우기
@@ -62,8 +72,7 @@ public class ShelterPhotoService {
             for (Long id : ids) {
                 processed++;
                 try {
-                    boolean ok = updatePhoto(id);
-                    if (ok) {
+                    if (updatePhoto(id)) {
                         updated++;
                     }
                 } catch (Exception e) {
