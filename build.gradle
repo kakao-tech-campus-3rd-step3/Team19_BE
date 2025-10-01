@@ -60,6 +60,15 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.springframework.batch:spring-batch-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Mapillary mock
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+
+    // S3Mock
+    testImplementation("com.adobe.testing:s3mock-junit5:3.8.0")
+
+    // H2 (테스트 DB)
+    testRuntimeOnly 'com.h2database:h2'
 }
 
 tasks.named('test') {
