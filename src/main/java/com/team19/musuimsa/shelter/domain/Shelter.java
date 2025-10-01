@@ -1,21 +1,22 @@
 package com.team19.musuimsa.shelter.domain;
 
-import static com.team19.musuimsa.batch.ShelterImportBatchConfig.parseTime;
-
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
-import java.math.BigDecimal;
-import java.time.LocalTime;
-import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalTime;
+import java.util.Objects;
+
+import static com.team19.musuimsa.batch.ShelterImportBatchConfig.parseTime;
 
 @Entity
 @Getter
@@ -89,6 +90,17 @@ public class Shelter {
         this.reviewCount = reviewCount;
     }
 
+    public boolean updatePhotoUrl(String newPhotoUrl) {
+        if (newPhotoUrl == null || newPhotoUrl.isBlank()) {
+            return false;
+        }
+        if (newPhotoUrl.equals(this.photoUrl)) {
+            return false;
+        }
+        this.photoUrl = newPhotoUrl;
+        return true;
+    }
+
     public static Shelter toShelter(ExternalShelterItem i) {
         return Shelter.builder()
                 .shelterId(i.rstrFcltyNo())
@@ -109,7 +121,7 @@ public class Shelter {
     }
 
     public boolean updateShelterInfo(ExternalShelterItem item, LocalTime weekdayOpen,
-            LocalTime weekdayClose, LocalTime weekendOpen, LocalTime weekendClose) {
+                                     LocalTime weekdayClose, LocalTime weekendOpen, LocalTime weekendClose) {
         boolean isChanged = false;
 
         if (!Objects.equals(this.name, item.rstrNm())) {
