@@ -85,14 +85,11 @@ public class ReviewService {
     // 쉼터별 리뷰 조회
     @Transactional(readOnly = true)
     public List<ReviewResponse> getReviewsByShelter(Long shelterId) {
-        Shelter shelter = shelterRepository.findById(shelterId)
+        // shelter 존재 검증은 유지
+        shelterRepository.findById(shelterId)
                 .orElseThrow(() -> new ShelterNotFoundException(shelterId));
 
-        List<Review> reviews = reviewRepository.findByShelterOrderByCreatedAtDesc(shelter);
-
-        return reviews.stream()
-                .map(ReviewResponse::from)
-                .toList();
+        return reviewRepository.findByShelterIdWithShelterName(shelterId);
     }
 
     // 사용자별 리뷰 조회
@@ -101,13 +98,9 @@ public class ReviewService {
         User loginUser = userRepository.findById(user.getUserId())
                 .orElseThrow(() -> new UserNotFoundException(user.getUserId()));
 
-        List<Review> reviews = reviewRepository.findByUser(loginUser);
-
-        return reviews.stream()
-                .map(ReviewResponse::from)
-                .toList();
+        return reviewRepository.findByUserIdWithShelterName(loginUser.getUserId());
     }
-
+    
     private void updateReviewsOfShelter(Shelter shelter) {
         ShelterReviewCountAndSum dto = reviewRepository.aggregateByShelterId(
                 shelter.getShelterId());
