@@ -39,23 +39,25 @@ public class ShelterUpdateJobListener implements JobExecutionListener {
     @Override
     public void afterJob(JobExecution jobExecution) {
         ExecutionContext ctx = jobExecution.getExecutionContext();
-        Set<Long> updatedIds = (Set<Long>) ctx.get(ShelterImportBatchConfig.UPDATED_IDS_KEY);
+        Set<Long> updatedIds = (Set<Long>) ctx.get(ShelterImportBatchConfig.LOCATION_UPDATED_IDS_KEY);
 
-        if (updatedIds.isEmpty()) {
+        if (updatedIds == null || updatedIds.isEmpty()) {
             log.info("<<<< Shelter Update Job END (변경된 쉼터 없음, 사진 갱신 생략)");
             return;
         }
 
         int processed = 0, updated = 0, failed = 0;
-        for (Long id : updatedIds) {
-            processed++;
-            try {
-                if (shelterPhotoService.updatePhoto(id)) {
-                    updated++;
+        if (updatedIds != null) {
+            processed = updatedIds.size();
+            for (Long id : updatedIds) {
+                try {
+                    if (shelterPhotoService.updatePhoto(id)) {
+                        updated++;
+                    }
+                } catch (Exception e) {
+                    failed++;
+                    log.warn("Photo update failed for shelter {}", id, e);
                 }
-            } catch (Exception e) {
-                failed++;
-                log.warn("photo update failed. shelterId={}", id, e);
             }
         }
 

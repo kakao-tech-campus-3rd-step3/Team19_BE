@@ -1,5 +1,6 @@
 package com.team19.musuimsa.shelter.domain;
 
+import com.team19.musuimsa.shelter.dto.UpdateResultResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -120,9 +121,11 @@ public class Shelter {
                 .build();
     }
 
-    public boolean updateShelterInfo(ExternalShelterItem item, LocalTime weekdayOpen,
-                                     LocalTime weekdayClose, LocalTime weekendOpen, LocalTime weekendClose) {
+    public UpdateResultResponse updateShelterInfo(ExternalShelterItem item,
+                                                  LocalTime weekdayOpen, LocalTime weekdayClose,
+                                                  LocalTime weekendOpen, LocalTime weekendClose) {
         boolean isChanged = false;
+        boolean locationChanged = false;
 
         if (!Objects.equals(this.name, item.rstrNm())) {
             this.name = item.rstrNm();
@@ -135,10 +138,12 @@ public class Shelter {
         if (this.latitude.compareTo(item.la()) != 0) {
             this.latitude = item.la();
             isChanged = true;
+            locationChanged = true; // ← 위/경도 바뀌면 사진 트리거
         }
         if (this.longitude.compareTo(item.lo()) != 0) {
             this.longitude = item.lo();
             isChanged = true;
+            locationChanged = true; // ← 위/경도 바뀌면 사진 트리거
         }
         if (!Objects.equals(this.capacity, item.usePsblNmpr())) {
             this.capacity = item.usePsblNmpr();
@@ -173,6 +178,6 @@ public class Shelter {
             this.isOutdoors = outdoors;
             isChanged = true;
         }
-        return isChanged;
+        return new UpdateResultResponse(isChanged, locationChanged);
     }
 }
