@@ -3,18 +3,20 @@ package com.team19.musuimsa.batch;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import jakarta.persistence.EntityManagerFactory;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.ItemWriteListener;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.scope.context.StepContext;
+import org.springframework.batch.core.scope.context.StepSynchronizationManager;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.Chunk;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.batch.item.database.JpaPagingItemReader;
@@ -24,6 +26,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Configuration
@@ -35,6 +43,7 @@ public class ShelterImportBatchConfig {
     private final EntityManagerFactory entityManagerFactory;
 
     private static final int CHUNK_SIZE = 100;
+    public static final String UPDATED_IDS_KEY = "updatedShelterIds";
 
     @Bean
     public Job shelterImportJob(Step shelterUpdateStep, ShelterUpdateJobListener listener) {
@@ -49,12 +58,14 @@ public class ShelterImportBatchConfig {
     public Step shelterUpdateStep(
             JpaPagingItemReader<Shelter> shelterItemReader,
             ItemProcessor<Shelter, Shelter> shelterItemProcessor,
-            JpaItemWriter<Shelter> shelterItemWriter) {
+            JpaItemWriter<Shelter> shelterItemWriter,
+            ItemWriteListener<Shelter> updatedIdCollector) {
         return new StepBuilder("shelterUpdateStep", jobRepository)
                 .<Shelter, Shelter>chunk(CHUNK_SIZE, transactionManager)
                 .reader(shelterItemReader)
                 .processor(shelterItemProcessor)
                 .writer(shelterItemWriter)
+                .listener(updatedIdCollector)
                 .build();
     }
 
@@ -98,6 +109,35 @@ public class ShelterImportBatchConfig {
         return new JpaItemWriterBuilder<Shelter>()
                 .entityManagerFactory(entityManagerFactory)
                 .build();
+    }
+
+    @Bean
+    public ItemWriteListener<Shelter> updatedIdCollector() {
+        return new ItemWriteListener<>() {
+
+            @Override
+            public void afterWrite(Chunk<? extends Shelter> items) {
+                if (items.isEmpty()) {
+                    return;
+                }
+
+                StepContext stepCtx = StepSynchronizationManager.getContext();
+
+                ExecutionContext jobCtx = stepCtx.getStepExecution()
+                        .getJobExecution()
+                        .getExecutionContext();
+
+                Set<Long> ids = (Set<Long>) jobCtx.get(UPDATED_IDS_KEY);
+                if (ids == null) {
+                    ids = new HashSet<>();
+                    jobCtx.put(UPDATED_IDS_KEY, ids);
+                }
+
+                for (Shelter s : items.getItems()) {
+                    ids.add(s.getShelterId());
+                }
+            }
+        };
     }
 
     public static LocalTime parseTime(String raw) {

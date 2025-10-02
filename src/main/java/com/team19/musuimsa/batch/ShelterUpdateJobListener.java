@@ -3,16 +3,20 @@ package com.team19.musuimsa.batch;
 import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import com.team19.musuimsa.shelter.service.ShelterOpenApiClient;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import com.team19.musuimsa.shelter.service.ShelterPhotoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobExecutionListener;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -20,6 +24,7 @@ import org.springframework.stereotype.Component;
 public class ShelterUpdateJobListener implements JobExecutionListener {
 
     private final ShelterOpenApiClient shelterOpenApiClient;
+    private final ShelterPhotoService shelterPhotoService;
 
     @Override
     public void beforeJob(JobExecution jobExecution) {
@@ -33,7 +38,28 @@ public class ShelterUpdateJobListener implements JobExecutionListener {
 
     @Override
     public void afterJob(JobExecution jobExecution) {
-        log.info("<<<< Shelter Update Job END");
+        ExecutionContext ctx = jobExecution.getExecutionContext();
+        Set<Long> updatedIds = (Set<Long>) ctx.get(ShelterImportBatchConfig.UPDATED_IDS_KEY);
+
+        if (updatedIds.isEmpty()) {
+            log.info("<<<< Shelter Update Job END (변경된 쉼터 없음, 사진 갱신 생략)");
+            return;
+        }
+
+        int processed = 0, updated = 0, failed = 0;
+        for (Long id : updatedIds) {
+            processed++;
+            try {
+                if (shelterPhotoService.updatePhoto(id)) {
+                    updated++;
+                }
+            } catch (Exception e) {
+                failed++;
+                log.warn("photo update failed. shelterId={}", id, e);
+            }
+        }
+
+        log.info("<<<< Shelter Update Job END (photo) processed={}, updated={}, failed={}", processed, updated, failed);
     }
 
     private Map<Long, ExternalShelterItem> fetchAllExternalShelterData() {
