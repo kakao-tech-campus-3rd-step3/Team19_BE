@@ -102,6 +102,10 @@ jobs:
               -e SPRING_PROFILES_ACTIVE=prod \
               -e jwt.secret.key=${{ secrets.JWT_SECRET_KEY }} \
               -e musuimsa.shelter.api.service-key=${{ secrets.MUSUIMSA_SHELTER_API_SERVICE_KEY }} \
+              -e mapillary.access-token=${{ secrets.MAPILLARY_ACCESS_TOKEN }} \
+              -e weather.service-key=${{ secrets.WEATHER_SERVICE_KEY }} \
+              -e aws.credentials.access-key=${{ secrets.AWS_CREDENTIALS_ACCESS_KEY }} \
+              -e aws.credentials.secret-key=${{ secrets.AWS_CREDENTIALS_SECRET_KEY }} \
               -e spring.datasource.url=${{ secrets.DB_URL }} \
               -e spring.datasource.username=${{ secrets.DB_USERNAME }} \
               -e spring.datasource.password=${{ secrets.DB_PASSWORD }} \
