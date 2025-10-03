@@ -41,8 +41,6 @@ jobs:
           WEATHER_SERVICE_KEY: "dummy-weather-key-for-ci"
           AWS_CREDENTIALS_ACCESS_KEY: "dummy-aws-access-key-for-ci"
           AWS_CREDENTIALS_SECRET_KEY: "dummy-aws-secret-key-for-ci"
-          AWS_REGION: "ap-northeast-2"
-          AWS_S3_ENDPOINT: "http://localhost:9090" # S3Mock을 위한 endpoint
         run: ./gradlew build # 프로젝트를 빌드합니다. 이 과정에서 테스트도 자동으로 함께 실행됩니다.
 
   deploy:
