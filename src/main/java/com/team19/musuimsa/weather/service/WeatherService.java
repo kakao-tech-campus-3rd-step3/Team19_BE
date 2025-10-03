@@ -25,7 +25,7 @@ public class WeatherService {
 
     private final RestClient restClient;
 
-    @V alue("${weather.service-key}")
+    @Value("${weather.service-key}")
     private String serviceKey;
 
     @Value("${weather.kma.base-url}")
@@ -45,7 +45,7 @@ public class WeatherService {
         Double t1h = fetchT1H(base.date(), base.time(), g.nx(), g.ny());
 
         if (t1h == null) {
-            KmaTime.Base prev = KmaTime.minusHours(base, 1, kst);
+            KmaTime.Base prev = KmaTime.minusHours(base, 1);
             Double fallback = fetchT1H(prev.date(), prev.time(), g.nx(), g.ny());
             if (fallback != null) {
                 base = prev;
