@@ -37,6 +37,10 @@ jobs:
           # dummy-for-ci
           JWT_SECRET_KEY: "dGhpcy1pcy1hLWR1bW15LWtleS1mb3ItY2ktYnVpbGQtb25seS1hbmQtbm90LXJlYWwK"
           MUSUIMSA_SHELTER_API_SERVICE_KEY: "dummy-key-for-ci"
+          MAPILLARY_ACCESS_TOKEN: "dummy-mapillary-token-for-ci"
+          WEATHER_SERVICE_KEY: "dummy-weather-key-for-ci"
+          AWS_CREDENTIALS_ACCESS_KEY: "dummy-aws-access-key-for-ci"
+          AWS_CREDENTIALS_SECRET_KEY: "dummy-aws-secret-key-for-ci"
         run: ./gradlew build # 프로젝트를 빌드합니다. 이 과정에서 테스트도 자동으로 함께 실행됩니다.
 
   deploy:
