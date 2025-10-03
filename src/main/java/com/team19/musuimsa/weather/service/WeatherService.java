@@ -123,16 +123,19 @@ public class WeatherService {
     }
 
     private String buildUrl(String baseDate, String baseTime, int nx, int ny) {
-        return UriComponentsBuilder.fromHttpUrl(baseUrl + "/getUltraSrtNcst")
-                .queryParam("serviceKey", serviceKey)
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(
+                        baseUrl + "/getUltraSrtNcst")
                 .queryParam("pageNo", 1)
                 .queryParam("numOfRows", 60)
                 .queryParam("dataType", "JSON")
                 .queryParam("base_date", baseDate)
                 .queryParam("base_time", baseTime)
                 .queryParam("nx", nx)
-                .queryParam("ny", ny)
-                .toUriString();
+                .queryParam("ny", ny);
+
+        String urlString = builder.toUriString();
+
+        return urlString + "&serviceKey=" + serviceKey;
     }
 
 }
