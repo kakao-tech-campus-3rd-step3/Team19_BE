@@ -39,6 +39,10 @@ dependencies {
     // Sprig Batch
     implementation 'org.springframework.boot:spring-boot-starter-batch'
 
+    // cache
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
 
@@ -61,3 +65,10 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+tasks.named("bootRun") {
+    systemProperty "spring.profiles.active", "dev" // JVM 인자 방식(B)
+    systemProperty "weather.kma.base-url", "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0"
+    systemProperty "weather.kma.allow-insecure", "true"
+}
+
