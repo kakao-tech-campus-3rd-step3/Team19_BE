@@ -62,7 +62,6 @@ class ShelterPhotoFlowE2ETest {
         r.add("aws.s3.folder", () -> "shelters");
         r.add("aws.s3.base-url", () -> "https://mock-s3.local");
         r.add("aws.s3.endpoint", () -> s3.getServiceEndpoint());
-        r.add("aws.s3.path-style-access", () -> "true");
         r.add("mapillary.api-base", () -> "http://localhost:" + mapillary.getPort());
         r.add("mapillary.access-token", () -> "dummy");
     }
