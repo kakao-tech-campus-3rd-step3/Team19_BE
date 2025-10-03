@@ -46,7 +46,10 @@ public class ShelterUpdateJobListener implements JobExecutionListener {
             return;
         }
 
-        int processed = 0, updated = 0, failed = 0;
+        int processed = 0;
+        int updated = 0;
+        int failed = 0;
+
         if (updatedIds != null) {
             processed = updatedIds.size();
             for (Long id : updatedIds) {
