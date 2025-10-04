@@ -41,8 +41,7 @@ class KmaTimeTest {
     void minusHours_Subtract2Hours() {
         KmaTime.Base current = new KmaTime.Base("20251003", "1400");
 
-        KmaTime.Base prev = KmaTime.minusHours(current, 2,
-                Clock.system(KST)); // Clock은 시간 계산에 큰 영향을 주지 않지만 필요
+        KmaTime.Base prev = KmaTime.minusHours(current, 2);
 
         assertEquals("20251003", prev.date());
         assertEquals("1200", prev.time());
@@ -53,7 +52,7 @@ class KmaTimeTest {
     void minusHours_CrossMidnight() {
         KmaTime.Base current = new KmaTime.Base("20251003", "0100");
 
-        KmaTime.Base prev = KmaTime.minusHours(current, 3, Clock.system(KST)); // 1시 - 3시간 = 전날 22시
+        KmaTime.Base prev = KmaTime.minusHours(current, 3);
 
         assertEquals("20251002", prev.date());
         assertEquals("2200", prev.time());
