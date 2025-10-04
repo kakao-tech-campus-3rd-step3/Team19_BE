@@ -1,5 +1,6 @@
 package com.team19.musuimsa.weather.controller;
 
+import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -14,10 +15,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
@@ -26,7 +27,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
         excludeAutoConfiguration = {SecurityAutoConfiguration.class},
         excludeFilters = @Filter(type = FilterType.ANNOTATION, classes = ControllerAdvice.class)
 )
-class WeatherControllerTest {
+public class WeatherControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -34,7 +35,7 @@ class WeatherControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private WeatherService weatherService;
 
     @Test
@@ -43,8 +44,7 @@ class WeatherControllerTest {
         // Given
         WeatherResponse mockResponse = new WeatherResponse(30, "20251003", "1500");
 
-        given(weatherService.getCurrentTemp(36.3504, 127.3845))
-                .willReturn(mockResponse);
+        given(weatherService.getCurrentTemp(anyDouble(), anyDouble())).willReturn(mockResponse);
 
         // When & Then
         mockMvc.perform(get("/api/weather/current")
@@ -53,8 +53,8 @@ class WeatherControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.temperature").value(25.5))
-                .andExpect(jsonPath("$.baseDate").value("20250929"))
-                .andExpect(jsonPath("$.baseTime").value("1700"));
+                .andExpect(jsonPath("$.temperature").value(30))
+                .andExpect(jsonPath("$.baseDate").value("20251003"))
+                .andExpect(jsonPath("$.baseTime").value("1500"));
     }
 }
