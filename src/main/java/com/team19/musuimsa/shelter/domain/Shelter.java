@@ -1,21 +1,23 @@
 package com.team19.musuimsa.shelter.domain;
 
-import static com.team19.musuimsa.batch.ShelterImportBatchConfig.parseTime;
-
+import com.team19.musuimsa.shelter.dto.UpdateResultResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
-import java.math.BigDecimal;
-import java.time.LocalTime;
-import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.time.LocalTime;
+import java.util.Objects;
+
+import static com.team19.musuimsa.batch.ShelterImportBatchConfig.parseTime;
 
 @Entity
 @Getter
@@ -89,6 +91,17 @@ public class Shelter {
         this.reviewCount = reviewCount;
     }
 
+    public boolean updatePhotoUrl(String newPhotoUrl) {
+        if (newPhotoUrl == null || newPhotoUrl.isBlank()) {
+            return false;
+        }
+        if (newPhotoUrl.equals(this.photoUrl)) {
+            return false;
+        }
+        this.photoUrl = newPhotoUrl;
+        return true;
+    }
+
     public static Shelter toShelter(ExternalShelterItem i) {
         return Shelter.builder()
                 .shelterId(i.rstrFcltyNo())
@@ -108,9 +121,11 @@ public class Shelter {
                 .build();
     }
 
-    public boolean updateShelterInfo(ExternalShelterItem item, LocalTime weekdayOpen,
-            LocalTime weekdayClose, LocalTime weekendOpen, LocalTime weekendClose) {
+    public UpdateResultResponse updateShelterInfo(ExternalShelterItem item,
+                                                  LocalTime weekdayOpen, LocalTime weekdayClose,
+                                                  LocalTime weekendOpen, LocalTime weekendClose) {
         boolean isChanged = false;
+        boolean locationChanged = false;
 
         if (!Objects.equals(this.name, item.rstrNm())) {
             this.name = item.rstrNm();
@@ -123,10 +138,12 @@ public class Shelter {
         if (this.latitude.compareTo(item.la()) != 0) {
             this.latitude = item.la();
             isChanged = true;
+            locationChanged = true; // ← 위/경도 바뀌면 사진 트리거
         }
         if (this.longitude.compareTo(item.lo()) != 0) {
             this.longitude = item.lo();
             isChanged = true;
+            locationChanged = true; // ← 위/경도 바뀌면 사진 트리거
         }
         if (!Objects.equals(this.capacity, item.usePsblNmpr())) {
             this.capacity = item.usePsblNmpr();
@@ -161,6 +178,6 @@ public class Shelter {
             this.isOutdoors = outdoors;
             isChanged = true;
         }
-        return isChanged;
+        return new UpdateResultResponse(isChanged, locationChanged);
     }
 }

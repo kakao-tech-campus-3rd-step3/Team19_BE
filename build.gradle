@@ -42,6 +42,9 @@ dependencies {
     // cache
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+    // AWS SDK v2 (S3)
+    implementation platform("software.amazon.awssdk:bom:2.25.61")
+    implementation "software.amazon.awssdk:s3"
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'
@@ -60,6 +63,15 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
     testImplementation 'org.springframework.batch:spring-batch-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Mapillary mock
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
+
+    // S3Mock
+    testImplementation("com.adobe.testing:s3mock-junit5:3.8.0")
+
+    // H2 (테스트 DB)
+    testRuntimeOnly 'com.h2database:h2'
 }
 
 tasks.named('test') {
