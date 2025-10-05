@@ -41,24 +41,27 @@ public class WeatherService {
 
     @Cacheable(cacheNames = "t1h", key = "#root.target.gridKey(#latitude, #longitude)")
     public WeatherResponse getCurrentTemp(double latitude, double longitude) {
-        NxNy g = KmaGrid.fromLatLon(latitude, longitude);
-        Clock kst = Clock.system(ZoneId.of("Asia/Seoul"));
+        NxNy grid = KmaGrid.fromLatLon(latitude, longitude);
+        Clock kstClock = Clock.system(ZoneId.of("Asia/Seoul"));
 
-        KmaTime.Base base = KmaTime.latestBase(kst);
-        Double t1h = fetchT1H(base.date(), base.time(), g.nx(), g.ny());
+        KmaTime.Base baseTime = KmaTime.latestBase(kstClock);
+        Double t1h = fetchT1H(baseTime.date(), baseTime.time(), grid.nx(), grid.ny());
 
         if (t1h == null) {
-            KmaTime.Base prev = KmaTime.minusHours(base, 1);
-            Double fallback = fetchT1H(prev.date(), prev.time(), g.nx(), g.ny());
+            KmaTime.Base previousBaseTime = KmaTime.minusHours(baseTime, 1);
+            Double fallback = fetchT1H(previousBaseTime.date(), previousBaseTime.time(), grid.nx(),
+                    grid.ny());
             if (fallback != null) {
-                base = prev;
+                baseTime = previousBaseTime;
                 t1h = fallback;
             }
         }
 
         if (t1h == null) {
             String requestInfo =
-                    "base=" + base.date() + " " + base.time() + ", nx=" + g.nx() + ", ny=" + g.ny();
+                    "base=" + baseTime.date() + " " + baseTime.time() + ", nx=" + grid.nx()
+                            + ", ny="
+                            + grid.ny();
             String message = "기상청 응답에 현재기온이 없음. " + requestInfo;
 
             log.warn("{} / request info: {}", message, requestInfo);
@@ -66,12 +69,12 @@ public class WeatherService {
             throw new ExternalApiException(requestInfo);
         }
 
-        return new WeatherResponse(t1h, base.date(), base.time());
+        return new WeatherResponse(t1h, baseTime.date(), baseTime.time());
     }
 
     public String gridKey(double latitude, double longitude) {
-        NxNy g = KmaGrid.fromLatLon(latitude, longitude);
-        return g.nx() + "-" + g.ny();
+        NxNy grid = KmaGrid.fromLatLon(latitude, longitude);
+        return grid.nx() + "-" + grid.ny();
     }
 
     private Double fetchT1H(String baseDate, String baseTime, int nx, int ny) {
@@ -79,13 +82,13 @@ public class WeatherService {
         String requestInfo = "base=" + baseDate + " " + baseTime + ", nx=" + nx + ", ny=" + ny;
 
         try {
-            KmaResponse resp = restClient.get().uri(uri).retrieve().body(KmaResponse.class);
+            KmaResponse kmaResponse = restClient.get().uri(uri).retrieve().body(KmaResponse.class);
 
-            if (resp == null || resp.response() == null) {
+            if (kmaResponse == null || kmaResponse.response() == null) {
                 return null;
             }
 
-            Header header = resp.response().header();
+            Header header = kmaResponse.response().header();
             if (header != null) {
                 String code = header.resultCode();
                 String message = header.resultMsg();
@@ -97,10 +100,11 @@ public class WeatherService {
                 }
             }
 
-            if (resp.response().body() == null || resp.response().body().items() == null) {
+            if (kmaResponse.response().body() == null
+                    || kmaResponse.response().body().items() == null) {
                 return null;
             }
-            List<Item> list = resp.response().body().items().item();
+            List<Item> list = kmaResponse.response().body().items().item();
             if (list == null) {
                 return null;
             }
@@ -108,8 +112,8 @@ public class WeatherService {
             // T1H 값 추출
             for (Item item : list) {
                 if ("T1H".equals(item.category())) {
-                    String v = item.obsrValue();
-                    return v == null ? null : Double.valueOf(v);
+                    String value = item.obsrValue();
+                    return value == null ? null : Double.valueOf(value);
                 }
             }
             return null;
