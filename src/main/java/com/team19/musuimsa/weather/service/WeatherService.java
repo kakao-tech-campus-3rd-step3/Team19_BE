@@ -6,6 +6,7 @@ import com.team19.musuimsa.weather.dto.WeatherResponse;
 import com.team19.musuimsa.weather.util.KmaGrid;
 import com.team19.musuimsa.weather.util.KmaTime;
 import jakarta.annotation.PostConstruct;
+import java.net.URI;
 import java.time.Clock;
 import java.time.ZoneId;
 import java.util.List;
@@ -54,11 +55,13 @@ public class WeatherService {
         }
 
         if (t1h == null) {
-            String url = buildUrl(base.date(), base.time(), g.nx(), g.ny());
-            String msg = "기상청 응답에 현재기온이 없음. nx=" + g.nx() + ", ny=" + g.ny()
-                    + ", base=" + base.date() + " " + base.time();
-            log.warn("{} / url={}", msg, url);
-            throw new ExternalApiException(url);
+            String requestInfo =
+                    "base=" + base.date() + " " + base.time() + ", nx=" + g.nx() + ", ny=" + g.ny();
+            String message = "기상청 응답에 현재기온이 없음. " + requestInfo;
+
+            log.warn("{} / request info: {}", message, requestInfo);
+
+            throw new ExternalApiException(requestInfo);
         }
 
         return new WeatherResponse(t1h, base.date(), base.time());
@@ -71,9 +74,11 @@ public class WeatherService {
 
     @SuppressWarnings("unchecked")
     private Double fetchT1H(String baseDate, String baseTime, int nx, int ny) {
-        String url = buildUrl(baseDate, baseTime, nx, ny);
+        URI uri = buildUri(baseDate, baseTime, nx, ny);
+        String requestInfo = "base=" + baseDate + " " + baseTime + ", nx=" + nx + ", ny=" + ny;
+
         try {
-            Map<String, Object> resp = restClient.get().uri(url).retrieve().body(Map.class);
+            Map<String, Object> resp = restClient.get().uri(uri).retrieve().body(Map.class);
             if (resp == null) {
                 return null;
             }
@@ -88,8 +93,10 @@ public class WeatherService {
                 Object code = header.get("resultCode");
                 Object message = header.get("resultMsg");
                 if (code != null && !"00".equals(String.valueOf(code))) {
-                    log.warn("기상청 오류 resultCode={}, resultMsg={}, url={}", code, message, url);
-                    throw new ExternalApiException(url);
+                    log.warn("기상청 오류 resultCode={}, resultMsg={}, requestInfo={}", code, message,
+                            requestInfo);
+
+                    throw new ExternalApiException(requestInfo);
                 }
             }
 
@@ -116,26 +123,26 @@ public class WeatherService {
         } catch (ExternalApiException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("기상청 호출 실패: {} - {} / url={}", e.getClass().getSimpleName(), e.getMessage(),
-                    url);
-            throw new ExternalApiException(url);
+            log.warn("기상청 호출 실패: {} - {} / requestInfo={}", e.getClass().getSimpleName(),
+                    e.getMessage(),
+                    requestInfo);
+
+            throw new ExternalApiException(requestInfo);
         }
     }
 
-    private String buildUrl(String baseDate, String baseTime, int nx, int ny) {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(
+    private URI buildUri(String baseDate, String baseTime, int nx, int ny) {
+        return UriComponentsBuilder.fromHttpUrl(
                         baseUrl + "/getUltraSrtNcst")
+                .queryParam("serviceKey", serviceKey)
                 .queryParam("pageNo", 1)
                 .queryParam("numOfRows", 60)
                 .queryParam("dataType", "JSON")
                 .queryParam("base_date", baseDate)
                 .queryParam("base_time", baseTime)
                 .queryParam("nx", nx)
-                .queryParam("ny", ny);
-
-        String urlString = builder.toUriString();
-
-        return urlString + "&serviceKey=" + serviceKey;
+                .queryParam("ny", ny)
+                .build(true)
+                .toUri();
     }
-
 }
