@@ -1,11 +1,9 @@
 package com.team19.musuimsa.batch;
 
 import com.team19.musuimsa.shelter.domain.Shelter;
+import com.team19.musuimsa.shelter.dto.UpdateResultResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import jakarta.persistence.EntityManagerFactory;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -14,7 +12,10 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.scope.context.StepContext;
+import org.springframework.batch.core.scope.context.StepSynchronizationManager;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.batch.item.database.JpaPagingItemReader;
@@ -24,6 +25,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Configuration
@@ -35,6 +42,7 @@ public class ShelterImportBatchConfig {
     private final EntityManagerFactory entityManagerFactory;
 
     private static final int CHUNK_SIZE = 100;
+    public static final String LOCATION_UPDATED_IDS_KEY = "locationChangedShelterIds";
 
     @Bean
     public Job shelterImportJob(Step shelterUpdateStep, ShelterUpdateJobListener listener) {
@@ -85,10 +93,24 @@ public class ShelterImportBatchConfig {
             LocalTime weekendOpen = parseTime(externalData.wkendHdayOperBeginTime());
             LocalTime weekendClose = parseTime(externalData.wkendHdayOperEndTime());
 
-            boolean isUpdated = shelter.updateShelterInfo(externalData, weekdayOpen, weekdayClose,
+            UpdateResultResponse result = shelter.updateShelterInfo(externalData,
+                    weekdayOpen, weekdayClose,
                     weekendOpen, weekendClose);
 
-            return isUpdated ? shelter : null; // 변경된 경우에만 writer로 전달
+            if (result.locationChanged()) {
+                StepContext stepCtx = StepSynchronizationManager.getContext();
+                ExecutionContext jobCtx = stepCtx.getStepExecution().getJobExecution().getExecutionContext();
+
+                Set<Long> geoIds = (Set<Long>) jobCtx.get(LOCATION_UPDATED_IDS_KEY);
+                if (geoIds == null) {
+                    geoIds = new HashSet<>();
+                    jobCtx.put(LOCATION_UPDATED_IDS_KEY, geoIds);
+                }
+                geoIds.add(shelter.getShelterId());
+            }
+
+            // DB 저장은 isChanged 기준
+            return result.isChanged() ? shelter : null; // 변경된 경우에만 writer로 전달
         };
     }
 
