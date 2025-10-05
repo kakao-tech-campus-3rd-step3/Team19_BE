@@ -1,6 +1,9 @@
 package com.team19.musuimsa.weather.service;
 
 import com.team19.musuimsa.exception.external.ExternalApiException;
+import com.team19.musuimsa.weather.dto.KmaResponse;
+import com.team19.musuimsa.weather.dto.KmaResponse.Header;
+import com.team19.musuimsa.weather.dto.KmaResponse.Item;
 import com.team19.musuimsa.weather.dto.NxNy;
 import com.team19.musuimsa.weather.dto.WeatherResponse;
 import com.team19.musuimsa.weather.util.KmaGrid;
@@ -10,7 +13,6 @@ import java.net.URI;
 import java.time.Clock;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,51 +74,42 @@ public class WeatherService {
         return g.nx() + "-" + g.ny();
     }
 
-    @SuppressWarnings("unchecked")
     private Double fetchT1H(String baseDate, String baseTime, int nx, int ny) {
         URI uri = buildUri(baseDate, baseTime, nx, ny);
         String requestInfo = "base=" + baseDate + " " + baseTime + ", nx=" + nx + ", ny=" + ny;
 
         try {
-            Map<String, Object> resp = restClient.get().uri(uri).retrieve().body(Map.class);
-            if (resp == null) {
+            KmaResponse resp = restClient.get().uri(uri).retrieve().body(KmaResponse.class);
+
+            if (resp == null || resp.response() == null) {
                 return null;
             }
 
-            Map<String, Object> response = (Map<String, Object>) resp.get("response");
-            if (response == null) {
-                return null;
-            }
-
-            Map<String, Object> header = (Map<String, Object>) response.get("header");
+            Header header = resp.response().header();
             if (header != null) {
-                Object code = header.get("resultCode");
-                Object message = header.get("resultMsg");
-                if (code != null && !"00".equals(String.valueOf(code))) {
+                String code = header.resultCode();
+                String message = header.resultMsg();
+
+                if (code != null && !"00".equals(code)) {
                     log.warn("기상청 오류 resultCode={}, resultMsg={}, requestInfo={}", code, message,
                             requestInfo);
-
                     throw new ExternalApiException(requestInfo);
                 }
             }
 
-            Map<String, Object> body = (Map<String, Object>) response.get("body");
-            if (body == null) {
+            if (resp.response().body() == null || resp.response().body().items() == null) {
                 return null;
             }
-            Map<String, Object> items = (Map<String, Object>) body.get("items");
-            if (items == null) {
-                return null;
-            }
-            List<Map<String, Object>> list = (List<Map<String, Object>>) items.get("item");
+            List<Item> list = resp.response().body().items().item();
             if (list == null) {
                 return null;
             }
 
-            for (Map<String, Object> m : list) {
-                if ("T1H".equals(m.get("category"))) {
-                    Object v = m.get("obsrValue");
-                    return v == null ? null : Double.valueOf(String.valueOf(v));
+            // T1H 값 추출
+            for (Item item : list) {
+                if ("T1H".equals(item.category())) {
+                    String v = item.obsrValue();
+                    return v == null ? null : Double.valueOf(v);
                 }
             }
             return null;
@@ -124,9 +117,7 @@ public class WeatherService {
             throw e;
         } catch (Exception e) {
             log.warn("기상청 호출 실패: {} - {} / requestInfo={}", e.getClass().getSimpleName(),
-                    e.getMessage(),
-                    requestInfo);
-
+                    e.getMessage(), requestInfo);
             throw new ExternalApiException(requestInfo);
         }
     }
