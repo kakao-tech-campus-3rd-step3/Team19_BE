@@ -77,10 +77,3 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
-
-tasks.named("bootRun") {
-    systemProperty "spring.profiles.active", "dev" // JVM 인자 방식(B)
-    systemProperty "weather.kma.base-url", "http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0"
-    systemProperty "weather.kma.allow-insecure", "true"
-}
-
