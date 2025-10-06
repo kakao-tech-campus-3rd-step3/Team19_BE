@@ -72,6 +72,11 @@ public class WeatherService {
         return new WeatherResponse(t1h, baseTime.date(), baseTime.time());
     }
 
+    public String gridKey(double latitude, double longitude) {
+        NxNy grid = KmaGrid.fromLatLon(latitude, longitude);
+        return grid.nx() + "-" + grid.ny();
+    }
+    
     private Double fetchT1H(String baseDate, String baseTime, int nx, int ny) {
         URI uri = buildUri(baseDate, baseTime, nx, ny);
         String requestInfo = "base=" + baseDate + " " + baseTime + ", nx=" + nx + ", ny=" + ny;
