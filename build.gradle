@@ -39,6 +39,9 @@ dependencies {
     // Sprig Batch
     implementation 'org.springframework.boot:spring-boot-starter-batch'
 
+    // cache
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
     // AWS SDK v2 (S3)
     implementation platform("software.amazon.awssdk:bom:2.25.61")
     implementation "software.amazon.awssdk:s3"
