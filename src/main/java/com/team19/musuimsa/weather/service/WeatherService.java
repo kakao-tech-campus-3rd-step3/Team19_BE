@@ -28,6 +28,8 @@ public class WeatherService {
 
     private final RestClient restClient;
 
+    private static final String KMA_SUCCESS_CODE = "00";
+
     @Value("${weather.service-key}")
     private String serviceKey;
 
@@ -76,7 +78,7 @@ public class WeatherService {
         NxNy grid = KmaGrid.fromLatLon(latitude, longitude);
         return grid.nx() + "-" + grid.ny();
     }
-    
+
     private Double fetchT1H(String baseDate, String baseTime, int nx, int ny) {
         URI uri = buildUri(baseDate, baseTime, nx, ny);
         String requestInfo = "base=" + baseDate + " " + baseTime + ", nx=" + nx + ", ny=" + ny;
@@ -93,7 +95,7 @@ public class WeatherService {
                 String code = header.resultCode();
                 String message = header.resultMsg();
 
-                if (code != null && !"00".equals(code)) {
+                if (code != null && !KMA_SUCCESS_CODE.equals(code)) {
                     log.warn("기상청 오류 resultCode={}, resultMsg={}, requestInfo={}", code, message,
                             requestInfo);
                     throw new ExternalApiException(requestInfo);
