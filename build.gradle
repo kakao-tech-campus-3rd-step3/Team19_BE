@@ -46,6 +46,9 @@ dependencies {
     implementation platform("software.amazon.awssdk:bom:2.25.61")
     implementation "software.amazon.awssdk:s3"
 
+    // Firebase Admin SDK
+    implementation 'com.google.firebase:firebase-admin:9.2.0'
+
     // Lombok
     compileOnly 'org.projectlombok:lombok'
 
