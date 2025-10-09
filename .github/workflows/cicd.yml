@@ -85,6 +85,9 @@ jobs:
           script: |
             cd /home/ubuntu/app
             
+            # Firebase 서비스 계정 키 파일 생성
+            echo "${{ secrets.FIREBASE_KEY_JSON }}" > ./firebase-service-account-key.json
+            
             # 환경 변수 설정
             export AWS_ECR_URI="${{ secrets.AWS_ECR_URI }}"
             export AWS_REGION="${{ secrets.AWS_REGION }}"
@@ -103,7 +106,9 @@ jobs:
             sudo docker run -d \
               --name musuimsa-app \
               -p 8080:8080 \
+              -v $(pwd)/firebase-service-account-key.json:/app/firebase-key.json \
               -e SPRING_PROFILES_ACTIVE=prod \
+              -e "fcm.service-account-key-path=file:/app/firebase-key.json" \
               -e jwt.secret.key="${{ secrets.JWT_SECRET_KEY }}" \
               -e musuimsa.shelter.api.service-key="${{ secrets.MUSUIMSA_SHELTER_API_SERVICE_KEY }}" \
               -e mapillary.access-token="${{ secrets.MAPILLARY_ACCESS_TOKEN }}" \
