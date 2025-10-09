@@ -175,9 +175,10 @@ public class UserService {
         user.updateLocation(request.latitude(), request.longitude());
     }
 
-    public void registerUserDevice(Long userId, UserDeviceRegisterRequest request) {
+    public UserDevice registerUserDevice(Long userId, UserDeviceRegisterRequest request) {
         User user = getUserById(userId);
         UserDevice userDevice = new UserDevice(user, request.deviceToken());
-        userDeviceRepository.save(userDevice);
+
+        return userDeviceRepository.save(userDevice);
     }
 }

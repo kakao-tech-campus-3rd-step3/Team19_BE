@@ -1,6 +1,7 @@
 package com.team19.musuimsa.user.controller;
 
 import com.team19.musuimsa.security.UserDetailsImpl;
+import com.team19.musuimsa.user.domain.UserDevice;
 import com.team19.musuimsa.user.dto.LoginRequest;
 import com.team19.musuimsa.user.dto.SignUpRequest;
 import com.team19.musuimsa.user.dto.TokenResponse;
@@ -123,6 +124,7 @@ public class UserController {
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestBody UserLocationUpdateRequest request) {
         userService.updateUserLocation(userDetails.getUser().getUserId(), request);
+
         return ResponseEntity.ok().build();
     }
 
@@ -130,7 +132,11 @@ public class UserController {
     public ResponseEntity<Void> registerUserDevice(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestBody UserDeviceRegisterRequest request) {
-        userService.registerUserDevice(userDetails.getUser().getUserId(), request);
-        return ResponseEntity.ok().build();
+        UserDevice savedDevice = userService.registerUserDevice(userDetails.getUser().getUserId(),
+                request);
+
+        URI location = URI.create("/api/users/me/devices/" + savedDevice.getId());
+
+        return ResponseEntity.created(location).build();
     }
 }
