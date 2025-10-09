@@ -8,12 +8,16 @@ import com.team19.musuimsa.exception.conflict.NicknameDuplicateException;
 import com.team19.musuimsa.exception.notfound.UserNotFoundException;
 import com.team19.musuimsa.user.domain.RefreshToken;
 import com.team19.musuimsa.user.domain.User;
+import com.team19.musuimsa.user.domain.UserDevice;
 import com.team19.musuimsa.user.dto.LoginRequest;
 import com.team19.musuimsa.user.dto.SignUpRequest;
 import com.team19.musuimsa.user.dto.TokenResponse;
+import com.team19.musuimsa.user.dto.UserDeviceRegisterRequest;
+import com.team19.musuimsa.user.dto.UserLocationUpdateRequest;
 import com.team19.musuimsa.user.dto.UserPasswordUpdateRequest;
 import com.team19.musuimsa.user.dto.UserResponse;
 import com.team19.musuimsa.user.dto.UserUpdateRequest;
+import com.team19.musuimsa.user.repository.UserDeviceRepository;
 import com.team19.musuimsa.user.repository.UserRepository;
 import com.team19.musuimsa.util.JwtUtil;
 import java.util.Objects;
@@ -28,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserDeviceRepository userDeviceRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -163,5 +168,16 @@ public class UserService {
     private User getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
+    public void updateUserLocation(Long userId, UserLocationUpdateRequest request) {
+        User user = getUserById(userId);
+        user.updateLocation(request.latitude(), request.longitude());
+    }
+
+    public void registerUserDevice(Long userId, UserDeviceRegisterRequest request) {
+        User user = getUserById(userId);
+        UserDevice userDevice = new UserDevice(user, request.deviceToken());
+        userDeviceRepository.save(userDevice);
     }
 }

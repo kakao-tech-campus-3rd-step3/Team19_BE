@@ -4,6 +4,8 @@ import com.team19.musuimsa.security.UserDetailsImpl;
 import com.team19.musuimsa.user.dto.LoginRequest;
 import com.team19.musuimsa.user.dto.SignUpRequest;
 import com.team19.musuimsa.user.dto.TokenResponse;
+import com.team19.musuimsa.user.dto.UserDeviceRegisterRequest;
+import com.team19.musuimsa.user.dto.UserLocationUpdateRequest;
 import com.team19.musuimsa.user.dto.UserPasswordUpdateRequest;
 import com.team19.musuimsa.user.dto.UserResponse;
 import com.team19.musuimsa.user.dto.UserUpdateRequest;
@@ -114,5 +116,21 @@ public class UserController {
         userService.deleteUser(userDetails.getUser());
 
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/me/location")
+    public ResponseEntity<Void> updateUserLocation(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody UserLocationUpdateRequest request) {
+        userService.updateUserLocation(userDetails.getUser().getUserId(), request);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/me/device")
+    public ResponseEntity<Void> registerUserDevice(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestBody UserDeviceRegisterRequest request) {
+        userService.registerUserDevice(userDetails.getUser().getUserId(), request);
+        return ResponseEntity.ok().build();
     }
 }
