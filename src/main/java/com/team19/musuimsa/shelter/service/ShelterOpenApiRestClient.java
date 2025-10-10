@@ -2,18 +2,24 @@ package com.team19.musuimsa.shelter.service;
 
 import com.team19.musuimsa.exception.external.ExternalApiException;
 import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
-import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@ConditionalOnProperty(
+        name = "musuimsa.shelter.api.mode",
+        havingValue = "real"
+)
 public class ShelterOpenApiRestClient implements ShelterOpenApiClient {
 
     @Value("${musuimsa.shelter.api.base-url}")
