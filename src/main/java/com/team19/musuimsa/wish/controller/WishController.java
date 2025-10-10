@@ -28,7 +28,7 @@ public class WishController {
     @PostMapping("/{shelterId}")
     public ResponseEntity<CreateWishResponse> createWish(
             @PathVariable Long shelterId,
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal(expression = "user") User user
     ) {
         CreateWishResponse response = wishService.createWish(shelterId, user);
 
@@ -41,7 +41,7 @@ public class WishController {
     public ResponseEntity<WishListResponse> getWishes(
             @RequestParam(required = false) Double latitude,
             @RequestParam(required = false) Double longitude,
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal(expression = "user") User user
     ) {
         WishListResponse response = wishService.getWishes(user, latitude, longitude);
         return ResponseEntity.ok(response);
@@ -51,7 +51,7 @@ public class WishController {
     @DeleteMapping("/{shelterId}")
     public ResponseEntity<Void> deleteWish(
             @PathVariable Long shelterId,
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal(expression = "user") User user
     ) {
         wishService.deleteWish(shelterId, user);
         return ResponseEntity.noContent().build();
