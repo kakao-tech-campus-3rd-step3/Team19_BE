@@ -66,12 +66,21 @@ public class FcmService {
 
             try {
                 String response = FirebaseMessaging.getInstance().send(message);
-                log.info("Successfully sent message to token {}: {}", device.getDeviceToken(),
+                log.info("Successfully sent message to token {}: {}",
+                        maskToken(device.getDeviceToken()),
                         response);
             } catch (Exception e) {
                 log.error("Failed to send push notification to token {}: {}",
-                        device.getDeviceToken(), e.getMessage());
+                        maskToken(device.getDeviceToken()), e.getMessage());
             }
         }
+    }
+
+    private String maskToken(String token) {
+        if (token == null || token.length() <= 16) {
+            return "****";
+        }
+
+        return token.substring(0, 8) + "..." + token.substring(token.length() - 8);
     }
 }
