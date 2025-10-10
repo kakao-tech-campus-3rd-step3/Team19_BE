@@ -1,5 +1,6 @@
 package com.team19.musuimsa.notification.service;
 
+import com.team19.musuimsa.exception.external.ExternalApiException;
 import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.repository.UserRepository;
 import com.team19.musuimsa.weather.dto.WeatherResponse;
@@ -59,8 +60,11 @@ public class PushNotificationService {
                 fcmService.sendPushNotification(user.getUserId(), title, body);
                 user.updateLastHeatwaveAlertAt();
             }
+        } catch (ExternalApiException e) {
+            log.warn("날씨 API 호출에 실패하여 푸시 알림을 처리하지 못했습니다. User ID: {}, URL: {}", user.getUserId(),
+                    e.getUrl());
         } catch (Exception e) {
-            log.error("Failed to process push notification for user: {}", user.getUserId(), e);
+            log.error("푸시 알림 처리 중 예상치 못한 오류가 발생했습니다. User ID: {}", user.getUserId(), e);
         }
     }
 }
