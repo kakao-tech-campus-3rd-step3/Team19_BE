@@ -41,6 +41,7 @@ jobs:
           WEATHER_SERVICE_KEY: "dummy-weather-key-for-ci"
           AWS_CREDENTIALS_ACCESS_KEY: "dummy-aws-access-key-for-ci"
           AWS_CREDENTIALS_SECRET_KEY: "dummy-aws-secret-key-for-ci"
+          FCM_SERVICE_ACCOUNT_KEY_PATH: "dummy-path-for-ci.json"
         run: ./gradlew build # 프로젝트를 빌드합니다. 이 과정에서 테스트도 자동으로 함께 실행됩니다.
 
   deploy:
@@ -85,6 +86,9 @@ jobs:
           script: |
             cd /home/ubuntu/app
             
+            # Firebase 서비스 계정 키 파일 생성
+            echo "${{ secrets.FIREBASE_KEY_JSON }}" > ./firebase-service-account-key.json
+            
             # 환경 변수 설정
             export AWS_ECR_URI="${{ secrets.AWS_ECR_URI }}"
             export AWS_REGION="${{ secrets.AWS_REGION }}"
@@ -103,7 +107,9 @@ jobs:
             sudo docker run -d \
               --name musuimsa-app \
               -p 8080:8080 \
+              -v $(pwd)/firebase-service-account-key.json:/app/firebase-key.json \
               -e SPRING_PROFILES_ACTIVE=prod \
+              -e "fcm.service-account-key-path=file:/app/firebase-key.json" \
               -e jwt.secret.key="${{ secrets.JWT_SECRET_KEY }}" \
               -e musuimsa.shelter.api.service-key="${{ secrets.MUSUIMSA_SHELTER_API_SERVICE_KEY }}" \
               -e mapillary.access-token="${{ secrets.MAPILLARY_ACCESS_TOKEN }}" \
