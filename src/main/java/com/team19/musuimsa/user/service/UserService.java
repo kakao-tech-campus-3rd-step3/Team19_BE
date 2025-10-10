@@ -98,7 +98,7 @@ public class UserService {
 
         // 3. DB에 저장된 토큰과 일치하는지 확인
         if (user.getRefreshToken() == null || !user.getRefreshToken().getToken()
-                .equals(refreshToken)) {
+                .equals(pureToken)) {
             throw new InvalidRefreshTokenException();
         }
 
