@@ -55,7 +55,7 @@ public class UserController {
 
     @PostMapping("/logout")
     public ResponseEntity<String> logoutUser(
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal(expression = "user") User user
     ) {
         userService.logout(user);
 
@@ -73,7 +73,7 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getMyInfo(
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal(expression = "user") User user
     ) {
         UserResponse userInfo = userService.getUserInfo(user.getUserId());
 
@@ -92,7 +92,7 @@ public class UserController {
     @PatchMapping("/me")
     public ResponseEntity<UserResponse> updateUserInfo(
             @RequestBody UserUpdateRequest userUpdateRequest,
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal(expression = "user") User user
     ) {
         UserResponse updatedUser = userService.updateUserInfo(userUpdateRequest,
                 user);
@@ -103,7 +103,7 @@ public class UserController {
     @PatchMapping("/me/password")
     public ResponseEntity<String> updateUserPassword(
             @Valid @RequestBody UserPasswordUpdateRequest requestDto,
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal(expression = "user") User user
     ) {
         userService.updateUserPassword(requestDto, user);
 
@@ -112,7 +112,7 @@ public class UserController {
 
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteUser(
-            @AuthenticationPrincipal User user
+            @AuthenticationPrincipal(expression = "user") User user
     ) {
         userService.deleteUser(user);
 
@@ -121,7 +121,7 @@ public class UserController {
 
     @PostMapping("/me/location")
     public ResponseEntity<Void> updateUserLocation(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal(expression = "user") User user,
             @RequestBody UserLocationUpdateRequest request) {
         userService.updateUserLocation(user.getUserId(), request);
 
@@ -130,7 +130,7 @@ public class UserController {
 
     @PostMapping("/me/device")
     public ResponseEntity<Void> registerUserDevice(
-            @AuthenticationPrincipal User user,
+            @AuthenticationPrincipal(expression = "user") User user,
             @RequestBody UserDeviceRegisterRequest request) {
         UserDevice savedDevice = userService.registerUserDevice(user.getUserId(),
                 request);
