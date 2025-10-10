@@ -1,6 +1,6 @@
 package com.team19.musuimsa.user.controller;
 
-import com.team19.musuimsa.security.UserDetailsImpl;
+import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.domain.UserDevice;
 import com.team19.musuimsa.user.dto.LoginRequest;
 import com.team19.musuimsa.user.dto.SignUpRequest;
@@ -55,9 +55,9 @@ public class UserController {
 
     @PostMapping("/logout")
     public ResponseEntity<String> logoutUser(
-            @AuthenticationPrincipal UserDetailsImpl userDetails
+            @AuthenticationPrincipal User user
     ) {
-        userService.logout(userDetails.getUser());
+        userService.logout(user);
 
         return ResponseEntity.ok("성공적으로 로그아웃 되었습니다.");
     }
@@ -73,9 +73,9 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getMyInfo(
-            @AuthenticationPrincipal UserDetailsImpl userDetails
+            @AuthenticationPrincipal User user
     ) {
-        UserResponse userInfo = userService.getUserInfo(userDetails.getUser().getUserId());
+        UserResponse userInfo = userService.getUserInfo(user.getUserId());
 
         return ResponseEntity.ok(userInfo);
     }
@@ -92,10 +92,10 @@ public class UserController {
     @PatchMapping("/me")
     public ResponseEntity<UserResponse> updateUserInfo(
             @RequestBody UserUpdateRequest userUpdateRequest,
-            @AuthenticationPrincipal UserDetailsImpl userDetails
+            @AuthenticationPrincipal User user
     ) {
         UserResponse updatedUser = userService.updateUserInfo(userUpdateRequest,
-                userDetails.getUser());
+                user);
 
         return ResponseEntity.ok(updatedUser);
     }
@@ -103,36 +103,36 @@ public class UserController {
     @PatchMapping("/me/password")
     public ResponseEntity<String> updateUserPassword(
             @Valid @RequestBody UserPasswordUpdateRequest requestDto,
-            @AuthenticationPrincipal UserDetailsImpl userDetails
+            @AuthenticationPrincipal User user
     ) {
-        userService.updateUserPassword(requestDto, userDetails.getUser());
+        userService.updateUserPassword(requestDto, user);
 
         return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
     }
 
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteUser(
-            @AuthenticationPrincipal UserDetailsImpl userDetails
+            @AuthenticationPrincipal User user
     ) {
-        userService.deleteUser(userDetails.getUser());
+        userService.deleteUser(user);
 
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/me/location")
     public ResponseEntity<Void> updateUserLocation(
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @AuthenticationPrincipal User user,
             @RequestBody UserLocationUpdateRequest request) {
-        userService.updateUserLocation(userDetails.getUser().getUserId(), request);
+        userService.updateUserLocation(user.getUserId(), request);
 
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/me/device")
     public ResponseEntity<Void> registerUserDevice(
-            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @AuthenticationPrincipal User user,
             @RequestBody UserDeviceRegisterRequest request) {
-        UserDevice savedDevice = userService.registerUserDevice(userDetails.getUser().getUserId(),
+        UserDevice savedDevice = userService.registerUserDevice(user.getUserId(),
                 request);
 
         URI location = URI.create("/api/users/me/devices/" + savedDevice.getId());
