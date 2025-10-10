@@ -15,6 +15,7 @@ import com.team19.musuimsa.user.repository.UserRepository;
 import com.team19.musuimsa.weather.dto.WeatherResponse;
 import com.team19.musuimsa.weather.service.WeatherService;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -101,6 +102,43 @@ class PushNotificationServiceTest {
 
         // then
         verify(fcmService, never()).sendPushNotification(anyLong(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("쿨다운 경계값 테스트: 50분 직전에는 알림을 보내지 않는다")
+    void doNotSendPush_When_JustBeforeCooldownExpires() {
+        // given
+        LocalDateTime alertTime = LocalDateTime.now().minusMinutes(50).plusSeconds(1);
+        ReflectionTestUtils.setField(userWithLocation, "lastHeatwaveAlertAt", alertTime);
+
+        WeatherResponse weatherResponse = new WeatherResponse(35.0, "20251010", "1500");
+        when(userRepository.findAll()).thenReturn(List.of(userWithLocation));
+        when(weatherService.getCurrentTemp(anyDouble(), anyDouble())).thenReturn(weatherResponse);
+
+        // when
+        pushNotificationService.checkUsersAndSendPushNotifications();
+
+        // then
+        verify(fcmService, never()).sendPushNotification(anyLong(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("쿨다운 경계값 테스트: 정확히 50분이 지났을 때 알림을 보낸다")
+    void sendPush_When_CooldownIsExactlyMet() {
+        // given
+        LocalDateTime alertTime = LocalDateTime.now().minusMinutes(50);
+        ReflectionTestUtils.setField(userWithLocation, "lastHeatwaveAlertAt", alertTime);
+
+        WeatherResponse weatherResponse = new WeatherResponse(35.0, "20251010", "1500");
+        when(userRepository.findAll()).thenReturn(List.of(userWithLocation));
+        when(weatherService.getCurrentTemp(anyDouble(), anyDouble())).thenReturn(weatherResponse);
+
+        // when
+        pushNotificationService.checkUsersAndSendPushNotifications();
+
+        // then
+        verify(fcmService, times(1)).sendPushNotification(eq(userWithLocation.getUserId()),
+                anyString(), anyString());
     }
 
     @Test
