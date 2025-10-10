@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class PushNotificationService {
 
     private static final double TEMPERATURE_THRESHOLD = 35.0;
@@ -24,7 +25,6 @@ public class PushNotificationService {
     private final WeatherService weatherService;
     private final FcmService fcmService;
 
-    @Transactional
     public void checkUsersAndSendPushNotifications() {
         List<User> users = userRepository.findAll();
 
