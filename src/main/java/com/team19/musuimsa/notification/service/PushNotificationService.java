@@ -29,7 +29,7 @@ public class PushNotificationService {
         List<User> users = userRepository.findAll();
 
         for (User user : users) {
-            if (user.getLastLatitude() == null || user.getLastLongitude() == null) {
+            if (!user.hasLocation()) {
                 continue;
             }
             checkTemperatureAndSendPush(user);
@@ -45,20 +45,18 @@ public class PushNotificationService {
 
             log.debug("User: {}, Temp: {}°C", user.getNickname(), currentTemp);
 
-            boolean isHot = currentTemp >= TEMPERATURE_THRESHOLD;
-            boolean isCooledDown = user.getLastHeatwaveAlertAt() == null ||
-                    user.getLastHeatwaveAlertAt()
-                            .isBefore(LocalDateTime.now()
-                                    .minusMinutes(NOTIFICATION_COOLDOWN_MINUTES));
-
-            if (isHot && isCooledDown) {
+            if (isAbleToSendHeatwaveAlert(user, currentTemp)) {
                 log.info("Sending heatwave alert to user: {}", user.getNickname());
                 String title = "날씨가 많이 덥습니다!";
                 String body = String.format("현재 계신 곳의 온도가 %.1f°C 입니다. 근처 무더위 쉼터를 찾으려면 누르세요!",
                         currentTemp);
 
-                fcmService.sendPushNotification(user.getUserId(), title, body);
-                user.updateLastHeatwaveAlertAt();
+                boolean sentSuccessfully = fcmService.sendPushNotification(user.getUserId(), title,
+                        body);
+
+                if (sentSuccessfully) {
+                    user.updateLastHeatwaveAlertAt();
+                }
             }
         } catch (ExternalApiException e) {
             log.warn("날씨 API 호출에 실패하여 푸시 알림을 처리하지 못했습니다. User ID: {}, URL: {}", user.getUserId(),
@@ -66,5 +64,18 @@ public class PushNotificationService {
         } catch (Exception e) {
             log.error("푸시 알림 처리 중 예상치 못한 오류가 발생했습니다. User ID: {}", user.getUserId(), e);
         }
+    }
+
+    private boolean isAbleToSendHeatwaveAlert(User user, double currentTemp) {
+        boolean isHot = currentTemp >= TEMPERATURE_THRESHOLD;
+
+        if (!isHot) {
+            return false;
+        }
+
+        return user.getLastHeatwaveAlertAt() == null ||
+                user.getLastHeatwaveAlertAt()
+                        .isBefore(LocalDateTime.now()
+                                .minusMinutes(NOTIFICATION_COOLDOWN_MINUTES));
     }
 }

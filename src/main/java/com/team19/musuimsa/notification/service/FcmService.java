@@ -49,9 +49,13 @@ public class FcmService {
         }
     }
 
-    public void sendPushNotification(Long userId, String title, String body) {
+    public boolean sendPushNotification(Long userId, String title, String body) {
         List<UserDevice> devices = userDeviceRepository.findByUser_UserId(userId);
+        if (devices.isEmpty()) {
+            return false;
+        }
 
+        boolean atLeastOneSuccess = false;
         for (UserDevice device : devices) {
             Notification notification = Notification.builder()
                     .setTitle(title)
@@ -69,11 +73,14 @@ public class FcmService {
                 log.info("Successfully sent message to token {}: {}",
                         maskToken(device.getDeviceToken()),
                         response);
+                atLeastOneSuccess = true;
             } catch (Exception e) {
                 log.error("Failed to send push notification to token {}: {}",
                         maskToken(device.getDeviceToken()), e.getMessage());
             }
         }
+
+        return atLeastOneSuccess;
     }
 
     private String maskToken(String token) {
