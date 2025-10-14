@@ -32,7 +32,7 @@ public class ReviewController {
     @PostMapping("/shelters/{shelterId}/reviews")
     public ResponseEntity<ReviewResponse> createReview(
             @RequestBody CreateReviewRequest request, @PathVariable Long shelterId,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal(expression = "user") User user) {
 
         ReviewResponse response = reviewService.createReview(shelterId, request, user);
 
@@ -44,7 +44,8 @@ public class ReviewController {
     // 리뷰 수정
     @PatchMapping("/reviews/{reviewId}")
     public ResponseEntity<ReviewResponse> updateReview(@PathVariable Long reviewId,
-            @RequestBody UpdateReviewRequest request, @AuthenticationPrincipal User user) {
+            @RequestBody UpdateReviewRequest request,
+            @AuthenticationPrincipal(expression = "user") User user) {
 
         ReviewResponse response = reviewService.updateReview(reviewId, request, user);
 
@@ -54,7 +55,7 @@ public class ReviewController {
     // 리뷰 삭제
     @DeleteMapping("/reviews/{reviewId}")
     public ResponseEntity<Void> deleteReview(@PathVariable Long reviewId,
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal(expression = "user") User user) {
 
         reviewService.deleteReview(reviewId, user);
 
