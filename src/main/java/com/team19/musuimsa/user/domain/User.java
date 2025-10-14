@@ -78,6 +78,10 @@ public class User {
         this.lastLongitude = longitude;
     }
 
+    public boolean hasLocation() {
+        return this.lastLatitude != null && this.lastLongitude != null;
+    }
+
     public void updateLastHeatwaveAlertAt() {
         this.lastHeatwaveAlertAt = LocalDateTime.now();
     }
