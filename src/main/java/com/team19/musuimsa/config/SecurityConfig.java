@@ -3,6 +3,7 @@ package com.team19.musuimsa.config;
 import com.team19.musuimsa.filter.JwtAuthorizationFilter;
 import com.team19.musuimsa.security.UserDetailsServiceImpl;
 import com.team19.musuimsa.util.JwtUtil;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,6 +17,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -37,8 +41,12 @@ public class SecurityConfig {
 
     @Bean
     @Order(2)
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+            CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
+                // CORS 설정
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
                 // API 서버는 토큰 기반으로 인증, 서버가 직접 제공하는 로그인 화면이나 브라우저 인증 팝업 필요 없음
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -70,5 +78,23 @@ public class SecurityConfig {
         http.addFilterBefore(jwtAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        // 프론트엔드 서버 주소 허용
+        configuration.setAllowedOrigins(Arrays.asList("https://team19-fe-rr1d.vercel.app"));
+        // 허용할 HTTP 메소드
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
+        // 허용할 HTTP 헤더
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        // 자격 증명(쿠키 등) 허용
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // /api/ 로 시작하는 모든 경로에 위 설정을 적용
+        source.registerCorsConfiguration("/api/**", configuration);
+        return source;
     }
 }
