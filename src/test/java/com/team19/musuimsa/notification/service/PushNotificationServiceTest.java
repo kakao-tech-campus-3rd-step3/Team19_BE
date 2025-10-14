@@ -62,6 +62,7 @@ class PushNotificationServiceTest {
         WeatherResponse weatherResponse = new WeatherResponse(35.0, "20251009", "1400");
         when(userRepository.findAll()).thenReturn(List.of(userWithLocation));
         when(weatherService.getCurrentTemp(anyDouble(), anyDouble())).thenReturn(weatherResponse);
+        when(fcmService.sendPushNotification(anyLong(), anyString(), anyString())).thenReturn(true);
 
         // when
         pushNotificationService.checkUsersAndSendPushNotifications();
