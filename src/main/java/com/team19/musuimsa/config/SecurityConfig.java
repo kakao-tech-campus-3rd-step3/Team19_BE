@@ -5,6 +5,7 @@ import com.team19.musuimsa.security.UserDetailsServiceImpl;
 import com.team19.musuimsa.util.JwtUtil;
 import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -28,6 +29,9 @@ public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
+
+    @Value("${musuimsa.frontend.url}")
+    private String frontendUrl;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -83,7 +87,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         // 프론트엔드 서버 주소 허용
-        configuration.setAllowedOrigins(Arrays.asList("https://team19-fe-rr1d.vercel.app"));
+        configuration.setAllowedOrigins(Arrays.asList(frontendUrl));
         // 허용할 HTTP 메소드
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
         // 허용할 HTTP 헤더
