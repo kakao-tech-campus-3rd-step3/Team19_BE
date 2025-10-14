@@ -65,7 +65,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 허용된 api 요청들
                         .requestMatchers("/api/users/signup", "/api/users/login",
-                                "/api/users/reissue", "/api/shelters/{shelterId}/reviews")
+                                "/api/users/reissue", "/api/shelters/{shelterId}/reviews",
+                                "/actuator/health")
                         .permitAll()
                         // 특정 사용자를 조회하는 GET 요청은 허용
                         .requestMatchers(HttpMethod.GET, "/api/users/{userId}").permitAll()
