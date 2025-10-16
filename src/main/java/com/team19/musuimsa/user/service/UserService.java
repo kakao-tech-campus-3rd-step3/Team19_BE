@@ -41,8 +41,10 @@ public class UserService {
 
         String encodedPassword = passwordEncoder.encode(signUpRequest.password());
 
-        String profileImageUrl =
-                signUpRequest.profileImageUrl() != null ? signUpRequest.profileImageUrl() : "";
+        String profileImageUrl = signUpRequest.profileImageUrl();
+        if (profileImageUrl == null || profileImageUrl.isBlank()) {
+            profileImageUrl = "";
+        }
 
         User user = new User(
                 signUpRequest.email(),
