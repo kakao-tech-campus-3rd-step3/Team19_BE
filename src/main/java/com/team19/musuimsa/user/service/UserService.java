@@ -36,8 +36,6 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
-    private static final String DEFAULT_PROFILE_IMAGE_URL = "https://wikis.krsocsci.org/images/a/aa/%EA%B8%B0%EB%B3%B8_%ED%94%84%EB%A1%9C%ED%95%84.png";
-
     public Long signUp(SignUpRequest signUpRequest) {
         checkDuplicateUser(signUpRequest);
 
