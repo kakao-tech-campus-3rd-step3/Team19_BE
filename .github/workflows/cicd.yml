@@ -88,6 +88,7 @@ jobs:
             
             # Firebase 서비스 계정 키 파일 생성
             echo "${{ secrets.FIREBASE_KEY_JSON }}" > ./firebase-service-account-key.json
+            echo "${{ secrets.FIREBASE_KEY_JSON }}" | base64 --decode > ./firebase-service-account-key.json
             
             # 환경 변수 설정
             export AWS_ECR_URI="${{ secrets.AWS_ECR_URI }}"

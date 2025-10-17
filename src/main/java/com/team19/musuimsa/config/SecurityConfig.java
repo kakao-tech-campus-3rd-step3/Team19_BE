@@ -3,7 +3,9 @@ package com.team19.musuimsa.config;
 import com.team19.musuimsa.filter.JwtAuthorizationFilter;
 import com.team19.musuimsa.security.UserDetailsServiceImpl;
 import com.team19.musuimsa.util.JwtUtil;
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -16,6 +18,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -24,6 +29,9 @@ public class SecurityConfig {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
+
+    @Value("${musuimsa.frontend.url}")
+    private String frontendUrl;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -39,6 +47,9 @@ public class SecurityConfig {
     @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // CORS 설정
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
                 // API 서버는 토큰 기반으로 인증, 서버가 직접 제공하는 로그인 화면이나 브라우저 인증 팝업 필요 없음
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
@@ -54,7 +65,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 허용된 api 요청들
                         .requestMatchers("/api/users/signup", "/api/users/login",
-                                "/api/users/reissue", "/api/shelters/{shelterId}/reviews")
+                                "/api/users/reissue", "/api/shelters/{shelterId}/reviews",
+                                "/actuator/health")
                         .permitAll()
                         // 특정 사용자를 조회하는 GET 요청은 허용
                         .requestMatchers(HttpMethod.GET, "/api/users/{userId}").permitAll()
@@ -70,5 +82,23 @@ public class SecurityConfig {
         http.addFilterBefore(jwtAuthorizationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        // 프론트엔드 서버 주소 허용
+        configuration.setAllowedOrigins(Arrays.asList(frontendUrl));
+        // 허용할 HTTP 메소드
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "DELETE", "OPTIONS"));
+        // 허용할 HTTP 헤더
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        // 자격 증명(쿠키 등) 허용
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // /api/ 로 시작하는 모든 경로에 위 설정을 적용
+        source.registerCorsConfiguration("/api/**", configuration);
+        return source;
     }
 }
