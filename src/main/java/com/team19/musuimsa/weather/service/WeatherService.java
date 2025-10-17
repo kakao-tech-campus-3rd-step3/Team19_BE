@@ -30,10 +30,10 @@ public class WeatherService {
 
     private static final String KMA_SUCCESS_CODE = "00";
 
-    @Value("${weather.kma.auth-key:}")
+    @Value("${weather.kma.auth-key}")
     private String authKey;
 
-    @Value("${weather.kma.base-url:}")
+    @Value("${weather.kma.base-url}")
     private String baseUrl;
 
     @PostConstruct
