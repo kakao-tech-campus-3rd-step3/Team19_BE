@@ -38,6 +38,7 @@ jobs:
           JWT_SECRET_KEY: "dGhpcy1pcy1hLWR1bW15LWtleS1mb3ItY2ktYnVpbGQtb25seS1hbmQtbm90LXJlYWwK"
           MUSUIMSA_SHELTER_API_SERVICE_KEY: "dummy-key-for-ci"
           MAPILLARY_ACCESS_TOKEN: "dummy-mapillary-token-for-ci"
+          WEATHER_SERVICE_KEY: "dummy-weather-key-for-ci"
           WEATHER_KMA_AUTH_KEY: "dummy-weather-key-for-ci"
           AWS_CREDENTIALS_ACCESS_KEY: "dummy-aws-access-key-for-ci"
           AWS_CREDENTIALS_SECRET_KEY: "dummy-aws-secret-key-for-ci"
@@ -87,7 +88,6 @@ jobs:
             cd /home/ubuntu/app
             
             # Firebase 서비스 계정 키 파일 생성
-            echo "${{ secrets.FIREBASE_KEY_JSON }}" > ./firebase-service-account-key.json
             echo "${{ secrets.FIREBASE_KEY_JSON }}" | base64 --decode > ./firebase-service-account-key.json
             
             # 환경 변수 설정
@@ -115,6 +115,7 @@ jobs:
               -e musuimsa.shelter.api.service-key="${{ secrets.MUSUIMSA_SHELTER_API_SERVICE_KEY }}" \
               -e mapillary.access-token="${{ secrets.MAPILLARY_ACCESS_TOKEN }}" \
               -e weather.service-key="${{ secrets.WEATHER_SERVICE_KEY }}" \
+              -e weather.kma.auth-key="${{ secrets.WEATHER_KMA_AUTH_KEY }}" \
               -e aws.credentials.access-key="${{ secrets.AWS_CREDENTIALS_ACCESS_KEY }}" \
               -e aws.credentials.secret-key="${{ secrets.AWS_CREDENTIALS_SECRET_KEY }}" \
               -e spring.datasource.url="${{ secrets.DB_URL }}" \
@@ -124,4 +125,4 @@ jobs:
               $AWS_ECR_URI:latest
             
             # 불필요한 이미지 정리
-            sudo docker image prune -af 
+            sudo docker image prune -af
