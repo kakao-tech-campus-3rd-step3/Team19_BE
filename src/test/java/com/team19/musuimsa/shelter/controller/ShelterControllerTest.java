@@ -3,6 +3,11 @@ package com.team19.musuimsa.shelter.controller;
 import com.team19.musuimsa.shelter.dto.NearbyShelterResponse;
 import com.team19.musuimsa.shelter.dto.OperatingHoursResponse;
 import com.team19.musuimsa.shelter.dto.ShelterResponse;
+import com.team19.musuimsa.shelter.dto.map.ClusterFeature;
+import com.team19.musuimsa.shelter.dto.map.MapFeature;
+import com.team19.musuimsa.shelter.dto.map.MapResponse;
+import com.team19.musuimsa.shelter.dto.map.MapShelterResponse;
+import com.team19.musuimsa.shelter.service.ShelterMapService;
 import com.team19.musuimsa.shelter.service.ShelterService;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.DisplayName;
@@ -32,6 +37,34 @@ class ShelterControllerTest {
 
     @MockitoBean
     ShelterService shelterService;
+
+    @MockitoBean
+    ShelterMapService shelterMapService;
+
+    @Test
+    @DisplayName("GET /api/shelters - 바운딩박스 파라미터 바인딩 및 MapResponse JSON 반환")
+    void getByBbox_returnsMapResponse() throws Exception {
+        List<MapFeature> items = List.of(
+                new ClusterFeature("gh_1", 37.11, 127.11, 3),
+                new MapShelterResponse(1L, "무더위쉼터A", 37.12, 127.12, true, 20, null, null, null)
+        );
+        Mockito.when(shelterMapService.getByBbox(Mockito.any()))
+                .thenReturn(new MapResponse("cluster", items, 42));
+
+        mockMvc.perform(get("/api/shelters")
+                        .param("minLat", "37.0")
+                        .param("minLng", "127.0")
+                        .param("maxLat", "37.2")
+                        .param("maxLng", "127.2")
+                        .param("zoom", "12")
+                        .param("page", "0")
+                        .param("size", "200")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.level", is("cluster")))
+                .andExpect(jsonPath("$.total", is(42)))
+                .andExpect(jsonPath("$.items", hasSize(2)));
+    }
 
     @DisplayName("GET /api/shelters/nearby - 가까운 쉼터 목록 JSON 반환")
     @Test

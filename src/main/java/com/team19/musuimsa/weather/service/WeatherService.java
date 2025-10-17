@@ -9,10 +9,6 @@ import com.team19.musuimsa.weather.dto.WeatherResponse;
 import com.team19.musuimsa.weather.util.KmaGrid;
 import com.team19.musuimsa.weather.util.KmaTime;
 import jakarta.annotation.PostConstruct;
-import java.net.URI;
-import java.time.Clock;
-import java.time.ZoneId;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +16,11 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
+import java.time.Clock;
+import java.time.ZoneId;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -30,8 +31,8 @@ public class WeatherService {
 
     private static final String KMA_SUCCESS_CODE = "00";
 
-    @Value("${weather.service-key}")
-    private String serviceKey;
+    @Value("${weather.kma.auth-key}")
+    private String authKey;
 
     @Value("${weather.kma.base-url}")
     private String baseUrl;
@@ -41,7 +42,7 @@ public class WeatherService {
         log.info("[WeatherService] KMA baseUrl = {}", baseUrl);
     }
 
-    @Cacheable(cacheNames = "t1h", key = "#root.target.gridKey(#latitude, #longitude)")
+    @Cacheable(cacheNames = "weather", key = "#root.target.gridKey(#latitude, #longitude) + ':t1h'")
     public WeatherResponse getCurrentTemp(double latitude, double longitude) {
         NxNy grid = KmaGrid.fromLatLon(latitude, longitude);
         Clock kstClock = Clock.system(ZoneId.of("Asia/Seoul"));
@@ -129,16 +130,16 @@ public class WeatherService {
     }
 
     private URI buildUri(String baseDate, String baseTime, int nx, int ny) {
-        return UriComponentsBuilder.fromHttpUrl(
-                        baseUrl + "/getUltraSrtNcst")
-                .queryParam("serviceKey", serviceKey)
+        return UriComponentsBuilder
+                .fromHttpUrl(baseUrl + "/getUltraSrtNcst")
                 .queryParam("pageNo", 1)
-                .queryParam("numOfRows", 60)
+                .queryParam("numOfRows", 1000)
                 .queryParam("dataType", "JSON")
                 .queryParam("base_date", baseDate)
                 .queryParam("base_time", baseTime)
                 .queryParam("nx", nx)
                 .queryParam("ny", ny)
+                .queryParam("authKey", authKey)
                 .build(true)
                 .toUri();
     }

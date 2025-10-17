@@ -1,5 +1,22 @@
 package com.team19.musuimsa.shelter.service;
 
+import com.team19.musuimsa.exception.external.ExternalApiException;
+import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
+import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
+import com.team19.musuimsa.shelter.repository.ShelterRepository;
+import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+
+import java.math.BigDecimal;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.times;
@@ -7,20 +24,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-
-import com.team19.musuimsa.exception.external.ExternalApiException;
-import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
-import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
-import com.team19.musuimsa.shelter.repository.ShelterRepository;
-import jakarta.persistence.EntityManager;
-import java.math.BigDecimal;
-import java.util.List;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class ShelterImportServiceTest {
@@ -31,6 +34,11 @@ class ShelterImportServiceTest {
     EntityManager entityManager;
     @Mock
     ShelterRepository shelterRepository;
+    @Mock
+    CacheManager cacheManager;
+    @Mock
+    Cache sheltersCache;
+
     @InjectMocks
     ShelterImportService service;
 
@@ -38,6 +46,8 @@ class ShelterImportServiceTest {
     @Test
     void importOnce_savesAcrossPages_andAccumulatesCount() {
         when(entityManager.merge(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        when(cacheManager.getCache("sheltersMap")).thenReturn(sheltersCache);
 
         ExternalResponse page1 = resp(2, 1, 3, List.of(
                 item(1001L, "A", "서울특별시", bd(37.1), bd(127.1),
@@ -83,6 +93,8 @@ class ShelterImportServiceTest {
     @DisplayName("importOnce - 외부 API 예외 발생 시 중단하고 누적 저장 수를 반환한다. ")
     @Test
     void importOnce_stopsOnExternalApiException() {
+        when(cacheManager.getCache("sheltersMap")).thenReturn(sheltersCache);
+
         ExternalResponse page1 = resp(2, 1, 4, List.of(
                 item(2001L, "X", "주소1", bd(37), bd(127),
                         5, 0, 0, "0800", "1700", null, null, "001")
@@ -118,9 +130,9 @@ class ShelterImportServiceTest {
     }
 
     private static ExternalResponse resp(Integer numOfRows,
-            Integer pageNo,
-            Integer totalCount,
-            List<ExternalShelterItem> body
+                                         Integer pageNo,
+                                         Integer totalCount,
+                                         List<ExternalShelterItem> body
     ) {
         return new ExternalResponse(
                 new ExternalResponse.Header("OK", "00", null),
