@@ -9,10 +9,6 @@ import com.team19.musuimsa.weather.dto.WeatherResponse;
 import com.team19.musuimsa.weather.util.KmaGrid;
 import com.team19.musuimsa.weather.util.KmaTime;
 import jakarta.annotation.PostConstruct;
-import java.net.URI;
-import java.time.Clock;
-import java.time.ZoneId;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +16,11 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
+import java.time.Clock;
+import java.time.ZoneId;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -41,7 +42,7 @@ public class WeatherService {
         log.info("[WeatherService] KMA baseUrl = {}", baseUrl);
     }
 
-    @Cacheable(cacheNames = "t1h", key = "#root.target.gridKey(#latitude, #longitude)")
+    @Cacheable(cacheNames = "weather", key = "#root.target.gridKey(#latitude, #longitude) + ':t1h'")
     public WeatherResponse getCurrentTemp(double latitude, double longitude) {
         NxNy grid = KmaGrid.fromLatLon(latitude, longitude);
         Clock kstClock = Clock.system(ZoneId.of("Asia/Seoul"));
