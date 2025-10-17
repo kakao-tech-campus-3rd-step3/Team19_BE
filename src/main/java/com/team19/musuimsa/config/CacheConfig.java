@@ -20,14 +20,14 @@ import java.util.List;
 @Configuration
 public class CacheConfig {
 
-    @Value("${cache.shelters.expire-after-write:120s}")
-    private String sheltersExpireAfterWrite;
+    @Value("${cache.shelters.expire-after-write}")
+    private Duration sheltersExpireAfterWrite;
 
     @Value("${cache.shelters.maximum-size:2000}")
     private long sheltersMaximumSize;
 
     @Value("${cache.weather.expire-after-write}")
-    private String weatherExpireAfterWrite;
+    private Duration weatherExpireAfterWrite;
 
     @Value("${cache.weather.maximum-size}")
     private long weatherMaximumSize;
@@ -37,7 +37,7 @@ public class CacheConfig {
         CaffeineCache shelters = new CaffeineCache(
                 "sheltersMap",
                 Caffeine.newBuilder()
-                        .expireAfterWrite(parse(sheltersExpireAfterWrite))
+                        .expireAfterWrite(sheltersExpireAfterWrite)
                         .maximumSize(sheltersMaximumSize)
                         .build()
         );
@@ -45,7 +45,7 @@ public class CacheConfig {
         CaffeineCache weather = new CaffeineCache(
                 "weather",
                 Caffeine.newBuilder()
-                        .expireAfterWrite(parse(weatherExpireAfterWrite))
+                        .expireAfterWrite(weatherExpireAfterWrite)
                         .maximumSize(weatherMaximumSize)
                         .build()
         );
@@ -54,27 +54,5 @@ public class CacheConfig {
         List<Cache> caches = Arrays.asList(shelters, weather);
         manager.setCaches(caches);
         return manager;
-    }
-
-    private Duration parse(String s) {
-        String v = s.trim().toLowerCase();
-
-        if (v.startsWith("pt")) {
-            return Duration.parse(v.toUpperCase());
-        }
-        if (v.endsWith("ms")) {
-            return Duration.ofMillis(Long.parseLong(v.replace("ms", "")));
-        }
-        if (v.endsWith("s")) {
-            return Duration.ofSeconds(Long.parseLong(v.replace("s", "")));
-        }
-        if (v.endsWith("m")) {
-            return Duration.ofMinutes(Long.parseLong(v.replace("m", "")));
-        }
-        if (v.endsWith("h")) {
-            return Duration.ofHours(Long.parseLong(v.replace("h", "")));
-        }
-
-        return Duration.ofSeconds(Long.parseLong(v));
     }
 }

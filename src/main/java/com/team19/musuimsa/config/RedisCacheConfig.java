@@ -3,6 +3,7 @@ package com.team19.musuimsa.config;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -24,6 +25,13 @@ import java.util.Map;
 @Configuration
 public class RedisCacheConfig {
 
+    @Value("${cache.shelters.expire-after-write}")
+    private Duration sheltersExpireAfterWrite;
+
+    @Value("${cache.weather.expire-after-write}")
+    private Duration weatherExpireAfterWrite;
+
+
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory cf, ObjectMapper baseMapper) {
         ObjectMapper mapper = baseMapper.copy()
@@ -37,8 +45,8 @@ public class RedisCacheConfig {
                 .prefixCacheNameWith("musuimsa::");
 
         Map<String, RedisCacheConfiguration> conf = new HashMap<String, RedisCacheConfiguration>();
-        conf.put("sheltersMap", base.entryTtl(Duration.ofSeconds(120)));
-        conf.put("weather", base.entryTtl(Duration.ofMinutes(10)));
+        conf.put("sheltersMap", base.entryTtl(sheltersExpireAfterWrite));
+        conf.put("weather", base.entryTtl(weatherExpireAfterWrite));
 
         return RedisCacheManager.builder(cf)
                 .cacheDefaults(base)
