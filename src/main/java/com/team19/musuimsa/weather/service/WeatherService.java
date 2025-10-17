@@ -31,8 +31,8 @@ public class WeatherService {
 
     private static final String KMA_SUCCESS_CODE = "00";
 
-    @Value("${weather.service-key}")
-    private String serviceKey;
+    @Value("${weather.kma.auth-key}")
+    private String authKey;
 
     @Value("${weather.kma.base-url}")
     private String baseUrl;
@@ -130,16 +130,16 @@ public class WeatherService {
     }
 
     private URI buildUri(String baseDate, String baseTime, int nx, int ny) {
-        return UriComponentsBuilder.fromHttpUrl(
-                        baseUrl + "/getUltraSrtNcst")
-                .queryParam("serviceKey", serviceKey)
+        return UriComponentsBuilder
+                .fromHttpUrl(baseUrl + "/getUltraSrtNcst")
                 .queryParam("pageNo", 1)
-                .queryParam("numOfRows", 60)
+                .queryParam("numOfRows", 1000)
                 .queryParam("dataType", "JSON")
                 .queryParam("base_date", baseDate)
                 .queryParam("base_time", baseTime)
                 .queryParam("nx", nx)
                 .queryParam("ny", ny)
+                .queryParam("authKey", authKey)
                 .build(true)
                 .toUri();
     }
