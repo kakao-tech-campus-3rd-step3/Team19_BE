@@ -1,35 +1,58 @@
 package com.team19.musuimsa.config;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
-import java.time.Duration;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.caffeine.CaffeineCacheManager;
+import org.springframework.cache.caffeine.CaffeineCache;
+import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+
+@Profile("dev")
 @EnableCaching
 @Configuration
 public class CacheConfig {
 
-    @Value("${spring.cache.caffeine.expire-after-write}")
-    private String expireAfterWrite;
+    @Value("${cache.shelters.expire-after-write}")
+    private Duration sheltersExpireAfterWrite;
 
-    @Value("${spring.cache.caffeine.maximum-size}")
-    private long maximumSize;
+    @Value("${cache.shelters.maximum-size:2000}")
+    private long sheltersMaximumSize;
+
+    @Value("${cache.weather.expire-after-write}")
+    private Duration weatherExpireAfterWrite;
+
+    @Value("${cache.weather.maximum-size}")
+    private long weatherMaximumSize;
 
     @Bean
     public CacheManager cacheManager() {
-        Duration expiryDuration = Duration.parse("PT" + expireAfterWrite.toUpperCase());
+        CaffeineCache shelters = new CaffeineCache(
+                "sheltersMap",
+                Caffeine.newBuilder()
+                        .expireAfterWrite(sheltersExpireAfterWrite)
+                        .maximumSize(sheltersMaximumSize)
+                        .build()
+        );
 
-        Caffeine<Object, Object> caffeine = Caffeine.newBuilder()
-                .expireAfterWrite(expiryDuration)
-                .maximumSize(maximumSize);
+        CaffeineCache weather = new CaffeineCache(
+                "weather",
+                Caffeine.newBuilder()
+                        .expireAfterWrite(weatherExpireAfterWrite)
+                        .maximumSize(weatherMaximumSize)
+                        .build()
+        );
 
-        CaffeineCacheManager manager = new CaffeineCacheManager();
-        manager.setCaffeine(caffeine);
-
+        SimpleCacheManager manager = new SimpleCacheManager();
+        List<Cache> caches = Arrays.asList(shelters, weather);
+        manager.setCaches(caches);
         return manager;
     }
 }
