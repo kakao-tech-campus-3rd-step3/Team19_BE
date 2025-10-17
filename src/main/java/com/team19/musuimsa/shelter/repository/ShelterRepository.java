@@ -58,30 +58,7 @@ public interface ShelterRepository extends JpaRepository<Shelter, Long> {
               WHERE s.latitude  BETWEEN :minLat AND :maxLat
                 AND s.longitude BETWEEN :minLng AND :maxLng
             """)
-    List<MapShelterResponse> findSummaryInBbox(
-            @Param("minLat") BigDecimal minLat,
-            @Param("minLng") BigDecimal minLng,
-            @Param("maxLat") BigDecimal maxLat,
-            @Param("maxLng") BigDecimal maxLng,
-            Pageable pageable);
-
-    @Query("""
-              SELECT new com.team19.musuimsa.shelter.dto.map.MapShelterResponse(
-                s.shelterId,
-                s.name,
-                cast(s.latitude  as double),
-                cast(s.longitude as double),
-                CASE WHEN coalesce(s.airConditionerCount, 0) > 0 THEN true ELSE false END,
-                s.capacity,
-                s.photoUrl,
-                cast(null as string),
-                cast(null as string)
-              )
-              FROM Shelter s
-              WHERE s.latitude  BETWEEN :minLat AND :maxLat
-                AND s.longitude BETWEEN :minLng AND :maxLng
-            """)
-    List<MapShelterResponse> findDetailInBbox(
+    List<MapShelterResponse> findInBbox(
             @Param("minLat") BigDecimal minLat,
             @Param("minLng") BigDecimal minLng,
             @Param("maxLat") BigDecimal maxLat,

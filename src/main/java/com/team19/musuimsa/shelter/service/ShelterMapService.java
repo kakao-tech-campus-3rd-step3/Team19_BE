@@ -40,17 +40,18 @@ public class ShelterMapService {
         double spanLng = Math.abs(req.maxLng() - req.minLng());
 
         if (spanLat > 3.0 || spanLng > 3.0 || req.zoom() < 13) {
-            List<MapShelterResponse> points = shelterRepository.findSummaryInBbox(
+            List<MapShelterResponse> points = shelterRepository.findInBbox(
                     minLat, minLng, maxLat, maxLng, pageable);
             List<ClusterFeature> clusters = Clusterer.byGeohash(points, precision);
             return new MapResponse("cluster", new ArrayList<MapFeature>(clusters), points.size());
         } else if (req.zoom() < 16) {
-            List<MapShelterResponse> items = shelterRepository.findSummaryInBbox(
+            List<MapShelterResponse> items = shelterRepository.findInBbox(
                     minLat, minLng, maxLat, maxLng, pageable);
             int total = shelterRepository.countInBbox(minLat, minLng, maxLat, maxLng);
             return new MapResponse("summary", new ArrayList<MapFeature>(items), total);
         } else {
-            List<MapShelterResponse> items = shelterRepository.findDetailInBbox(
+            // 나중에 상세 내용 분리 예정 (쿼리 이용)
+            List<MapShelterResponse> items = shelterRepository.findInBbox(
                     minLat, minLng, maxLat, maxLng, pageable);
             int total = shelterRepository.countInBbox(minLat, minLng, maxLat, maxLng);
             return new MapResponse("detail", new ArrayList<MapFeature>(items), total);

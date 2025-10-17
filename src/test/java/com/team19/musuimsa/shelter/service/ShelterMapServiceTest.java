@@ -12,6 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -31,7 +32,7 @@ class ShelterMapServiceTest {
                 new MapShelterResponse(2L, "B", 37.1001, 127.1, false, 20, null, null, null),
                 new MapShelterResponse(3L, "C", 37.5, 127.5, true, 30, null, null, null)
         );
-        when(repo.findSummaryInBbox(any(), any(), any(), any(), any())).thenReturn(three);
+        when(repo.findInBbox(any(), any(), any(), any(), any())).thenReturn(three);
 
         // zoom 12 → cluster
         MapResponse r1 = svc.getByBbox(new MapBoundsRequest(
@@ -39,7 +40,7 @@ class ShelterMapServiceTest {
         ));
         assertThat(r1.level()).isEqualTo("cluster");
         assertThat(r1.items()).isNotEmpty();
-        verify(repo, times(1)).findSummaryInBbox(
+        verify(repo, times(1)).findInBbox(
                 any(BigDecimal.class), any(BigDecimal.class), any(BigDecimal.class), any(BigDecimal.class), any());
 
         // spanLat > 3.0 → cluster
@@ -55,10 +56,12 @@ class ShelterMapServiceTest {
         ShelterRepository repo = mock(ShelterRepository.class);
         ShelterMapService svc = new ShelterMapService(repo);
 
-        when(repo.findSummaryInBbox(any(), any(), any(), any(), any()))
-                .thenReturn(List.of(new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, null, null, null)));
-        when(repo.findDetailInBbox(any(), any(), any(), any(), any()))
-                .thenReturn(List.of(new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, "u", "09:00", "18:00")));
+        // 연속 호출 스텁: 1번째(요약), 2번째(상세)
+        when(repo.findInBbox(any(), any(), any(), any(), any()))
+                .thenReturn(
+                        List.of(new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, null, null, null)),   // 1st call
+                        List.of(new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, "u.jpg", "09:00", "18:00")) // 2nd call
+                );
         when(repo.countInBbox(any(), any(), any(), any())).thenReturn(42);
 
         // zoom 14 → summary
@@ -67,7 +70,10 @@ class ShelterMapServiceTest {
         ));
         assertThat(summary.level()).isEqualTo("summary");
         assertThat(summary.total()).isEqualTo(42);
-        verify(repo, times(1)).findSummaryInBbox(any(), any(), any(), any(), any());
+        verify(repo, times(1)).findInBbox(any(), any(), any(), any(), any());
+
+        // 호출 기록만 초기화(스텁은 유지)
+        clearInvocations(repo);
 
         // zoom 16 → detail
         MapResponse detail = svc.getByBbox(new MapBoundsRequest(
@@ -75,6 +81,7 @@ class ShelterMapServiceTest {
         ));
         assertThat(detail.level()).isEqualTo("detail");
         assertThat(detail.total()).isEqualTo(42);
-        verify(repo, times(1)).findDetailInBbox(any(), any(), any(), any(), any());
+        verify(repo, times(1)).findInBbox(any(), any(), any(), any(), any());
     }
+
 }
