@@ -26,7 +26,9 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ShelterController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -101,8 +103,8 @@ class ShelterControllerTest {
                 .andExpect(jsonPath("$[0].longitude", is(126.9780)))
                 .andExpect(jsonPath("$[0].distance", is("0m")))
                 .andExpect(jsonPath("$[0].isOutdoors", is(true)))
-                .andExpect(jsonPath("$[0].operatingHoursResponse.weekday", is("09:00~18:00")))
-                .andExpect(jsonPath("$[0].operatingHoursResponse.weekend", is("10:00~16:00")))
+                .andExpect(jsonPath("$[0].operatingHours.weekday", is("09:00~18:00")))
+                .andExpect(jsonPath("$[0].operatingHours.weekend", is("10:00~16:00")))
                 .andExpect(jsonPath("$[0].averageRating", is(4.5)))
                 .andExpect(jsonPath("$[0].photoUrl", is("https://example.com/shelter1.jpg")))
                 // 두번째 무더위 쉼터
@@ -113,8 +115,8 @@ class ShelterControllerTest {
                 .andExpect(jsonPath("$[1].longitude", is(126.9895)))
                 .andExpect(jsonPath("$[1].distance", is("1.1km")))
                 .andExpect(jsonPath("$[1].isOutdoors", is(false)))
-                .andExpect(jsonPath("$[1].operatingHoursResponse.weekday", is("09:00~18:00")))
-                .andExpect(jsonPath("$[1].operatingHoursResponse.weekend", is("10:00~16:00")))
+                .andExpect(jsonPath("$[1].operatingHours.weekday", is("09:00~18:00")))
+                .andExpect(jsonPath("$[1].operatingHours.weekend", is("10:00~16:00")))
                 .andExpect(jsonPath("$[1].averageRating", is(3.8)))
                 .andExpect(jsonPath("$[1].photoUrl", is("https://example.com/shelter2.jpg")));
     }
@@ -142,8 +144,8 @@ class ShelterControllerTest {
                 .andExpect(jsonPath("$.latitude", is(37.5665)))
                 .andExpect(jsonPath("$.longitude", is(126.9780)))
                 .andExpect(jsonPath("$.distance", is("0m")))
-                .andExpect(jsonPath("$.operatingHoursResponse.weekday", is("09:00~18:00")))
-                .andExpect(jsonPath("$.operatingHoursResponse.weekend", is("10:00~16:00")))
+                .andExpect(jsonPath("$.operatingHours.weekday", is("09:00~18:00")))
+                .andExpect(jsonPath("$.operatingHours.weekend", is("10:00~16:00")))
                 .andExpect(jsonPath("$.capacity", is(50)))
                 .andExpect(jsonPath("$.isOutdoors", is(true)))
                 .andExpect(jsonPath("$.coolingEquipment.fanCount", is(3)))

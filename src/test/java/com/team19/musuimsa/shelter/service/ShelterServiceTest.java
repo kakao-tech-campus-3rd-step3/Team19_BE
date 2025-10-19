@@ -91,8 +91,8 @@ class ShelterServiceTest {
             assertThat(dto1.latitude()).isEqualTo(37.5665);
             assertThat(dto1.longitude()).isEqualTo(126.9780);
             assertThat(dto1.distance()).isEqualTo("0.0km");
-            assertThat(dto1.operatingHoursResponse().weekday()).isEqualTo("09:00~18:00");
-            assertThat(dto1.operatingHoursResponse().weekend()).isEqualTo("10:00~16:00");
+            assertThat(dto1.operatingHours().weekday()).isEqualTo("09:00~18:00");
+            assertThat(dto1.operatingHours().weekend()).isEqualTo("10:00~16:00");
             assertThat(dto1.isOutdoors()).isEqualTo(true);
             assertThat(dto1.averageRating()).isEqualTo(2.8); // 14/5
             assertThat(dto1.photoUrl()).isEqualTo("https://example.com/shelter1.jpg");
@@ -107,8 +107,8 @@ class ShelterServiceTest {
             assertThat(dto2.longitude()).isEqualTo(126.9895);
             assertThat(dto2.distance()).endsWith("km");
             assertThat(dto2.distance()).startsWith("1.");
-            assertThat(dto2.operatingHoursResponse().weekday()).isEqualTo("09:00~18:00");
-            assertThat(dto2.operatingHoursResponse().weekend()).isEqualTo("10:00~16:00");
+            assertThat(dto2.operatingHours().weekday()).isEqualTo("09:00~18:00");
+            assertThat(dto2.operatingHours().weekend()).isEqualTo("10:00~16:00");
             assertThat(dto2.isOutdoors()).isEqualTo(false);
             assertThat(dto2.averageRating()).isEqualTo(3.8); // 19/5
             assertThat(dto2.photoUrl()).isEqualTo("https://example.com/shelter2.jpg");
@@ -163,8 +163,8 @@ class ShelterServiceTest {
             assertThat(dto.latitude()).isEqualTo(37.5665);
             assertThat(dto.longitude()).isEqualTo(126.9780);
             assertThat(dto.distance()).isEqualTo("0.0km");
-            assertThat(dto.operatingHoursResponse().weekday()).isEqualTo("09:00~18:00");
-            assertThat(dto.operatingHoursResponse().weekend()).isEqualTo("10:00~16:00");
+            assertThat(dto.operatingHours().weekday()).isEqualTo("09:00~18:00");
+            assertThat(dto.operatingHours().weekend()).isEqualTo("10:00~16:00");
             assertThat(dto.capacity()).isEqualTo(50);
             assertThat(dto.isOutdoors()).isEqualTo(true);
             assertThat(dto.coolingEquipment().fanCount()).isEqualTo(3);

@@ -8,7 +8,7 @@ public record NearbyShelterResponse(
         double longitude,
         String distance,
         boolean isOutdoors,
-        OperatingHoursResponse operatingHoursResponse,
+        OperatingHoursResponse operatingHours,
         double averageRating,
         String photoUrl
 ) {
