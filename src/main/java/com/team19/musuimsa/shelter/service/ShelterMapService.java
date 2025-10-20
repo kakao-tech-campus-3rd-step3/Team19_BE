@@ -31,10 +31,10 @@ public class ShelterMapService {
         int precision = GeoHashUtil.prefixForZoom(req.zoom());
         Pageable pageable = PageRequest.of(req.pageOrDefault(), req.sizeOrDefault());
 
-        BigDecimal minLat = bd(req.minLat());
-        BigDecimal minLng = bd(req.minLng());
-        BigDecimal maxLat = bd(req.maxLat());
-        BigDecimal maxLng = bd(req.maxLng());
+        BigDecimal minLat = toBigDecimal(req.minLat());
+        BigDecimal minLng = toBigDecimal(req.minLng());
+        BigDecimal maxLat = toBigDecimal(req.maxLat());
+        BigDecimal maxLng = toBigDecimal(req.maxLng());
 
         double spanLat = Math.abs(req.maxLat() - req.minLat());
         double spanLng = Math.abs(req.maxLng() - req.minLng());
@@ -64,7 +64,7 @@ public class ShelterMapService {
         return "v1:z" + r.zoom() + ":gh:" + gh + ":p" + r.pageOrDefault() + ":s" + r.sizeOrDefault();
     }
 
-    private static BigDecimal bd(double d) {
+    private static BigDecimal toBigDecimal(double d) {
         return BigDecimal.valueOf(d);
     }
 }
