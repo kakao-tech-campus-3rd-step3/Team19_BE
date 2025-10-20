@@ -50,7 +50,7 @@ public class ShelterMapService {
             int total = shelterRepository.countInBbox(minLat, minLng, maxLat, maxLng);
             return new MapResponse("summary", new ArrayList<MapFeature>(items), total);
         } else {
-            // 나중에 상세 내용 분리 예정 (쿼리 이용)
+            // TODO: 나중에 상세 내용 분리 예정 (쿼리 이용)
             List<MapShelterResponse> items = shelterRepository.findInBbox(
                     minLat, minLng, maxLat, maxLng, pageable);
             int total = shelterRepository.countInBbox(minLat, minLng, maxLat, maxLng);
