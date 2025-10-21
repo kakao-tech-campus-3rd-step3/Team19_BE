@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 public final class Clusterer {
-    private Clusterer() {
-    }
 
     public static List<ClusterFeature> byGeohash(List<MapShelterResponse> points, int precision) {
         Map<String, List<MapShelterResponse>> groups = new HashMap<String, List<MapShelterResponse>>();
