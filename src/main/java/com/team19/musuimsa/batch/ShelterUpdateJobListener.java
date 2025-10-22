@@ -50,17 +50,15 @@ public class ShelterUpdateJobListener implements JobExecutionListener {
         int updated = 0;
         int failed = 0;
 
-        if (updatedIds != null) {
-            processed = updatedIds.size();
-            for (Long id : updatedIds) {
-                try {
-                    if (shelterPhotoService.updatePhoto(id)) {
-                        updated++;
-                    }
-                } catch (Exception e) {
-                    failed++;
-                    log.warn("Photo update failed for shelter {}", id, e);
+        processed = updatedIds.size();
+        for (Long id : updatedIds) {
+            try {
+                if (shelterPhotoService.updatePhoto(id)) {
+                    updated++;
                 }
+            } catch (Exception e) {
+                failed++;
+                log.warn("Photo update failed for shelter {}", id, e);
             }
         }
 
