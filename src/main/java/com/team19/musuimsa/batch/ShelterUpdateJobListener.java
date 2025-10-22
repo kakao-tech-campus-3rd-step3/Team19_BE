@@ -50,7 +50,6 @@ public class ShelterUpdateJobListener implements JobExecutionListener {
         int updated = 0;
         int failed = 0;
 
-        processed = updatedIds.size();
         for (Long id : updatedIds) {
             try {
                 if (shelterPhotoService.updatePhoto(id)) {
@@ -60,6 +59,7 @@ public class ShelterUpdateJobListener implements JobExecutionListener {
                 failed++;
                 log.warn("Photo update failed for shelter {}", id, e);
             }
+            processed++;
         }
 
         log.info("<<<< Shelter Update Job END (photo) processed={}, updated={}, failed={}", processed, updated, failed);
