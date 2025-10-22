@@ -61,7 +61,7 @@ public class ShelterMapService {
     @SuppressWarnings("unused")
     public String cacheKey(MapBoundsRequest r) {
         int precision = GeoHashUtil.prefixForZoom(r.zoom());
-        String gh = GeoHashUtil.snapBbox(r.minLat(), r.minLng(), r.maxLat(), r.maxLng(), precision);
+        String gh = GeoHashUtil.snapBbox(toBigDecimal(r.minLat()), toBigDecimal(r.minLng()), toBigDecimal(r.maxLat()), toBigDecimal(r.maxLng()), precision);
         return "v1:z" + r.zoom() + ":gh:" + gh + ":p" + r.pageOrDefault() + ":s" + r.sizeOrDefault();
     }
 
