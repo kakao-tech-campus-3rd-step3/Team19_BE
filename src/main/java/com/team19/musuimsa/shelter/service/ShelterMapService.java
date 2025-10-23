@@ -28,7 +28,7 @@ public class ShelterMapService {
     @Cacheable(value = "sheltersMap", key = "#root.target.cacheKey(#req)", sync = true)
     @Transactional(readOnly = true)
     public MapResponse getByBbox(MapBoundsRequest req) {
-        int precision = GeoHashUtil.prefixForZoom(req.zoom());
+        int precision = GeoHashUtil.geohashPrecisionForZoom(req.zoom());
         Pageable pageable = PageRequest.of(req.pageOrDefault(), req.sizeOrDefault());
 
         BigDecimal minLat = toBigDecimal(req.minLat());
@@ -60,9 +60,9 @@ public class ShelterMapService {
 
     @SuppressWarnings("unused")
     public String cacheKey(MapBoundsRequest request) {
-        int precision = GeoHashUtil.prefixForZoom(request.zoom());
-        String gh = GeoHashUtil.snapBbox(toBigDecimal(request.minLat()), toBigDecimal(request.minLng()), toBigDecimal(request.maxLat()), toBigDecimal(request.maxLng()), precision);
-        return "v1:z" + request.zoom() + ":gh:" + gh + ":p" + request.pageOrDefault() + ":s" + request.sizeOrDefault();
+        int geohashPrecision = GeoHashUtil.geohashPrecisionForZoom(request.zoom());
+        String snappedGeohash = GeoHashUtil.snapBbox(toBigDecimal(request.minLat()), toBigDecimal(request.minLng()), toBigDecimal(request.maxLat()), toBigDecimal(request.maxLng()), geohashPrecision);
+        return "v1:z" + request.zoom() + ":gh:" + snappedGeohash + ":p" + request.pageOrDefault() + ":s" + request.sizeOrDefault();
     }
 
     private static BigDecimal toBigDecimal(double d) {

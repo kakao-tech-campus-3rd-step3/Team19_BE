@@ -175,7 +175,7 @@ public class ShelterImportService {
             Set<String> patterns = new HashSet<>();
             for (ChangedPoint p : moved) {
                 for (int z : zooms) {
-                    int precision = GeoHashUtil.prefixForZoom(z);
+                    int precision = GeoHashUtil.geohashPrecisionForZoom(z);
                     if (p.oldLat() != null && p.oldLng() != null) {
                         patterns.add(keyPattern(z, p.oldLat(), p.oldLng(), precision));
                     }

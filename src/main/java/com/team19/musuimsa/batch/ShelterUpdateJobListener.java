@@ -139,7 +139,7 @@ public class ShelterUpdateJobListener implements JobExecutionListener {
                 }
 
                 for (int z : zooms) {
-                    int precision = GeoHashUtil.prefixForZoom(z);
+                    int precision = GeoHashUtil.geohashPrecisionForZoom(z);
                     String cell = GeoHashUtil.snapBbox(lat, lng, lat, lng, precision);
                     String pattern = "musuimsa::sheltersMap::v1:z" + z + ":gh:" + cell + ":*";
                     deletedSum += scanAndDelete(redis, pattern);

@@ -6,7 +6,7 @@ public final class GeoHashUtil {
     private GeoHashUtil() {
     }
 
-    public static int prefixForZoom(int z) {
+    public static int geohashPrecisionForZoom(int z) {
         if (z < 13) {
             return 5;
         }
