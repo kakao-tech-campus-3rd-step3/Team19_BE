@@ -59,10 +59,10 @@ public class ShelterMapService {
     }
 
     @SuppressWarnings("unused")
-    public String cacheKey(MapBoundsRequest r) {
-        int precision = GeoHashUtil.prefixForZoom(r.zoom());
-        String gh = GeoHashUtil.snapBbox(toBigDecimal(r.minLat()), toBigDecimal(r.minLng()), toBigDecimal(r.maxLat()), toBigDecimal(r.maxLng()), precision);
-        return "v1:z" + r.zoom() + ":gh:" + gh + ":p" + r.pageOrDefault() + ":s" + r.sizeOrDefault();
+    public String cacheKey(MapBoundsRequest request) {
+        int precision = GeoHashUtil.prefixForZoom(request.zoom());
+        String gh = GeoHashUtil.snapBbox(toBigDecimal(request.minLat()), toBigDecimal(request.minLng()), toBigDecimal(request.maxLat()), toBigDecimal(request.maxLng()), precision);
+        return "v1:z" + request.zoom() + ":gh:" + gh + ":p" + request.pageOrDefault() + ":s" + request.sizeOrDefault();
     }
 
     private static BigDecimal toBigDecimal(double d) {
