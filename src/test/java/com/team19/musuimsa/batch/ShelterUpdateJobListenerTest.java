@@ -46,14 +46,14 @@ class ShelterUpdateJobListenerTest {
     @Test
     @DisplayName("afterJob: Redis가 있을 때 변경된 셸터의 지오해시 패턴을 SCAN/DEL 한다. ")
     void afterJob_selectiveInvalidation_scansAndDeletesOnRedis() {
-        StringRedisTemplate redis = mock(StringRedisTemplate.class);
-        RedisConnectionFactory cf = mock(RedisConnectionFactory.class);
-        RedisConnection conn = mock(RedisConnection.class);
+        StringRedisTemplate stringRedisTemplate = mock(StringRedisTemplate.class);
+        RedisConnectionFactory redisConnectionFactory = mock(RedisConnectionFactory.class);
+        RedisConnection redisConnection = mock(RedisConnection.class);
         RedisKeyCommands redisKeyCommands = mock(RedisKeyCommands.class);
 
-        when(redis.getConnectionFactory()).thenReturn(cf);
-        when(cf.getConnection()).thenReturn(conn);
-        when(conn.keyCommands()).thenReturn(redisKeyCommands);
+        when(stringRedisTemplate.getConnectionFactory()).thenReturn(redisConnectionFactory);
+        when(redisConnectionFactory.getConnection()).thenReturn(redisConnection);
+        when(redisConnection.keyCommands()).thenReturn(redisKeyCommands);
 
         // 1) 커서 mock: 키 하나 반환 후 종료
         @SuppressWarnings("unchecked")
@@ -68,7 +68,7 @@ class ShelterUpdateJobListenerTest {
 
         // SUT
         ShelterUpdateJobListener listener =
-                new ShelterUpdateJobListener(api, photo, repo, cacheManager, Optional.of(redis));
+                new ShelterUpdateJobListener(api, photo, repo, cacheManager, Optional.of(stringRedisTemplate));
 
         JobExecution jobExecution = new JobExecution(1L);
         jobExecution.getExecutionContext().put(ShelterImportBatchConfig.LOCATION_UPDATED_IDS_KEY, Set.of(1L));
