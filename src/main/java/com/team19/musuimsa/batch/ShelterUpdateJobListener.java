@@ -126,7 +126,7 @@ public class ShelterUpdateJobListener implements JobExecutionListener {
         // 서비스 분기에서 사용중인 줌 레벨 대역
         int[] zooms = {12, 13, 14, 15, 16, 17};
 
-        // prod(redis)면 패턴 삭제, dev(caffeine)면 clear 폴백
+        // prod(redis): 패턴 삭제, dev(caffeine)면 clear 폴백
         if (redisTemplate.isPresent()) {
             StringRedisTemplate redis = redisTemplate.get();
             int deletedSum = 0;
@@ -147,7 +147,7 @@ public class ShelterUpdateJobListener implements JobExecutionListener {
             }
             log.info("Selective cache invalidation done. deletedKeys={}", deletedSum);
         } else {
-            // 로컬(dev, caffeine) — 패턴 삭제 수단이 없어 캐시 전체 clear
+            // dev(caffeine) — 패턴 삭제 수단이 없어 캐시 전체 clear
             Cache cache = cacheManager.getCache("sheltersMap");
             if (cache != null) {
                 cache.clear();
@@ -168,6 +168,7 @@ public class ShelterUpdateJobListener implements JobExecutionListener {
         } catch (Exception e) {
             log.warn("SCAN failed for pattern {}", pattern, e);
         }
+
         if (!keys.isEmpty()) {
             redis.delete(keys);
         }
