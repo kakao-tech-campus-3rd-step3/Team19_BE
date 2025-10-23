@@ -14,6 +14,7 @@ import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisKeyCommands;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -24,7 +25,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
@@ -49,8 +49,11 @@ class ShelterUpdateJobListenerTest {
         StringRedisTemplate redis = mock(StringRedisTemplate.class);
         RedisConnectionFactory cf = mock(RedisConnectionFactory.class);
         RedisConnection conn = mock(RedisConnection.class);
+        RedisKeyCommands redisKeyCommands = mock(RedisKeyCommands.class);
+
         when(redis.getConnectionFactory()).thenReturn(cf);
         when(cf.getConnection()).thenReturn(conn);
+        when(conn.keyCommands()).thenReturn(redisKeyCommands);
 
         // 1) 커서 mock: 키 하나 반환 후 종료
         @SuppressWarnings("unchecked")
@@ -61,7 +64,7 @@ class ShelterUpdateJobListenerTest {
         doNothing().when(cursor).close();
 
         // 2) scan() 이 커서를 돌려주도록 스텁
-        when(conn.scan(any(ScanOptions.class))).thenReturn(cursor);
+        when(redisKeyCommands.scan(any(ScanOptions.class))).thenReturn(cursor);
 
         // SUT
         ShelterUpdateJobListener listener =
@@ -82,7 +85,7 @@ class ShelterUpdateJobListenerTest {
         listener.afterJob(jobExecution);
 
         // then
-        verify(redis, atLeastOnce()).delete(anySet());
+        verify(redisKeyCommands, atLeastOnce()).del(any(byte[][].class));
     }
 
     @Test
