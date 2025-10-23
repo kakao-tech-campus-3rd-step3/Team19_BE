@@ -14,6 +14,8 @@ import org.springframework.batch.core.JobExecutionListener;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -21,7 +23,6 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -158,20 +159,36 @@ public class ShelterUpdateJobListener implements JobExecutionListener {
 
     // Redis에서 패턴으로 SCAN 후 DEL
     private int scanAndDelete(StringRedisTemplate redis, String pattern) {
-        ScanOptions options = ScanOptions.scanOptions().match(pattern).count(1000).build();
-        Set<String> keys = new HashSet<>();
-        try (Cursor<byte[]> cursor = redis.getConnectionFactory()
-                .getConnection().scan(options)) {
-            while (cursor.hasNext()) {
-                keys.add(new String(cursor.next()));
+        int removed = 0;
+        RedisConnection conn = null;
+        try {
+            conn = redis.getConnectionFactory().getConnection();
+            ScanOptions options = ScanOptions.scanOptions().match(pattern).count(1000).build();
+            try (Cursor<byte[]> cursor = conn.keyCommands().scan(options)) {
+                List<byte[]> batch = new ArrayList<>(500);
+                while (cursor.hasNext()) {
+                    batch.add(cursor.next());
+                    if (batch.size() >= 500) {
+                        conn.keyCommands().del(batch.toArray(new byte[0][]));
+                        removed += batch.size();
+                        batch.clear();
+                    }
+                }
+                if (!batch.isEmpty()) {
+                    conn.keyCommands().del(batch.toArray(new byte[0][]));
+                    removed += batch.size();
+                }
             }
         } catch (Exception e) {
-            log.warn("SCAN failed for pattern {}", pattern, e);
+            throw new DataAccessResourceFailureException("SCAN/DEL failed: " + pattern, e);
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                } catch (Exception ignore) {
+                }
+            }
         }
-
-        if (!keys.isEmpty()) {
-            redis.delete(keys);
-        }
-        return keys.size();
+        return removed;
     }
 }
