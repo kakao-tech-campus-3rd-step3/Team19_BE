@@ -7,7 +7,7 @@ public record ShelterResponse(
         double latitude,
         double longitude,
         String distance,
-        OperatingHoursResponse operatingHoursResponse,
+        OperatingHoursResponse operatingHours,
         int capacity,
         boolean isOutdoors,
         CoolingEquipment coolingEquipment,

@@ -206,3 +206,6 @@ gradle-app.setting
 ### Custom ###
 # application-secret.properties
 application-secret.properties
+
+# firebase service account key
+firebase-service-account-key.json
