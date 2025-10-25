@@ -28,13 +28,13 @@ public class ShelterMapService {
     @Cacheable(value = "sheltersMap", key = "#root.target.cacheKey(#req)", sync = true)
     @Transactional(readOnly = true)
     public MapResponse getByBbox(MapBoundsRequest req) {
-        int precision = GeoHashUtil.prefixForZoom(req.zoom());
+        int precision = GeoHashUtil.geohashPrecisionForZoom(req.zoom());
         Pageable pageable = PageRequest.of(req.pageOrDefault(), req.sizeOrDefault());
 
-        BigDecimal minLat = bd(req.minLat());
-        BigDecimal minLng = bd(req.minLng());
-        BigDecimal maxLat = bd(req.maxLat());
-        BigDecimal maxLng = bd(req.maxLng());
+        BigDecimal minLat = toBigDecimal(req.minLat());
+        BigDecimal minLng = toBigDecimal(req.minLng());
+        BigDecimal maxLat = toBigDecimal(req.maxLat());
+        BigDecimal maxLng = toBigDecimal(req.maxLng());
 
         double spanLat = Math.abs(req.maxLat() - req.minLat());
         double spanLng = Math.abs(req.maxLng() - req.minLng());
@@ -50,7 +50,7 @@ public class ShelterMapService {
             int total = shelterRepository.countInBbox(minLat, minLng, maxLat, maxLng);
             return new MapResponse("summary", new ArrayList<MapFeature>(items), total);
         } else {
-            // 나중에 상세 내용 분리 예정 (쿼리 이용)
+            // TODO: 나중에 상세 내용 분리 예정 (쿼리 이용)
             List<MapShelterResponse> items = shelterRepository.findInBbox(
                     minLat, minLng, maxLat, maxLng, pageable);
             int total = shelterRepository.countInBbox(minLat, minLng, maxLat, maxLng);
@@ -58,13 +58,14 @@ public class ShelterMapService {
         }
     }
 
-    public String cacheKey(MapBoundsRequest r) {
-        int precision = GeoHashUtil.prefixForZoom(r.zoom());
-        String gh = GeoHashUtil.snapBbox(r.minLat(), r.minLng(), r.maxLat(), r.maxLng(), precision);
-        return "v1:z" + r.zoom() + ":gh:" + gh + ":p" + r.pageOrDefault() + ":s" + r.sizeOrDefault();
+    @SuppressWarnings("unused")
+    public String cacheKey(MapBoundsRequest request) {
+        int geohashPrecision = GeoHashUtil.geohashPrecisionForZoom(request.zoom());
+        String snappedGeohash = GeoHashUtil.snapBbox(toBigDecimal(request.minLat()), toBigDecimal(request.minLng()), toBigDecimal(request.maxLat()), toBigDecimal(request.maxLng()), geohashPrecision);
+        return "v1:z" + request.zoom() + ":gh:" + snappedGeohash + ":p" + request.pageOrDefault() + ":s" + request.sizeOrDefault();
     }
 
-    private static BigDecimal bd(double d) {
+    private static BigDecimal toBigDecimal(double d) {
         return BigDecimal.valueOf(d);
     }
 }

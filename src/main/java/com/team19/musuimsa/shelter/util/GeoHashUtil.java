@@ -1,10 +1,12 @@
 package com.team19.musuimsa.shelter.util;
 
+import java.math.BigDecimal;
+
 public final class GeoHashUtil {
     private GeoHashUtil() {
     }
 
-    public static int prefixForZoom(int z) {
+    public static int geohashPrecisionForZoom(int z) {
         if (z < 13) {
             return 5;
         }
@@ -21,9 +23,9 @@ public final class GeoHashUtil {
         return la + "_" + ln + "_p" + precision;
     }
 
-    public static String snapBbox(double minLat, double minLng, double maxLat, double maxLng, int p) {
-        String a = geohash(minLat, minLng, p);
-        String b = geohash(maxLat, maxLng, p);
+    public static String snapBbox(BigDecimal minLat, BigDecimal minLng, BigDecimal maxLat, BigDecimal maxLng, int p) {
+        String a = geohash(minLat.doubleValue(), minLng.doubleValue(), p);
+        String b = geohash(maxLat.doubleValue(), maxLng.doubleValue(), p);
         return a + "__" + b;
     }
 }
