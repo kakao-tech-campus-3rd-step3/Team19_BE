@@ -3,8 +3,8 @@ package com.team19.musuimsa.shelter.dto.map;
 public record MapShelterResponse(
         Long id,
         String name,
-        double lat,
-        double lng,
+        double latitude,
+        double longitude,
         Boolean hasAircon,
         Integer capacity,
         String photoUrl,
