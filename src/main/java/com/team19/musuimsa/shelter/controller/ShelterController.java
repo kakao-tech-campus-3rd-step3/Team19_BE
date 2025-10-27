@@ -27,7 +27,7 @@ public class ShelterController {
 
     // 쉼터 메인 페이지 바운딩박스 기반 조회
     @GetMapping
-    public MapResponse getByBbox(
+    public ResponseEntity<MapResponse> getByBbox(
             @RequestParam double minLat,
             @RequestParam double minLng,
             @RequestParam double maxLat,
@@ -36,7 +36,7 @@ public class ShelterController {
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size
     ) {
-        return shelterMapService.getByBbox(new MapBoundsRequest(minLat, minLng, maxLat, maxLng, zoom, page, size));
+        return ResponseEntity.ok(shelterMapService.getByBbox(new MapBoundsRequest(minLat, minLng, maxLat, maxLng, zoom, page, size)));
     }
 
     // 가까운 쉼터 조회
