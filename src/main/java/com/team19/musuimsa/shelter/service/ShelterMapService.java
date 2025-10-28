@@ -46,21 +46,22 @@ public class ShelterMapService {
 
         int total = shelterRepository.countInBbox(minLat, minLng, maxLat, maxLng);
 
+        // 1) cluster 레벨: 포인트만 모아서 클러스터 생성 (운영시간 X)
         if (spanLat > 3.0 || spanLng > 3.0 || req.zoom() < 13) {
             List<MapShelterResponse> points = shelterRepository.findInBbox(
                     minLat, minLng, maxLat, maxLng, pageable);
             List<ClusterFeature> clusters = Clusterer.byGeohash(points, precision);
             return new MapResponse("cluster", new ArrayList<MapFeature>(clusters), total);
-        } else if (req.zoom() < 16) {
-            List<MapShelterRow> rows = shelterRepository.findInBboxWithHours(
-                    minLat, minLng, maxLat, maxLng, pageable);
-            List<MapShelterResponse> items = rows.stream().map(this::toTodayResponse).toList();
+        }
+
+        // 2) summary/detail 레벨: 시간 포함 행을 받아 오늘(KST) 기준으로 운영시간과 함께 반환
+        List<MapShelterRow> rows = shelterRepository.findInBboxWithHours(
+                minLat, minLng, maxLat, maxLng, pageable);
+        List<MapShelterResponse> items = rows.stream().map(this::toTodayResponse).toList();
+
+        if (req.zoom() < 16) {
             return new MapResponse("summary", new ArrayList<MapFeature>(items), total);
         } else {
-            // TODO: 나중에 상세 내용 분리 예정 (쿼리 이용)
-            List<MapShelterRow> rows = shelterRepository.findInBboxWithHours(
-                    minLat, minLng, maxLat, maxLng, pageable);
-            List<MapShelterResponse> items = rows.stream().map(this::toTodayResponse).toList();
             return new MapResponse("detail", new ArrayList<MapFeature>(items), total);
         }
     }
