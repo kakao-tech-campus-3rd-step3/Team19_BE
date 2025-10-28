@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,11 +81,13 @@ public class ShelterMapService {
         DayOfWeek dow = LocalDate.now(kst).getDayOfWeek();
         boolean weekend = (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY);
 
-        LocalTime fromT = LocalTime.parse(weekend ? mapShelterRow.weekendOpenTime() : mapShelterRow.weekdayOpenTime());
-        LocalTime toT = LocalTime.parse(weekend ? mapShelterRow.weekendCloseTime() : mapShelterRow.weekdayCloseTime());
+        String fromTime = weekend ? mapShelterRow.weekendOpenTime() : mapShelterRow.weekdayOpenTime();
+        String toTime = weekend ? mapShelterRow.weekendCloseTime() : mapShelterRow.weekdayCloseTime();
 
-        String from = formatHm(fromT);
-        String to = formatHm(toT);
+        String from = normalizeHm(fromTime);
+        String to = normalizeHm(toTime);
+
+        String hours = mergeHours(from, to);
 
         return new MapShelterResponse(
                 mapShelterRow.id(),
@@ -96,13 +97,35 @@ public class ShelterMapService {
                 mapShelterRow.hasAircon(),
                 mapShelterRow.capacity(),
                 mapShelterRow.photoUrl(),
-                from,
-                to
+                hours
         );
     }
 
-    private String formatHm(LocalTime t) {
-        return (t == null) ? null : t.toString().substring(0, 5);
+    private String normalizeHm(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+
+        String digits = raw.replaceAll("\\D+", "");
+        if (digits.length() == 4) {
+            return digits.substring(0, 2) + ":" + digits.substring(2, 4);
+        }
+
+        return raw;
+    }
+
+    private String mergeHours(String from, String to) {
+        if (from == null && to == null) {
+            return null;
+        }
+        if (from == null) {
+            return "~" + to;
+        }
+        if (to == null) {
+            return from + "~";
+        }
+
+        return from + "~" + to;
     }
 
 }

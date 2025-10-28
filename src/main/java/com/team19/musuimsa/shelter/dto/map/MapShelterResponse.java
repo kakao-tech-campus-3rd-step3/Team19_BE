@@ -8,7 +8,6 @@ public record MapShelterResponse(
         Boolean hasAircon,
         Integer capacity,
         String photoUrl,
-        String openFrom,
-        String openTo
+        String operatingHours
 ) implements MapFeature {
 }
