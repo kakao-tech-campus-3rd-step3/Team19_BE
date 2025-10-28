@@ -28,9 +28,9 @@ class ShelterMapServiceTest {
 
         // repo summary 결과를 3개로 가정 (클러스터링 결과 count는 그룹 수)
         List<MapShelterResponse> three = List.of(
-                new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, null, null, null),
-                new MapShelterResponse(2L, "B", 37.1001, 127.1, false, 20, null, null, null),
-                new MapShelterResponse(3L, "C", 37.5, 127.5, true, 30, null, null, null)
+                new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, null, null),
+                new MapShelterResponse(2L, "B", 37.1001, 127.1, false, 20, null, null),
+                new MapShelterResponse(3L, "C", 37.5, 127.5, true, 30, null, null)
         );
         when(repo.findInBbox(any(), any(), any(), any(), any())).thenReturn(three);
 
@@ -56,13 +56,26 @@ class ShelterMapServiceTest {
         ShelterRepository repo = mock(ShelterRepository.class);
         ShelterMapService svc = new ShelterMapService(repo);
 
-        // 연속 호출 스텁: 1번째(요약), 2번째(상세)
-        when(repo.findInBbox(any(), any(), any(), any(), any()))
-                .thenReturn(
-                        List.of(new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, null, null, null)),   // 1st call
-                        List.of(new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, "u.jpg", "09:00", "18:00")) // 2nd call
-                );
         when(repo.countInBbox(any(), any(), any(), any())).thenReturn(42);
+
+        // 연속 호출 스텁: 1번째(summary), 2번째(detail)
+        when(repo.findInBboxWithHours(any(), any(), any(), any(), any()))
+                .thenReturn(
+                        List.of(
+                                new com.team19.musuimsa.shelter.dto.MapShelterRow(
+                                        1L, "A", 37.1, 127.1, true, 10, null,
+                                        "0900", "1800", "1000", "1600"
+                                )
+                        )
+                )
+                .thenReturn(
+                        List.of(
+                                new com.team19.musuimsa.shelter.dto.MapShelterRow(
+                                        1L, "A", 37.1, 127.1, true, 10, "u.jpg",
+                                        "09:00", "18:00", "10:00", "16:00"
+                                )
+                        )
+                );
 
         // zoom 14 → summary
         MapResponse summary = svc.getByBbox(new MapBoundsRequest(
@@ -70,7 +83,7 @@ class ShelterMapServiceTest {
         ));
         assertThat(summary.level()).isEqualTo("summary");
         assertThat(summary.total()).isEqualTo(42);
-        verify(repo, times(1)).findInBbox(any(), any(), any(), any(), any());
+        verify(repo, times(1)).findInBboxWithHours(any(), any(), any(), any(), any());
 
         // 호출 기록만 초기화(스텁은 유지)
         clearInvocations(repo);
@@ -81,7 +94,7 @@ class ShelterMapServiceTest {
         ));
         assertThat(detail.level()).isEqualTo("detail");
         assertThat(detail.total()).isEqualTo(42);
-        verify(repo, times(1)).findInBbox(any(), any(), any(), any(), any());
+        verify(repo, times(1)).findInBboxWithHours(any(), any(), any(), any(), any());
     }
 
 }

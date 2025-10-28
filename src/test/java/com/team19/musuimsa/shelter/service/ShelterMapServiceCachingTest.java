@@ -37,7 +37,7 @@ class ShelterMapServiceCachingTest {
             ShelterRepository repo = ctx.getBean(ShelterRepository.class);
 
             when(repo.findInBbox(any(), any(), any(), any(), any()))
-                    .thenReturn(List.of(new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, null, null, null)));
+                    .thenReturn(List.of(new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, null, null)));
             when(repo.countInBbox(any(), any(), any(), any())).thenReturn(1);
 
             MapBoundsRequest req = new MapBoundsRequest(37.0, 127.0, 37.2, 127.2, 14, 0, 200);
