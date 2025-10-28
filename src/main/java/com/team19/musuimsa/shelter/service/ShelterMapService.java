@@ -1,5 +1,6 @@
 package com.team19.musuimsa.shelter.service;
 
+import com.team19.musuimsa.shelter.dto.MapShelterRow;
 import com.team19.musuimsa.shelter.dto.map.ClusterFeature;
 import com.team19.musuimsa.shelter.dto.map.MapBoundsRequest;
 import com.team19.musuimsa.shelter.dto.map.MapFeature;
@@ -16,6 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,13 +52,15 @@ public class ShelterMapService {
             List<ClusterFeature> clusters = Clusterer.byGeohash(points, precision);
             return new MapResponse("cluster", new ArrayList<MapFeature>(clusters), total);
         } else if (req.zoom() < 16) {
-            List<MapShelterResponse> items = shelterRepository.findInBbox(
+            List<MapShelterRow> rows = shelterRepository.findInBboxWithHours(
                     minLat, minLng, maxLat, maxLng, pageable);
+            List<MapShelterResponse> items = rows.stream().map(this::toTodayResponse).toList();
             return new MapResponse("summary", new ArrayList<MapFeature>(items), total);
         } else {
             // TODO: 나중에 상세 내용 분리 예정 (쿼리 이용)
-            List<MapShelterResponse> items = shelterRepository.findInBbox(
+            List<MapShelterRow> rows = shelterRepository.findInBboxWithHours(
                     minLat, minLng, maxLat, maxLng, pageable);
+            List<MapShelterResponse> items = rows.stream().map(this::toTodayResponse).toList();
             return new MapResponse("detail", new ArrayList<MapFeature>(items), total);
         }
     }
@@ -68,4 +75,33 @@ public class ShelterMapService {
     private static BigDecimal toBigDecimal(double d) {
         return BigDecimal.valueOf(d);
     }
+
+    private MapShelterResponse toTodayResponse(MapShelterRow mapShelterRow) {
+        ZoneId kst = ZoneId.of("Asia/Seoul");
+        DayOfWeek dow = LocalDate.now(kst).getDayOfWeek();
+        boolean weekend = (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY);
+
+        LocalTime fromT = LocalTime.parse(weekend ? mapShelterRow.weekendOpenTime() : mapShelterRow.weekdayOpenTime());
+        LocalTime toT = LocalTime.parse(weekend ? mapShelterRow.weekendCloseTime() : mapShelterRow.weekdayCloseTime());
+
+        String from = formatHm(fromT);
+        String to = formatHm(toT);
+
+        return new MapShelterResponse(
+                mapShelterRow.id(),
+                mapShelterRow.name(),
+                mapShelterRow.latitude(),
+                mapShelterRow.longitude(),
+                mapShelterRow.hasAircon(),
+                mapShelterRow.capacity(),
+                mapShelterRow.photoUrl(),
+                from,
+                to
+        );
+    }
+
+    private String formatHm(LocalTime t) {
+        return (t == null) ? null : t.toString().substring(0, 5);
+    }
+
 }
