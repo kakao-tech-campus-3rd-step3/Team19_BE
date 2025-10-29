@@ -14,14 +14,20 @@ java {
     }
 }
 
+repositories {
+    mavenCentral()
+}
+
 configurations {
+    configureEach {
+        resolutionStrategy {
+            force 'com.google.guava:guava:32.0.1-android'
+            force 'com.google.protobuf:protobuf-java:4.28.2'
+        }
+    }
     compileOnly {
         extendsFrom annotationProcessor
     }
-}
-
-repositories {
-    mavenCentral()
 }
 
 dependencies {
@@ -38,13 +44,23 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     // Sprig Batch
     implementation 'org.springframework.boot:spring-boot-starter-batch'
+    // Actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
 
     // cache
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
     // AWS SDK v2 (S3)
     implementation platform("software.amazon.awssdk:bom:2.25.61")
     implementation "software.amazon.awssdk:s3"
+
+    // Firebase Admin SDK
+    implementation group: 'com.google.firebase', name: 'firebase-admin', version: '9.2.0'
+
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'

@@ -157,26 +157,26 @@ class UserServiceTest {
         @Test
         @DisplayName("성공")
         void reissueToken_Success() {
-            String oldRefreshToken = "Bearer oldRefreshToken";
-            String newRefreshToken = "Bearer newRefreshToken";
+            String oldRefreshTokenWithPrefix = "Bearer oldRefreshToken";
+            String oldPureRefreshToken = "oldRefreshToken";
             String newAccessToken = "newAccessToken";
-            String pureToken = "oldRefreshToken";
+            String newPureRefreshToken = "newRefreshToken";
 
-            user.updateRefreshToken(oldRefreshToken);
+            user.updateRefreshToken(oldPureRefreshToken);
             Claims claims = Jwts.claims().subject(user.getEmail()).build();
 
-            given(jwtUtil.validateToken(pureToken)).willReturn(true);
-            given(jwtUtil.getUserInfoFromToken(pureToken)).willReturn(claims);
+            given(jwtUtil.validateToken(oldPureRefreshToken)).willReturn(true);
+            given(jwtUtil.getUserInfoFromToken(oldPureRefreshToken)).willReturn(claims);
             given(userRepository.findByEmail(user.getEmail())).willReturn(Optional.of(user));
             given(jwtUtil.createAccessToken(user.getEmail())).willReturn(newAccessToken);
-            given(jwtUtil.createRefreshToken(user.getEmail())).willReturn(newRefreshToken);
+            given(jwtUtil.createRefreshToken(user.getEmail())).willReturn(newPureRefreshToken);
 
-            TokenResponse tokenResponse = userService.reissueToken(oldRefreshToken);
+            TokenResponse tokenResponse = userService.reissueToken(oldRefreshTokenWithPrefix);
 
             SoftAssertions.assertSoftly(softly -> {
                 softly.assertThat(tokenResponse.accessToken()).isEqualTo(newAccessToken);
-                softly.assertThat(tokenResponse.refreshToken()).isEqualTo(newRefreshToken);
-                softly.assertThat(user.getRefreshToken().getToken()).isEqualTo(newRefreshToken);
+                softly.assertThat(tokenResponse.refreshToken()).isEqualTo(newPureRefreshToken);
+                softly.assertThat(user.getRefreshToken().getToken()).isEqualTo(newPureRefreshToken);
             });
         }
 

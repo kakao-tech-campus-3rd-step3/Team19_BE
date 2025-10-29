@@ -8,12 +8,16 @@ import com.team19.musuimsa.exception.conflict.NicknameDuplicateException;
 import com.team19.musuimsa.exception.notfound.UserNotFoundException;
 import com.team19.musuimsa.user.domain.RefreshToken;
 import com.team19.musuimsa.user.domain.User;
+import com.team19.musuimsa.user.domain.UserDevice;
 import com.team19.musuimsa.user.dto.LoginRequest;
 import com.team19.musuimsa.user.dto.SignUpRequest;
 import com.team19.musuimsa.user.dto.TokenResponse;
+import com.team19.musuimsa.user.dto.UserDeviceRegisterRequest;
+import com.team19.musuimsa.user.dto.UserLocationUpdateRequest;
 import com.team19.musuimsa.user.dto.UserPasswordUpdateRequest;
 import com.team19.musuimsa.user.dto.UserResponse;
 import com.team19.musuimsa.user.dto.UserUpdateRequest;
+import com.team19.musuimsa.user.repository.UserDeviceRepository;
 import com.team19.musuimsa.user.repository.UserRepository;
 import com.team19.musuimsa.util.JwtUtil;
 import java.util.Objects;
@@ -28,10 +32,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserDeviceRepository userDeviceRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-
-    private static final String DEFAULT_PROFILE_IMAGE_URL = "https://wikis.krsocsci.org/images/a/aa/%EA%B8%B0%EB%B3%B8_%ED%94%84%EB%A1%9C%ED%95%84.png";
 
     public Long signUp(SignUpRequest signUpRequest) {
         checkDuplicateUser(signUpRequest);
@@ -39,8 +42,8 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(signUpRequest.password());
 
         String profileImageUrl = signUpRequest.profileImageUrl();
-        if (profileImageUrl == null || profileImageUrl.isEmpty()) {
-            profileImageUrl = DEFAULT_PROFILE_IMAGE_URL;
+        if (profileImageUrl == null || profileImageUrl.isBlank()) {
+            profileImageUrl = "";
         }
 
         User user = new User(
@@ -93,7 +96,7 @@ public class UserService {
 
         // 3. DB에 저장된 토큰과 일치하는지 확인
         if (user.getRefreshToken() == null || !user.getRefreshToken().getToken()
-                .equals(refreshToken)) {
+                .equals(pureToken)) {
             throw new InvalidRefreshTokenException();
         }
 
@@ -163,5 +166,17 @@ public class UserService {
     private User getUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
+    public void updateUserLocation(Long userId, UserLocationUpdateRequest request) {
+        User user = getUserById(userId);
+        user.updateLocation(request.latitude(), request.longitude());
+    }
+
+    public UserDevice registerUserDevice(Long userId, UserDeviceRegisterRequest request) {
+        User user = getUserById(userId);
+        UserDevice userDevice = new UserDevice(user, request.deviceToken());
+
+        return userDeviceRepository.save(userDevice);
     }
 }
