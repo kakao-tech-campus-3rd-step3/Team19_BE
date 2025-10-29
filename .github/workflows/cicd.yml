@@ -122,6 +122,7 @@ jobs:
               -e spring.datasource.username="${{ secrets.DB_USERNAME }}" \
               -e spring.datasource.password="${{ secrets.DB_PASSWORD }}" \
               -e spring.data.redis.host="${{ secrets.REDIS_HOST }}" \
+              -e spring.data.redis.password="${{ secrets.REDIS_PASSWORD }}" \
               --restart unless-stopped \
               $AWS_ECR_URI:latest
             
