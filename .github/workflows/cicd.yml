@@ -108,6 +108,8 @@ jobs:
             sudo docker run -d \
               --name musuimsa-app \
               -p 8080:8080 \
+              --log-opt max-size=10m \
+              --log-opt max-file=3 \
               -v $(pwd)/firebase-service-account-key.json:/app/firebase-key.json \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e "fcm.service-account-key-path=file:/app/firebase-key.json" \
