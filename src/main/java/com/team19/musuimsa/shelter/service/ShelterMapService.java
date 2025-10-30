@@ -107,11 +107,15 @@ public class ShelterMapService {
         }
 
         String digits = raw.replaceAll("\\D+", "");
-        if (digits.length() == 4) {
-            return digits.substring(0, 2) + ":" + digits.substring(2, 4);
+        if (digits.length() < 3 || digits.length() > 4) {
+            return raw;
         }
 
-        return raw;
+        if (digits.length() == 3) {
+            digits = "0" + digits;
+        }
+
+        return digits.substring(0, 2) + ":" + digits.substring(2, 4);
     }
 
     private String mergeHours(String from, String to) {
