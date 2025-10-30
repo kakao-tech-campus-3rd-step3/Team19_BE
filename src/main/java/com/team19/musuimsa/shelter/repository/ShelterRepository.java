@@ -1,8 +1,8 @@
 package com.team19.musuimsa.shelter.repository;
 
 import com.team19.musuimsa.shelter.domain.Shelter;
-import com.team19.musuimsa.shelter.dto.MapShelterRow;
 import com.team19.musuimsa.shelter.dto.map.MapShelterResponse;
+import com.team19.musuimsa.shelter.dto.map.MapShelterRow;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -66,7 +66,7 @@ public interface ShelterRepository extends JpaRepository<Shelter, Long> {
             Pageable pageable);
 
     @Query("""
-              SELECT new com.team19.musuimsa.shelter.dto.MapShelterRow(
+              SELECT new com.team19.musuimsa.shelter.dto.map.MapShelterRow(
                 s.shelterId,
                 s.name,
                 cast(s.latitude  as double),

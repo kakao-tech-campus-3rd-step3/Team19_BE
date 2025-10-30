@@ -1,11 +1,11 @@
 package com.team19.musuimsa.shelter.service;
 
-import com.team19.musuimsa.shelter.dto.MapShelterRow;
 import com.team19.musuimsa.shelter.dto.map.ClusterFeature;
 import com.team19.musuimsa.shelter.dto.map.MapBoundsRequest;
 import com.team19.musuimsa.shelter.dto.map.MapFeature;
 import com.team19.musuimsa.shelter.dto.map.MapResponse;
 import com.team19.musuimsa.shelter.dto.map.MapShelterResponse;
+import com.team19.musuimsa.shelter.dto.map.MapShelterRow;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.shelter.util.Clusterer;
 import com.team19.musuimsa.shelter.util.GeoHashUtil;

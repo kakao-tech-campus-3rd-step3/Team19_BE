@@ -3,6 +3,7 @@ package com.team19.musuimsa.shelter.service;
 import com.team19.musuimsa.shelter.dto.map.MapBoundsRequest;
 import com.team19.musuimsa.shelter.dto.map.MapResponse;
 import com.team19.musuimsa.shelter.dto.map.MapShelterResponse;
+import com.team19.musuimsa.shelter.dto.map.MapShelterRow;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -62,7 +63,7 @@ class ShelterMapServiceTest {
         when(repo.findInBboxWithHours(any(), any(), any(), any(), any()))
                 .thenReturn(
                         List.of(
-                                new com.team19.musuimsa.shelter.dto.MapShelterRow(
+                                new MapShelterRow(
                                         1L, "A", 37.1, 127.1, true, 10, null,
                                         "0900", "1800", "1000", "1600"
                                 )
@@ -70,7 +71,7 @@ class ShelterMapServiceTest {
                 )
                 .thenReturn(
                         List.of(
-                                new com.team19.musuimsa.shelter.dto.MapShelterRow(
+                                new MapShelterRow(
                                         1L, "A", 37.1, 127.1, true, 10, "u.jpg",
                                         "09:00", "18:00", "10:00", "16:00"
                                 )
