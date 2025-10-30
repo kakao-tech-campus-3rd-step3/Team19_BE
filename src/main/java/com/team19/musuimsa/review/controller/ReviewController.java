@@ -83,7 +83,7 @@ public class ReviewController {
     // 내가 쓴 리뷰 조회
     @GetMapping("/users/me/reviews")
     public ResponseEntity<List<ReviewResponse>> getReviewByUser(
-            @AuthenticationPrincipal User user) {
+            @AuthenticationPrincipal(expression = "user") User user) {
 
         List<ReviewResponse> reviews = reviewService.getReviewsByUser(user);
 
