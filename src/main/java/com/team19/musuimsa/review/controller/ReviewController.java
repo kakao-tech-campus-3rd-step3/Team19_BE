@@ -181,7 +181,7 @@ public class ReviewController {
     })
     @GetMapping("/users/me/reviews")
     public ResponseEntity<List<ReviewResponse>> getReviewByUser(
-            @Parameter(hidden = true) @AuthenticationPrincipal User user) {
+            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
 
         List<ReviewResponse> reviews = reviewService.getReviewsByUser(user);
 

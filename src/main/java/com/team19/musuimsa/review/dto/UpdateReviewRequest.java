@@ -5,10 +5,11 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 @Schema(description = "리뷰 수정 요청 데이터")
 public record UpdateReviewRequest(
-        @NotBlank
+        @NotBlank @Size(max = 100, message = "리뷰는 100자까지 작성 가능합니다.")
         @Schema(description = "리뷰 내용", example = "정말 좋아요!")
         String content,
 
