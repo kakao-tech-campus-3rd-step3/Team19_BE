@@ -9,6 +9,10 @@ import com.team19.musuimsa.weather.dto.WeatherResponse;
 import com.team19.musuimsa.weather.util.KmaGrid;
 import com.team19.musuimsa.weather.util.KmaTime;
 import jakarta.annotation.PostConstruct;
+import java.net.URI;
+import java.time.Clock;
+import java.time.ZoneId;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,11 +20,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
-
-import java.net.URI;
-import java.time.Clock;
-import java.time.ZoneId;
-import java.util.List;
 
 @Slf4j
 @Service
@@ -42,37 +41,28 @@ public class WeatherService {
         log.info("[WeatherService] KMA baseUrl = {}", baseUrl);
     }
 
-    @Cacheable(cacheNames = "weather", key = "#root.target.gridKey(#latitude, #longitude) + ':t1h'")
+    // 최신 기준시각에서 조회 실패/무자료면 -1h, -2h 순으로 폴백. KMA가 갓 갱신된 시각에 데이터를 늦게 올리는 경우를 흡수한다.
+    @Cacheable(cacheManager = "caffeineCacheManager", cacheNames = "weather",
+            key = "#root.target.gridKey(#latitude, #longitude) + ':t1h'")
     public WeatherResponse getCurrentTemp(double latitude, double longitude) {
         NxNy grid = KmaGrid.fromLatLon(latitude, longitude);
         Clock kstClock = Clock.system(ZoneId.of("Asia/Seoul"));
 
         KmaTime.Base baseTime = KmaTime.latestBase(kstClock);
-        Double t1h = fetchT1H(baseTime.date(), baseTime.time(), grid.nx(), grid.ny());
+
+        // 0h(현재 기준), -1h, -2h 순서로 시도
+        Double t1h = tryFetchWithFallbacks(baseTime, grid, 0, 1, 2);
+        KmaTime.Base usedBase = baseTime;
 
         if (t1h == null) {
-            KmaTime.Base previousBaseTime = KmaTime.minusHours(baseTime, 1);
-            Double fallback = fetchT1H(previousBaseTime.date(), previousBaseTime.time(), grid.nx(),
-                    grid.ny());
-            if (fallback != null) {
-                baseTime = previousBaseTime;
-                t1h = fallback;
-            }
-        }
-
-        if (t1h == null) {
-            String requestInfo =
-                    "base=" + baseTime.date() + " " + baseTime.time() + ", nx=" + grid.nx()
-                            + ", ny="
-                            + grid.ny();
-            String message = "기상청 응답에 현재기온이 없음. " + requestInfo;
-
-            log.warn("{} / request info: {}", message, requestInfo);
-
+            // 어떤 시각에서도 못 받았으면 에러
+            String requestInfo = "base=" + baseTime.date() + " " + baseTime.time()
+                    + ", nx=" + grid.nx() + ", ny=" + grid.ny();
+            log.warn("기상청 응답에 현재기온이 없음. {}", requestInfo);
             throw new ExternalApiException(requestInfo);
         }
 
-        return new WeatherResponse(t1h, baseTime.date(), baseTime.time());
+        return new WeatherResponse(t1h, usedBase.date(), usedBase.time());
     }
 
     public String gridKey(double latitude, double longitude) {
@@ -80,53 +70,75 @@ public class WeatherService {
         return grid.nx() + "-" + grid.ny();
     }
 
+    private Double tryFetchWithFallbacks(KmaTime.Base base, NxNy grid, int... minusHours) {
+        for (int h : minusHours) {
+            KmaTime.Base b = (h == 0) ? base : KmaTime.minusHours(base, h);
+            Double v = safeFetchT1H(b.date(), b.time(), grid.nx(), grid.ny());
+            if (v != null) {
+                return v;
+            }
+        }
+        return null;
+    }
+
+    // 외부 예외를 던지지 않고 null로 흘려보내 폴백을 유도
+    private Double safeFetchT1H(String baseDate, String baseTime, int nx, int ny) {
+        try {
+            return fetchT1H(baseDate, baseTime, nx, ny);
+        } catch (ExternalApiException e) {
+            log.warn("KMA 호출 실패(폴백 예정). baseDate={}, baseTime={}, nx={}, ny={}, msg={}",
+                    baseDate, baseTime, nx, ny, e.getMessage());
+            return null;
+        } catch (Exception e) {
+            log.warn("KMA 호출 예외(폴백 예정). {} - {} / baseDate={}, baseTime={}, nx={}, ny={}",
+                    e.getClass().getSimpleName(), e.getMessage(), baseDate, baseTime, nx, ny);
+            return null;
+        }
+    }
+
+    // KMA resultCode != "00" 이면 예외를 던지지 않고 null 반환 → 상위 폴백 유도
     private Double fetchT1H(String baseDate, String baseTime, int nx, int ny) {
         URI uri = buildUri(baseDate, baseTime, nx, ny);
         String requestInfo = "base=" + baseDate + " " + baseTime + ", nx=" + nx + ", ny=" + ny;
 
-        try {
-            KmaResponse kmaResponse = restClient.get().uri(uri).retrieve().body(KmaResponse.class);
+        log.debug("KMA request uri={}", uri);
 
-            if (kmaResponse == null || kmaResponse.response() == null) {
-                return null;
-            }
+        KmaResponse kmaResponse = restClient.get().uri(uri).retrieve().body(KmaResponse.class);
 
-            Header header = kmaResponse.response().header();
-            if (header != null) {
-                String code = header.resultCode();
-                String message = header.resultMsg();
-
-                if (code != null && !KMA_SUCCESS_CODE.equals(code)) {
-                    log.warn("기상청 오류 resultCode={}, resultMsg={}, requestInfo={}", code, message,
-                            requestInfo);
-                    throw new ExternalApiException(requestInfo);
-                }
-            }
-
-            if (kmaResponse.response().body() == null
-                    || kmaResponse.response().body().items() == null) {
-                return null;
-            }
-            List<Item> list = kmaResponse.response().body().items().item();
-            if (list == null) {
-                return null;
-            }
-
-            // T1H 값 추출
-            for (Item item : list) {
-                if ("T1H".equals(item.category())) {
-                    String value = item.obsrValue();
-                    return value == null ? null : Double.valueOf(value);
-                }
-            }
+        if (kmaResponse == null || kmaResponse.response() == null) {
             return null;
-        } catch (ExternalApiException e) {
-            throw e;
-        } catch (Exception e) {
-            log.warn("기상청 호출 실패: {} - {} / requestInfo={}", e.getClass().getSimpleName(),
-                    e.getMessage(), requestInfo);
-            throw new ExternalApiException(requestInfo);
         }
+
+        Header header = kmaResponse.response().header();
+        if (header != null) {
+            String code = header.resultCode();
+            String message = header.resultMsg();
+
+            if (code != null && !KMA_SUCCESS_CODE.equals(code)) {
+                // null 반환하여 상위 폴백을 유도
+                log.warn("KMA 무자료/오류 resultCode={}, resultMsg={}, requestInfo={}",
+                        code, message, requestInfo);
+                return null;
+            }
+        }
+
+        if (kmaResponse.response().body() == null
+                || kmaResponse.response().body().items() == null) {
+            return null;
+        }
+        List<Item> list = kmaResponse.response().body().items().item();
+        if (list == null) {
+            return null;
+        }
+
+        // T1H 값 추출
+        for (Item item : list) {
+            if ("T1H".equals(item.category())) {
+                String value = item.obsrValue();
+                return value == null ? null : Double.valueOf(value);
+            }
+        }
+        return null;
     }
 
     private URI buildUri(String baseDate, String baseTime, int nx, int ny) {

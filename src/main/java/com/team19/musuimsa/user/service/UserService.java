@@ -118,15 +118,17 @@ public class UserService {
     }
 
     public UserResponse updateUserInfo(UserUpdateRequest userUpdateRequest, User loginUser) {
+        User user = getUserById(loginUser.getUserId());
+
         String newNickname = userUpdateRequest.nickname();
         String newProfileImageUrl = userUpdateRequest.profileImageUrl();
 
-        boolean isNicknameSame = Objects.equals(newNickname, loginUser.getNickname());
+        boolean isNicknameSame = Objects.equals(newNickname, user.getNickname());
         boolean isProfileImageUrlSame = Objects.equals(newProfileImageUrl,
-                loginUser.getProfileImageUrl());
+                user.getProfileImageUrl());
 
         if (isNicknameSame && isProfileImageUrlSame) {
-            return UserResponse.from(loginUser);
+            return UserResponse.from(user);
         }
 
         if (!isNicknameSame && newNickname != null && !newNickname.isEmpty()) {
@@ -135,22 +137,25 @@ public class UserService {
             });
         }
 
-        loginUser.updateUser(newNickname, newProfileImageUrl);
+        user.updateUser(newNickname, newProfileImageUrl);
 
-        return UserResponse.from(loginUser);
+        return UserResponse.from(user);
     }
 
     public void updateUserPassword(UserPasswordUpdateRequest requestDto, User loginUser) {
-        if (!passwordEncoder.matches(requestDto.currentPassword(), loginUser.getPassword())) {
+        User user = getUserById(loginUser.getUserId());
+
+        if (!passwordEncoder.matches(requestDto.currentPassword(), user.getPassword())) {
             throw new InvalidPasswordException();
         }
 
         String newEncodedPassword = passwordEncoder.encode(requestDto.newPassword());
-        loginUser.updatePassword(newEncodedPassword);
+        user.updatePassword(newEncodedPassword);
     }
 
     public void deleteUser(User loginUser) {
-        userRepository.delete(loginUser);
+        User user = getUserById(loginUser.getUserId());
+        userRepository.delete(user);
     }
 
     private void checkDuplicateUser(SignUpRequest signUpRequest) {
