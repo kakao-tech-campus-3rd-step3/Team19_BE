@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Profile;
 @Profile({"dev", "prod"})
 @EnableCaching
 @Configuration
-public class CacheConfig {
+public class CaffeineCacheConfig {
 
     @Value("${cache.weather.expire-after-write}")
     private Duration weatherExpireAfterWrite;
