@@ -1,7 +1,6 @@
 package com.team19.musuimsa.shelter.controller;
 
 import com.team19.musuimsa.exception.dto.ErrorResponseDto;
-import com.team19.musuimsa.shelter.dto.BatchReport;
 import com.team19.musuimsa.shelter.dto.BatchUpdateResponse;
 import com.team19.musuimsa.shelter.dto.ShelterImportResponse;
 import com.team19.musuimsa.shelter.dto.ShelterPhotoUrlUpdateResponse;
@@ -16,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +23,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
+
+@Profile("dev")
 @Tag(name = "관리자 API", description = "데이터 임포트 및 관리용 API (내부용)")
 @RestController
 @RequestMapping("/api/admin/shelters")
@@ -89,13 +92,7 @@ public class ShelterAdminController {
             @Parameter(description = "최대 실행할 페이지 수 (무한 실행 방지)", example = "100")
             @RequestParam(defaultValue = "100") int maxPages
     ) {
-        BatchReport batchReport = photoService.updateAllMissing(pageSize, maxPages);
-        return ResponseEntity.ok(
-                new BatchUpdateResponse(
-                        batchReport.processed(),
-                        batchReport.updated(),
-                        batchReport.failed()
-                )
-        );
+        BatchUpdateResponse batchReport = photoService.updateAllMissing(pageSize, maxPages);
+        return ResponseEntity.ok(batchReport);
     }
 }

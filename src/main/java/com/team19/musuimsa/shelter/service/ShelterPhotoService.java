@@ -2,7 +2,7 @@ package com.team19.musuimsa.shelter.service;
 
 import com.team19.musuimsa.mapillary.MapillaryPhotoAgent;
 import com.team19.musuimsa.shelter.domain.Shelter;
-import com.team19.musuimsa.shelter.dto.BatchReport;
+import com.team19.musuimsa.shelter.dto.BatchUpdateResponse;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,7 +58,7 @@ public class ShelterPhotoService {
     }
 
     // photoUrl이 비어있는 쉼터만 페이징으로 채우기
-    public BatchReport updateAllMissing(int pageSize, int maxPages) {
+    public BatchUpdateResponse updateAllMissing(int pageSize, int maxPages) {
         int processed = 0;
         int updated = 0;
         int failed = 0;
@@ -86,6 +86,6 @@ public class ShelterPhotoService {
                 }
             }
         }
-        return new BatchReport(processed, updated, failed);
+        return new BatchUpdateResponse(processed, updated, failed);
     }
 }
