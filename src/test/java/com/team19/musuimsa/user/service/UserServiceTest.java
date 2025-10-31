@@ -205,6 +205,7 @@ class UserServiceTest {
                     "newProfile.jpg");
             given(userRepository.findByNickname(requestDto.nickname())).willReturn(
                     Optional.empty());
+            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
 
             UserResponse responseDto = userService.updateUserInfo(requestDto,
                     user);
@@ -222,6 +223,7 @@ class UserServiceTest {
                     user.getProfileImageUrl());
             given(userRepository.findByNickname(requestDto.nickname())).willReturn(
                     Optional.empty());
+            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
 
             UserResponse responseDto = userService.updateUserInfo(requestDto,
                     user);
@@ -236,6 +238,8 @@ class UserServiceTest {
         @Test
         @DisplayName("성공 - 프로필 이미지만 변경")
         void updateUserInfo_Success_OnlyProfileImage() {
+            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
+
             UserUpdateRequest requestDto = new UserUpdateRequest(user.getNickname(),
                     "newProfile.jpg");
 
@@ -252,6 +256,8 @@ class UserServiceTest {
         @Test
         @DisplayName("성공 - 변경 사항 없음")
         void updateUserInfo_Success_NoChanges() {
+            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
+
             UserUpdateRequest requestDto = new UserUpdateRequest(user.getNickname(),
                     user.getProfileImageUrl());
 
@@ -268,6 +274,8 @@ class UserServiceTest {
         @Test
         @DisplayName("성공 - null 또는 빈 값으로 요청 시 기존 정보 유지")
         void updateUserInfo_Success_NullAndEmptyValues() {
+            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
+
             UserUpdateRequest requestDto = new UserUpdateRequest(null, "");
 
             UserResponse responseDto = userService.updateUserInfo(requestDto, user);
@@ -288,6 +296,7 @@ class UserServiceTest {
             User existingUser = new User("exist@example.com", "password", "newNickname", "p.jpg");
             given(userRepository.findByNickname(requestDto.nickname())).willReturn(
                     Optional.of(existingUser));
+            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
 
             assertThrows(NicknameDuplicateException.class,
                     () -> userService.updateUserInfo(requestDto, user));
@@ -307,6 +316,7 @@ class UserServiceTest {
                     user.getPassword())).willReturn(true);
             given(passwordEncoder.encode(requestDto.newPassword())).willReturn(
                     "newEncodedPassword");
+            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
 
             userService.updateUserPassword(requestDto, user);
 
@@ -320,6 +330,7 @@ class UserServiceTest {
                     "wrongPassword", "newPassword");
             given(passwordEncoder.matches(requestDto.currentPassword(),
                     user.getPassword())).willReturn(false);
+            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
 
             assertThrows(InvalidPasswordException.class,
                     () -> userService.updateUserPassword(requestDto, user));
@@ -333,6 +344,8 @@ class UserServiceTest {
         @Test
         @DisplayName("성공")
         void deleteUser_Success() {
+            given(userRepository.findById(user.getUserId())).willReturn(Optional.of(user));
+            
             userService.deleteUser(user);
 
             verify(userRepository, times(1)).delete(user);
