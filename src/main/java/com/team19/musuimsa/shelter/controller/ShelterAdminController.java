@@ -51,12 +51,6 @@ public class ShelterAdminController {
             @RequestParam(defaultValue = "100") int maxPages
     ) {
         BatchUpdateResponse batchReport = photoService.updateAllMissing(pageSize, maxPages);
-        return ResponseEntity.ok(
-                new BatchUpdateResponse(
-                        batchReport.processed(),
-                        batchReport.updated(),
-                        batchReport.failed()
-                )
-        );
+        return ResponseEntity.ok(batchReport);
     }
 }
