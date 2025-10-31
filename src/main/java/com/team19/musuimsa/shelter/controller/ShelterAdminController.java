@@ -1,6 +1,5 @@
 package com.team19.musuimsa.shelter.controller;
 
-import com.team19.musuimsa.shelter.dto.BatchReport;
 import com.team19.musuimsa.shelter.dto.BatchUpdateResponse;
 import com.team19.musuimsa.shelter.dto.ShelterImportResponse;
 import com.team19.musuimsa.shelter.dto.ShelterPhotoUrlUpdateResponse;
@@ -51,7 +50,7 @@ public class ShelterAdminController {
             @RequestParam(defaultValue = "100") int pageSize,
             @RequestParam(defaultValue = "100") int maxPages
     ) {
-        BatchReport batchReport = photoService.updateAllMissing(pageSize, maxPages);
+        BatchUpdateResponse batchReport = photoService.updateAllMissing(pageSize, maxPages);
         return ResponseEntity.ok(
                 new BatchUpdateResponse(
                         batchReport.processed(),
