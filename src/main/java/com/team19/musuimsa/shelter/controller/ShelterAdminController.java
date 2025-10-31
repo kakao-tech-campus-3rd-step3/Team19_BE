@@ -7,6 +7,7 @@ import com.team19.musuimsa.shelter.dto.ShelterPhotoUrlUpdateResponse;
 import com.team19.musuimsa.shelter.service.ShelterImportService;
 import com.team19.musuimsa.shelter.service.ShelterPhotoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
 
+@Profile("dev")
 @RestController
 @RequestMapping("/api/admin/shelters")
 @RequiredArgsConstructor
