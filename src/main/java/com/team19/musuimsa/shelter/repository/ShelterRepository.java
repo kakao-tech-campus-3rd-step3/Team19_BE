@@ -2,6 +2,7 @@ package com.team19.musuimsa.shelter.repository;
 
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.dto.map.MapShelterResponse;
+import com.team19.musuimsa.shelter.dto.map.MapShelterRow;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -51,7 +52,6 @@ public interface ShelterRepository extends JpaRepository<Shelter, Long> {
                 CASE WHEN coalesce(s.airConditionerCount, 0) > 0 THEN true ELSE false END,
                 s.capacity,
                 s.photoUrl,
-                cast(null as string),
                 cast(null as string)
               )
               FROM Shelter s
@@ -59,6 +59,31 @@ public interface ShelterRepository extends JpaRepository<Shelter, Long> {
                 AND s.longitude BETWEEN :minLng AND :maxLng
             """)
     List<MapShelterResponse> findInBbox(
+            @Param("minLat") BigDecimal minLat,
+            @Param("minLng") BigDecimal minLng,
+            @Param("maxLat") BigDecimal maxLat,
+            @Param("maxLng") BigDecimal maxLng,
+            Pageable pageable);
+
+    @Query("""
+              SELECT new com.team19.musuimsa.shelter.dto.map.MapShelterRow(
+                s.shelterId,
+                s.name,
+                cast(s.latitude  as double),
+                cast(s.longitude as double),
+                CASE WHEN coalesce(s.airConditionerCount, 0) > 0 THEN true ELSE false END,
+                s.capacity,
+                s.photoUrl,
+                cast(s.weekdayOpenTime  as string),
+                cast(s.weekdayCloseTime as string),
+                cast(s.weekendOpenTime  as string),
+                cast(s.weekendCloseTime as string)
+              )
+              FROM Shelter s
+              WHERE s.latitude  BETWEEN :minLat AND :maxLat
+                AND s.longitude BETWEEN :minLng AND :maxLng
+            """)
+    List<MapShelterRow> findInBboxWithHours(
             @Param("minLat") BigDecimal minLat,
             @Param("minLng") BigDecimal minLng,
             @Param("maxLat") BigDecimal maxLat,

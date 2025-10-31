@@ -1,6 +1,6 @@
 package com.team19.musuimsa.shelter.dto.map;
 
-public record MapShelterResponse(
+public record MapShelterRow(
         Long id,
         String name,
         double latitude,
@@ -8,6 +8,10 @@ public record MapShelterResponse(
         Boolean hasAircon,
         Integer capacity,
         String photoUrl,
-        String operatingHours
-) implements MapFeature {
+        String weekdayOpenTime,
+        String weekdayCloseTime,
+        String weekendOpenTime,
+        String weekendCloseTime
+) {
 }
+
