@@ -1,16 +1,13 @@
 package com.team19.musuimsa.shelter.service;
 
-import com.team19.musuimsa.exception.external.ExternalApiException;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.dto.ChangedPoint;
 import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import com.team19.musuimsa.shelter.util.GeoHashUtil;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.dao.DataAccessResourceFailureException;
@@ -28,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -38,13 +36,11 @@ public class ShelterImportService {
 
     private final ShelterOpenApiClient shelterOpenApiClient;
 
-    @PersistenceContext
     private final EntityManager entityManager;
 
     private final CacheManager cacheManager;
 
-    @Autowired(required = false)
-    private StringRedisTemplate redisTemplate;
+    private final Optional<StringRedisTemplate> redisTemplate;
 
     private static final String SHELTERS_CACHE = "sheltersMap";
     private static final String CACHE_NAME_PREFIX = "musuimsa::" + SHELTERS_CACHE + "::v1:z";
@@ -57,107 +53,106 @@ public class ShelterImportService {
         // 위치가 바뀐 쉼터 모음
         List<ChangedPoint> moved = new ArrayList<>();
 
+        boolean success = false;
         try {
             while (true) {
                 long t0 = System.nanoTime();
-                try {
-                    log.info("[Shelter Import] ==== START page={} ====", page);
+                log.info("[Shelter Import] ==== START page={} ====", page);
 
-                    ExternalResponse res = shelterOpenApiClient.fetchPage(page);
-                    if (res == null) {
-                        log.warn("[Shelter Import] page={} 응답이 null 입니다.", page);
-                        break;
-                    }
-                    log.debug("[Shelter Import] page={} header={}, numOfRows={}, totalCount={}",
-                            page, res.header(), res.numOfRows(), res.totalCount());
-
-                    // DTO-엔티티 매핑
-                    List<ExternalShelterItem> items = safeItems(res);
-                    log.info("[Shelter Import] page={} 수신 아이템 수={}", page, items.size());
-
-                    for (ExternalShelterItem item : items) {
-                        // 1) 기존 값
-                        Shelter before = entityManager.find(Shelter.class, item.rstrFcltyNo());
-
-                        // 2) 저장할 값
-                        Shelter after = Shelter.toShelter(item);
-
-                        // 3) 위치 변경 감지(pre-merge)
-                        if (before != null
-                                && (notEquals(before.getLatitude(), after.getLatitude())
-                                || notEquals(before.getLongitude(), after.getLongitude()))) {
-
-                            moved.add(new ChangedPoint(
-                                    before.getShelterId(),
-                                    before.getLatitude(), before.getLongitude(),
-                                    after.getLatitude(), after.getLongitude()
-                            ));
-                        }
-
-                        // 4) merge
-                        entityManager.merge(after);
-                        saved++;
-                        changed = true;
-
-                        // 5) 대량 처리시 메모리 안정화
-                        if (saved % 500 == 0) {
-                            entityManager.flush();
-                            entityManager.clear();
-                        }
-                    }
-                    log.info("[Shelter Import] page={} merge 완료 (누적 저장 수={})", page, saved);
-
-                    // 페이지네이션 진행 판단
-                    int total = res.totalCount() == null ? 0 : res.totalCount();
-                    int rows = res.numOfRows() == null ? 0 : res.numOfRows();
-                    int lastPage = (rows > 0) ? (int) Math.ceil(total / (double) rows) : page;
-                    log.debug("[Shelter Import] page={} 페이지네이션: total={}, rows={}, lastPage={}", page,
-                            total, rows, lastPage);
-
-                    long elapsedMs = (System.nanoTime() - t0) / 1_000_000;
-                    log.info("[Shelter Import] ==== END page={} ({} ms) ====", page, elapsedMs);
-
-                    if (page >= lastPage) {
-                        break;
-                    }
-                    page++;
-
-                } catch (ExternalApiException e) {
-                    log.error("[Shelter Import] API 호출 실패 (page={}): {}", page, e.getMessage(), e);
-                    break;
-                } catch (Exception e) {
-                    log.error("[Shelter Import] 처리 중 예외 (page={}): {}", page, e.getMessage(), e);
+                ExternalResponse res = shelterOpenApiClient.fetchPage(page);
+                if (res == null) {
+                    log.warn("[Shelter Import] page={} 응답이 null 입니다.", page);
                     break;
                 }
+
+                List<ExternalShelterItem> items = safeItems(res);
+                log.info("[Shelter Import] page={} 수신 아이템 수={}", page, items.size());
+
+                for (ExternalShelterItem item : items) {
+                    // 1) 기존 값
+                    Shelter before = entityManager.find(Shelter.class, item.rstrFcltyNo());
+
+                    if (before == null) {
+                        // 2) 저장할 값
+                        Shelter after = Shelter.toShelter(item);
+                        entityManager.persist(after);
+                        saved++;
+                        changed = true;
+                    } else {
+                        BigDecimal oldLat = before.getLatitude();
+                        BigDecimal oldLng = before.getLongitude();
+
+                        boolean anyChanged = before.updateFrom(item);
+                        if (anyChanged) {
+                            saved++;
+                            changed = true;
+                            if (notEquals(oldLat, before.getLatitude()) || notEquals(oldLng, before.getLongitude())) {
+                                moved.add(
+                                        new ChangedPoint(
+                                                before.getShelterId(),
+                                                oldLat,
+                                                oldLng,
+                                                before.getLatitude(),
+                                                before.getLongitude()
+                                        )
+                                );
+                            }
+                        }
+                    }
+
+                    if (saved % 500 == 0) {
+                        entityManager.flush();
+                        entityManager.clear();
+                    }
+                }
+
+                // 페이지네이션 진행 판단
+                int total = res.totalCount() == null ? 0 : res.totalCount();
+                int rows = res.numOfRows() == null ? 0 : res.numOfRows();
+                int lastPage = (rows > 0) ? (int) Math.ceil(total / (double) rows) : page;
+                log.info("[Shelter Import] ==== END page={} ({} ms) ====", page, (System.nanoTime() - t0) / 1_000_000);
+
+                if (page >= lastPage) {
+                    break;
+                }
+                page++;
             }
+            success = true; // 예외 없이 끝난 경우
         } finally {
-            // 변경이 있었으면 캐시 무효화 (커밋 이후)
-            if (changed) {
-                invalidateCacheAfterCommit(moved);
+            if (success) {
+                try {
+                    entityManager.flush();
+                } catch (Exception ignore) {
+                }
+
+                if (changed) {
+                    invalidateCacheAfterCommit(moved);
+                }
             }
         }
 
-        log.info("[Shelter Import] 종료. 총 저장 수={}", saved);
+        log.info("[Shelter Import] 정상 종료. 총 저장/갱신 수={}", saved);
         return saved;
     }
 
     // 커밋 이후 캐시 무효화 등록
     private void invalidateCacheAfterCommit(List<ChangedPoint> moved) {
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    doInvalidate(moved);
-                }
-            });
-        } else {
-            doInvalidate(moved);
+        if (!TransactionSynchronizationManager.isActualTransactionActive()) {
+            log.debug("[Shelter Import] no active tx -> skip cache invalidation");
+            return;
         }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                doInvalidate(moved);
+            }
+        });
     }
 
     private void doInvalidate(List<ChangedPoint> moved) {
         // Redis가 없거나(=dev), 선택 무효화 대상도 없으면 전체 clear
-        if (redisTemplate == null || moved == null || moved.isEmpty()) {
+        if (redisTemplate.isEmpty() || moved == null || moved.isEmpty()) {
             Cache cache = cacheManager.getCache(SHELTERS_CACHE);
             if (cache != null) {
                 cache.clear();
@@ -170,7 +165,7 @@ public class ShelterImportService {
 
         RedisConnection conn = null;
         try {
-            conn = Objects.requireNonNull(redisTemplate.getConnectionFactory()).getConnection();
+            conn = Objects.requireNonNull(redisTemplate.get().getConnectionFactory()).getConnection();
 
             Set<String> patterns = new HashSet<>();
             for (ChangedPoint p : moved) {
