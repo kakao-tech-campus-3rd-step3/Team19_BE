@@ -150,7 +150,7 @@ public class ShelterImportService {
         });
     }
 
-    private void doInvalidate(List<ChangedPoint> moved) {
+    void doInvalidate(List<ChangedPoint> moved) {
         // Redis가 없거나(=dev), 선택 무효화 대상도 없으면 전체 clear
         if (redisTemplate.isEmpty() || moved == null || moved.isEmpty()) {
             Cache cache = cacheManager.getCache(SHELTERS_CACHE);
