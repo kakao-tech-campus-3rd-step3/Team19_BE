@@ -1,5 +1,6 @@
 package com.team19.musuimsa.shelter.domain;
 
+import com.team19.musuimsa.batch.ShelterImportBatchConfig;
 import com.team19.musuimsa.shelter.dto.UpdateResultResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import jakarta.persistence.Column;
@@ -179,5 +180,16 @@ public class Shelter {
             isChanged = true;
         }
         return new UpdateResultResponse(isChanged, locationChanged);
+    }
+
+    public boolean updateFrom(ExternalShelterItem item) {
+        LocalTime wkOpen = ShelterImportBatchConfig.parseTime(item.wkdayOperBeginTime());
+        LocalTime wkClose = ShelterImportBatchConfig.parseTime(item.wkdayOperEndTime());
+        LocalTime weOpen = ShelterImportBatchConfig.parseTime(item.wkendHdayOperBeginTime());
+        LocalTime weClose = ShelterImportBatchConfig.parseTime(item.wkendHdayOperEndTime());
+
+        UpdateResultResponse r = this.updateShelterInfo(item, wkOpen, wkClose, weOpen, weClose);
+
+        return r.isChanged();
     }
 }
