@@ -1,6 +1,7 @@
 package com.team19.musuimsa.shelter.service;
 
 import com.team19.musuimsa.exception.external.ExternalApiException;
+import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
@@ -18,7 +19,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -45,10 +48,6 @@ class ShelterImportServiceTest {
     @DisplayName("importOnce - 두 페이지를 돌아가며 저장된 전체 건수를 합산한다. ")
     @Test
     void importOnce_savesAcrossPages_andAccumulatesCount() {
-        when(entityManager.merge(any())).thenAnswer(inv -> inv.getArgument(0));
-
-        when(cacheManager.getCache("sheltersMap")).thenReturn(sheltersCache);
-
         ExternalResponse page1 = resp(2, 1, 3, List.of(
                 item(1001L, "A", "서울특별시", bd(37.1), bd(127.1),
                         10, 1, 2, "0900", "1800", "1000", "1700", "002"),
@@ -66,7 +65,7 @@ class ShelterImportServiceTest {
         int saved = service.importOnce();
         assertThat(saved).isEqualTo(3);
 
-        verify(entityManager, times(3)).merge(any());
+        verify(entityManager, times(3)).persist(any(Shelter.class));
         verifyNoInteractions(shelterRepository);
 
         verify(client).fetchPage(1);
@@ -86,15 +85,13 @@ class ShelterImportServiceTest {
         int saved = service.importOnce();
         assertThat(saved).isEqualTo(0);
 
-        verifyNoInteractions(entityManager);
+        verify(entityManager, never()).persist(any());
         verifyNoInteractions(shelterRepository);
     }
 
     @DisplayName("importOnce - 외부 API 예외 발생 시 중단하고 누적 저장 수를 반환한다. ")
     @Test
     void importOnce_stopsOnExternalApiException() {
-        when(cacheManager.getCache("sheltersMap")).thenReturn(sheltersCache);
-
         ExternalResponse page1 = resp(2, 1, 4, List.of(
                 item(2001L, "X", "주소1", bd(37), bd(127),
                         5, 0, 0, "0800", "1700", null, null, "001")
@@ -105,11 +102,14 @@ class ShelterImportServiceTest {
         when(client.fetchPage(2)).thenThrow(
                 new ExternalApiException("GET /DSSP-IF-10942?pageNo=2"));
 
-        int saved = service.importOnce();
-        assertThat(saved).isEqualTo(1);
-
-        verify(entityManager, times(1)).merge(any());
+        assertThatThrownBy(() -> service.importOnce())
+                .isInstanceOf(ExternalApiException.class);
+        verify(entityManager, times(1)).persist(any(Shelter.class));
         verifyNoInteractions(shelterRepository);
+
+        verify(client).fetchPage(1);
+        verify(client).fetchPage(2);
+        verifyNoMoreInteractions(client);
     }
 
     private static BigDecimal bd(double v) {
