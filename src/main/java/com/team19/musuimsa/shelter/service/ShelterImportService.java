@@ -238,7 +238,6 @@ public class ShelterImportService {
 
     // 줌/위치/정밀도로 Redis 키 패턴 생성
     private static String keyPattern(int z, BigDecimal lat, BigDecimal lng, int precision) {
-        // GeoHashUtil.snapBbox(BigDecimal, BigDecimal, BigDecimal, BigDecimal, int) 사용
         String cell = GeoHashUtil.snapBbox(lat, lng, lat, lng, precision);
         return CACHE_NAME_PREFIX + z + ":gh:" + cell + ":*";
     }
