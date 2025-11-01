@@ -2,11 +2,13 @@ package com.team19.musuimsa.shelter.service;
 
 import com.team19.musuimsa.exception.external.ExternalApiException;
 import com.team19.musuimsa.shelter.domain.Shelter;
+import com.team19.musuimsa.shelter.dto.ChangedPoint;
 import com.team19.musuimsa.shelter.dto.external.ExternalResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -14,13 +16,22 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.redis.connection.RedisConnection;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisKeyCommands;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -110,6 +121,59 @@ class ShelterImportServiceTest {
         verify(client).fetchPage(1);
         verify(client).fetchPage(2);
         verifyNoMoreInteractions(client);
+    }
+
+    @Nested
+    class CacheInvalidation {
+        @Test
+        @DisplayName("Redis를 사용하지 않거나 moved 비어있으면 전체 캐시를 clear한다. ")
+        void invalidate_clearsAll_whenRedisMissingOrMovedEmpty() {
+            ShelterImportService svc = new ShelterImportService(
+                    client, entityManager, cacheManager, Optional.empty()
+            );
+            when(cacheManager.getCache("sheltersMap")).thenReturn(sheltersCache);
+
+            // moved = empty → 전체 clear
+            svc.doInvalidate(List.of());
+
+            verify(sheltersCache).clear();
+        }
+
+        @Test
+        @DisplayName("moved 지정 시 패턴 SCAN 후 선택 삭제(DEL)를 수행한다. ")
+        void invalidate_selectiveDeletion_scansAndDeletes() {
+            StringRedisTemplate redis = mock(StringRedisTemplate.class);
+            RedisConnectionFactory cf = mock(RedisConnectionFactory.class);
+            RedisConnection conn = mock(RedisConnection.class);
+            RedisKeyCommands keys = mock(RedisKeyCommands.class);
+
+            when(redis.getConnectionFactory()).thenReturn(cf);
+            when(cf.getConnection()).thenReturn(conn);
+            when(conn.keyCommands()).thenReturn(keys);
+
+            Cursor<byte[]> cursor = mock(Cursor.class);
+            when(cursor.hasNext()).thenReturn(true, false);
+            when(cursor.next()).thenReturn("k1".getBytes());
+
+            when(keys.scan(any(ScanOptions.class))).thenReturn(cursor);
+            when(keys.del(any(byte[][].class))).thenReturn(1L);
+
+            ShelterImportService svc = new ShelterImportService(
+                    client, entityManager, cacheManager, Optional.of(redis)
+            );
+
+            List<ChangedPoint> moved = List.of(
+                    new ChangedPoint(1L, bd(36.1), bd(127.1), bd(36.2), bd(127.2))
+            );
+
+            svc.doInvalidate(moved);
+
+            verify(keys, atLeastOnce()).scan(any(ScanOptions.class));
+            verify(keys, atLeastOnce()).del(any(byte[][].class));
+            verify(conn).close();
+
+            verifyNoInteractions(cacheManager);
+        }
     }
 
     private static BigDecimal bd(double v) {
