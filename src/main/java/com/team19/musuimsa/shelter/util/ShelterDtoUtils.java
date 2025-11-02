@@ -5,6 +5,7 @@ import com.team19.musuimsa.shelter.dto.NearbyShelterResponse;
 import com.team19.musuimsa.shelter.dto.OperatingHoursResponse;
 import com.team19.musuimsa.shelter.dto.ShelterResponse;
 
+import java.math.BigDecimal;
 import java.time.LocalTime;
 
 public final class ShelterDtoUtils {
@@ -38,7 +39,8 @@ public final class ShelterDtoUtils {
     public static String distanceFrom(double userLat, double userLng, Shelter shelter) {
         return distanceBetween(
                 userLat, userLng,
-                shelter.getLatitude().doubleValue(), shelter.getLongitude().doubleValue()
+                toDoubleOrZero(shelter.getLatitude()),
+                toDoubleOrZero(shelter.getLongitude())
         );
     }
 
@@ -53,10 +55,12 @@ public final class ShelterDtoUtils {
     }
 
     public static double average(Integer total, Integer count) {
-        if (count == 0) {
+        int c = toIntOrZero(count);
+
+        if (c == 0) {
             return 0.0;
         }
-        return total.doubleValue() / count;
+        return toIntOrZero(total) / (double) c;
     }
 
     public static NearbyShelterResponse toNearbyDto(Shelter shelter, String distance) {
@@ -64,10 +68,10 @@ public final class ShelterDtoUtils {
                 shelter.getShelterId(),
                 shelter.getName(),
                 shelter.getAddress(),
-                shelter.getLatitude().doubleValue(),
-                shelter.getLongitude().doubleValue(),
+                toDoubleOrZero(shelter.getLatitude()),
+                toDoubleOrZero(shelter.getLongitude()),
                 distance,
-                shelter.getIsOutdoors(),
+                toBooleanOrFalse(shelter.getIsOutdoors()),
                 new OperatingHoursResponse(
                         formatHours(shelter.getWeekdayOpenTime(), shelter.getWeekdayCloseTime()),
                         formatHours(shelter.getWeekendOpenTime(), shelter.getWeekendCloseTime())
@@ -82,19 +86,35 @@ public final class ShelterDtoUtils {
                 shelter.getShelterId(),
                 shelter.getName(),
                 shelter.getAddress(),
-                shelter.getLatitude().doubleValue(),
-                shelter.getLongitude().doubleValue(),
+                toDoubleOrZero(shelter.getLatitude()),
+                toDoubleOrZero(shelter.getLongitude()),
                 distance,
                 new OperatingHoursResponse(
                         formatHours(shelter.getWeekdayOpenTime(), shelter.getWeekdayCloseTime()),
                         formatHours(shelter.getWeekendOpenTime(), shelter.getWeekendCloseTime())
                 ),
-                shelter.getCapacity(),
-                shelter.getIsOutdoors(),
-                new ShelterResponse.CoolingEquipment(shelter.getFanCount(), shelter.getAirConditionerCount()),
-                shelter.getTotalRating(),
-                shelter.getReviewCount(),
+                toIntOrZero(shelter.getCapacity()),
+                toBooleanOrFalse(shelter.getIsOutdoors()),
+                new ShelterResponse.CoolingEquipment(
+                        toIntOrZero(shelter.getFanCount()),
+                        toIntOrZero(shelter.getAirConditionerCount())
+                ),
+                toIntOrZero(shelter.getTotalRating()),
+                toIntOrZero(shelter.getReviewCount()),
                 shelter.getPhotoUrl()
         );
+    }
+
+    // null-safe helpers
+    private static int toIntOrZero(Integer value) {
+        return value == null ? 0 : value;
+    }
+
+    private static boolean toBooleanOrFalse(Boolean value) {
+        return value != null && value;
+    }
+
+    private static double toDoubleOrZero(BigDecimal value) {
+        return value == null ? 0.0 : value.doubleValue();
     }
 }

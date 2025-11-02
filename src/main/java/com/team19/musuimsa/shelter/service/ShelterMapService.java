@@ -5,6 +5,7 @@ import com.team19.musuimsa.shelter.dto.map.MapBoundsRequest;
 import com.team19.musuimsa.shelter.dto.map.MapFeature;
 import com.team19.musuimsa.shelter.dto.map.MapResponse;
 import com.team19.musuimsa.shelter.dto.map.MapShelterResponse;
+import com.team19.musuimsa.shelter.dto.map.MapShelterRow;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.shelter.util.Clusterer;
 import com.team19.musuimsa.shelter.util.GeoHashUtil;
@@ -16,6 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,21 +43,24 @@ public class ShelterMapService {
         double spanLat = Math.abs(req.maxLat() - req.minLat());
         double spanLng = Math.abs(req.maxLng() - req.minLng());
 
+        int total = shelterRepository.countInBbox(minLat, minLng, maxLat, maxLng);
+
+        // 1) cluster 레벨: 포인트만 모아서 클러스터 생성 (운영시간 X)
         if (spanLat > 3.0 || spanLng > 3.0 || req.zoom() < 13) {
             List<MapShelterResponse> points = shelterRepository.findInBbox(
                     minLat, minLng, maxLat, maxLng, pageable);
             List<ClusterFeature> clusters = Clusterer.byGeohash(points, precision);
-            return new MapResponse("cluster", new ArrayList<MapFeature>(clusters), points.size());
-        } else if (req.zoom() < 16) {
-            List<MapShelterResponse> items = shelterRepository.findInBbox(
-                    minLat, minLng, maxLat, maxLng, pageable);
-            int total = shelterRepository.countInBbox(minLat, minLng, maxLat, maxLng);
+            return new MapResponse("cluster", new ArrayList<MapFeature>(clusters), total);
+        }
+
+        // 2) summary/detail 레벨: 시간 포함 행을 받아 오늘(KST) 기준으로 운영시간과 함께 반환
+        List<MapShelterRow> rows = shelterRepository.findInBboxWithHours(
+                minLat, minLng, maxLat, maxLng, pageable);
+        List<MapShelterResponse> items = rows.stream().map(this::toTodayResponse).toList();
+
+        if (req.zoom() < 16) {
             return new MapResponse("summary", new ArrayList<MapFeature>(items), total);
         } else {
-            // TODO: 나중에 상세 내용 분리 예정 (쿼리 이용)
-            List<MapShelterResponse> items = shelterRepository.findInBbox(
-                    minLat, minLng, maxLat, maxLng, pageable);
-            int total = shelterRepository.countInBbox(minLat, minLng, maxLat, maxLng);
             return new MapResponse("detail", new ArrayList<MapFeature>(items), total);
         }
     }
@@ -68,4 +75,61 @@ public class ShelterMapService {
     private static BigDecimal toBigDecimal(double d) {
         return BigDecimal.valueOf(d);
     }
+
+    private MapShelterResponse toTodayResponse(MapShelterRow mapShelterRow) {
+        ZoneId kst = ZoneId.of("Asia/Seoul");
+        DayOfWeek dow = LocalDate.now(kst).getDayOfWeek();
+        boolean weekend = (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY);
+
+        String fromTime = weekend ? mapShelterRow.weekendOpenTime() : mapShelterRow.weekdayOpenTime();
+        String toTime = weekend ? mapShelterRow.weekendCloseTime() : mapShelterRow.weekdayCloseTime();
+
+        String from = normalizeHm(fromTime);
+        String to = normalizeHm(toTime);
+
+        String hours = mergeHours(from, to);
+
+        return new MapShelterResponse(
+                mapShelterRow.id(),
+                mapShelterRow.name(),
+                mapShelterRow.latitude(),
+                mapShelterRow.longitude(),
+                mapShelterRow.hasAircon(),
+                mapShelterRow.capacity(),
+                mapShelterRow.photoUrl(),
+                hours
+        );
+    }
+
+    private String normalizeHm(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+
+        String digits = raw.replaceAll("\\D+", "");
+        if (digits.length() < 3 || digits.length() > 4) {
+            return raw;
+        }
+
+        if (digits.length() == 3) {
+            digits = "0" + digits;
+        }
+
+        return digits.substring(0, 2) + ":" + digits.substring(2, 4);
+    }
+
+    private String mergeHours(String from, String to) {
+        if (from == null && to == null) {
+            return null;
+        }
+        if (from == null) {
+            return "~" + to;
+        }
+        if (to == null) {
+            return from + "~";
+        }
+
+        return from + "~" + to;
+    }
+
 }

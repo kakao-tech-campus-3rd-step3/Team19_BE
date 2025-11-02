@@ -1,10 +1,21 @@
 package com.team19.musuimsa.review.controller;
 
+import com.team19.musuimsa.exception.dto.ErrorResponseDto;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
 import com.team19.musuimsa.review.service.ReviewService;
 import com.team19.musuimsa.user.domain.User;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "리뷰 API", description = "쉼터 리뷰 작성, 수정, 삭제, 조회 관련 API")
 @RestController
 @RequestMapping("/api")
 public class ReviewController {
@@ -29,9 +41,30 @@ public class ReviewController {
     }
 
     // 리뷰 작성
+    @Operation(summary = "리뷰 작성", description = "특정 쉼터에 대한 리뷰를 작성합니다.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201",
+                    description = "리뷰 작성 성공 (헤더 Location에 리뷰 리소스 URI 포함)",
+                    content = @Content(schema = @Schema(implementation = ReviewResponse.class))),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터 (내용 누락, 별점 범위 오류 등)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "404", description = "해당 ID의 쉼터를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "409", description = "동시성 문제 발생 (리뷰 집계 업데이트 충돌)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
     @PostMapping("/shelters/{shelterId}/reviews")
     public ResponseEntity<ReviewResponse> createReview(
-            @RequestBody CreateReviewRequest request, @PathVariable Long shelterId,
+            @Parameter(description = "리뷰 생성 정보", required = true,
+                    schema = @Schema(implementation = CreateReviewRequest.class))
+            @Valid @RequestBody CreateReviewRequest request,
+
+            @Parameter(description = "리뷰를 작성할 쉼터의 ID", example = "1", required = true)
+            @PathVariable Long shelterId,
+
+            @Parameter(hidden = true)
             @AuthenticationPrincipal(expression = "user") User user) {
 
         ReviewResponse response = reviewService.createReview(shelterId, request, user);
@@ -42,10 +75,30 @@ public class ReviewController {
     }
 
     // 리뷰 수정
+    @Operation(summary = "리뷰 수정", description = "자신이 작성한 리뷰의 내용, 별점, 사진 URL을 수정합니다.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "리뷰 수정 성공",
+                    content = @Content(schema = @Schema(implementation = ReviewResponse.class))),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터 (유효성 검사 실패)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "403", description = "자신의 리뷰만 수정 가능 (권한 없음)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "해당 ID의 리뷰를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "409", description = "동시성 문제 발생",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
     @PatchMapping("/reviews/{reviewId}")
-    public ResponseEntity<ReviewResponse> updateReview(@PathVariable Long reviewId,
-            @RequestBody UpdateReviewRequest request,
-            @AuthenticationPrincipal(expression = "user") User user) {
+    public ResponseEntity<ReviewResponse> updateReview(
+            @Parameter(description = "수정할 리뷰의 ID", example = "1", required = true)
+            @PathVariable Long reviewId,
+            @Parameter(description = "수정할 리뷰 정보 (변경할 필드만 포함)", required = true,
+                    schema = @Schema(implementation = UpdateReviewRequest.class))
+            @Valid @RequestBody UpdateReviewRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
 
         ReviewResponse response = reviewService.updateReview(reviewId, request, user);
 
@@ -53,9 +106,24 @@ public class ReviewController {
     }
 
     // 리뷰 삭제
+    @Operation(summary = "리뷰 삭제", description = "자신이 작성한 리뷰를 삭제합니다.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "리뷰 삭제 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "403", description = "자신의 리뷰만 삭제 가능 (권한 없음)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "해당 ID의 리뷰를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "409", description = "동시성 문제 발생",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
     @DeleteMapping("/reviews/{reviewId}")
-    public ResponseEntity<Void> deleteReview(@PathVariable Long reviewId,
-            @AuthenticationPrincipal(expression = "user") User user) {
+    public ResponseEntity<Void> deleteReview(
+            @Parameter(description = "삭제할 리뷰의 ID", example = "1", required = true)
+            @PathVariable Long reviewId,
+            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
 
         reviewService.deleteReview(reviewId, user);
 
@@ -63,8 +131,17 @@ public class ReviewController {
     }
 
     // 리뷰 단건 조회
+    @Operation(summary = "리뷰 단건 조회", description = "특정 리뷰 ID로 리뷰 상세 정보를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = ReviewResponse.class))),
+            @ApiResponse(responseCode = "404", description = "해당 ID의 리뷰를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
     @GetMapping("/reviews/{reviewId}")
-    public ResponseEntity<ReviewResponse> getReview(@PathVariable Long reviewId) {
+    public ResponseEntity<ReviewResponse> getReview(
+            @Parameter(description = "조회할 리뷰의 ID", example = "1", required = true)
+            @PathVariable Long reviewId) {
 
         ReviewResponse response = reviewService.getReview(reviewId);
 
@@ -72,8 +149,18 @@ public class ReviewController {
     }
 
     // 쉼터 리뷰 조회
+    @Operation(summary = "쉼터별 리뷰 목록 조회", description = "특정 쉼터에 작성된 모든 리뷰를 최신순으로 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(array = @ArraySchema(
+                            schema = @Schema(implementation = ReviewResponse.class)))),
+            @ApiResponse(responseCode = "404", description = "해당 ID의 쉼터를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
     @GetMapping("/shelters/{shelterId}/reviews")
-    public ResponseEntity<List<ReviewResponse>> getReviewByShelter(@PathVariable Long shelterId) {
+    public ResponseEntity<List<ReviewResponse>> getReviewByShelter(
+            @Parameter(description = "리뷰를 조회할 쉼터의 ID", example = "1", required = true)
+            @PathVariable Long shelterId) {
 
         List<ReviewResponse> reviews = reviewService.getReviewsByShelter(shelterId);
 
@@ -81,9 +168,20 @@ public class ReviewController {
     }
 
     // 내가 쓴 리뷰 조회
+    @Operation(summary = "내가 쓴 리뷰 목록 조회", description = "로그인된 사용자가 작성한 모든 리뷰를 최신순으로 조회합니다.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(array = @ArraySchema(
+                            schema = @Schema(implementation = ReviewResponse.class)))), // 배열 응답 명시
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+    })
     @GetMapping("/users/me/reviews")
     public ResponseEntity<List<ReviewResponse>> getReviewByUser(
-            @AuthenticationPrincipal User user) {
+            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
 
         List<ReviewResponse> reviews = reviewService.getReviewsByUser(user);
 
