@@ -1,6 +1,8 @@
 package com.team19.musuimsa.review.Repository;
 
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 import com.team19.musuimsa.review.domain.Review;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.review.repository.ReviewRepository;
@@ -8,15 +10,13 @@ import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.repository.UserRepository;
+import java.math.BigDecimal;
+import java.time.LocalTime;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
-
-import java.math.BigDecimal;
-import java.time.LocalTime;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @DataJpaTest
 @EnableJpaAuditing
@@ -32,7 +32,8 @@ public class ReviewRepositoryTest {
     private UserRepository userRepository;
 
     @Test
-    void 리뷰_생성_성공() {
+    @DisplayName("리뷰 생성 성공")
+    void createReviewSuccess() {
         // given
         User user = new User("aran@email.com", "1234", "윤", "image.url");
         userRepository.save(user);

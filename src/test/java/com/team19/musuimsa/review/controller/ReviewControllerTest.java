@@ -131,10 +131,74 @@ public class ReviewControllerTest {
     }
 
     @Test
+    @DisplayName("리뷰 내용, 사진 URL 없이도 생성 요청 성공")
+    void createReviewWithNoContentAndNoUrlSsuccess() throws Exception {
+        // Given
+        CreateReviewRequest request = new CreateReviewRequest("", 5, "");
+
+        given(reviewService.createReview(any(Long.class), any(CreateReviewRequest.class),
+                any(User.class)))
+                .willReturn(response);
+
+        // When & Then
+        mockMvc.perform(post("/api/shelters/{shelterId}/reviews", shelterId)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location", "/api/reviews/" + response.reviewId()));
+
+        verify(reviewService).createReview(any(Long.class), any(CreateReviewRequest.class),
+                any(User.class));
+    }
+
+    @Test
     @DisplayName("리뷰 수정 요청 성공")
     void updateReviewSuccess() throws Exception {
         // Given
         UpdateReviewRequest request = new UpdateReviewRequest("수정된 리뷰 내용입니다.", 4, "photoUrl");
+
+        given(reviewService.updateReview(any(Long.class), any(UpdateReviewRequest.class),
+                any(User.class)))
+                .willReturn(response);
+
+        // When & Then
+        mockMvc.perform(patch("/api/reviews/{reviewId}", reviewId)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        verify(reviewService).updateReview(any(Long.class), any(UpdateReviewRequest.class),
+                any(User.class));
+    }
+
+    @Test
+    @DisplayName("별점만 변경 요청 성공")
+    void updateReviewRatingSuccess() throws Exception {
+        // Given
+        UpdateReviewRequest request = new UpdateReviewRequest(null, 4, null);
+
+        given(reviewService.updateReview(any(Long.class), any(UpdateReviewRequest.class),
+                any(User.class)))
+                .willReturn(response);
+
+        // When & Then
+        mockMvc.perform(patch("/api/reviews/{reviewId}", reviewId)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        verify(reviewService).updateReview(any(Long.class), any(UpdateReviewRequest.class),
+                any(User.class));
+    }
+
+    @Test
+    @DisplayName("photoUrl만 변경 요청 성공")
+    void updateReviewPhotoUrlSuccess() throws Exception {
+        // Given
+        UpdateReviewRequest request = new UpdateReviewRequest(null, null, "updateUrl");
 
         given(reviewService.updateReview(any(Long.class), any(UpdateReviewRequest.class),
                 any(User.class)))
