@@ -15,7 +15,7 @@ public record CreateReviewRequest(
 
         @NotNull @Min(1) @Max(5)
         @Schema(description = "별점 (1~5)", example = "5", requiredMode = Schema.RequiredMode.REQUIRED)
-        int rating,
+        Integer rating,
 
         @Schema(description = "리뷰 사진 URL", example = "https://example.com/review.jpg")
         String photoUrl
