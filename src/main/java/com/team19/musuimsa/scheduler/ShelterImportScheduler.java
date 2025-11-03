@@ -16,7 +16,7 @@ public class ShelterImportScheduler {
     private final Job shelterImportJob;
 
     // 매일 새벽 2시에 실행
-    @Scheduled(cron = "0 0 2 * * *")
+    @Scheduled(cron = "0 45 3 * * *")
     public void runShelterImportJob() throws Exception {
         JobParameters jobParameters = new JobParametersBuilder()
                 .addString("jobID", String.valueOf(System.currentTimeMillis()))
