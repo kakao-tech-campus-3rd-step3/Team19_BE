@@ -281,11 +281,11 @@ public class ReviewServiceTest {
 
         // then
         assertThat(response).isNotNull();
-        assertThat(response.content()).isEqualTo(
-                updateRequest.content());   // content는 값 변경 없었으므로 원래 요청 시의 값과 비교
-        assertThat(response.rating()).isEqualTo(request.rating());
+        assertThat(response.content()).isEqualTo(updateRequest.content());
+        assertThat(response.rating()).isEqualTo(
+                request.rating());  // rating은 값 변경 없었으므로 원래 요청인 request의 값과 비교
         assertThat(response.photoUrl()).isEqualTo(
-                request.photoUrl());   // photoUrl도 값 변경 없었으므로 원래 요청 시의 값과 비교
+                request.photoUrl());   // photoUrl는 값 변경 없었으므로 원래 요청 시의 값과 비교
 
         verify(reviewRepository).findById(eq(id));
         verify(reviewRepository).aggregateByShelterId(eq(shelterId));

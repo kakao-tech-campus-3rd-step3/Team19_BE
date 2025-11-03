@@ -175,7 +175,7 @@ public class ReviewControllerTest {
 
     @Test
     @DisplayName("별점만 변경 요청 성공")
-    void updateReviewRatingtSuccess() throws Exception {
+    void updateReviewRatingSuccess() throws Exception {
         // Given
         UpdateReviewRequest request = new UpdateReviewRequest(null, 4, null);
 
