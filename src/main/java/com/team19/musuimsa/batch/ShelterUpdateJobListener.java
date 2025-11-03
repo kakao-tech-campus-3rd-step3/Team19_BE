@@ -114,7 +114,11 @@ public class ShelterUpdateJobListener implements JobExecutionListener {
             page++;
         }
         return allItems.stream()
-                .collect(Collectors.toMap(ExternalShelterItem::rstrFcltyNo, Function.identity()));
+                .collect(Collectors.toMap(
+                        ExternalShelterItem::rstrFcltyNo,
+                        Function.identity(),
+                        (existingValue, newValue) -> existingValue
+                ));
     }
 
     // 변경된 쉼터 id들의 좌표로부터, 해당될 수 있는 z 레벨의 geohash 셀 prefix를 계산해 패턴 삭제
