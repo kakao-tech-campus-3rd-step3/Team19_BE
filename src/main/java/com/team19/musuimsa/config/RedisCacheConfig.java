@@ -1,8 +1,11 @@
 package com.team19.musuimsa.config;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,6 +36,13 @@ public class RedisCacheConfig {
     public CacheManager redisCacheManager(RedisConnectionFactory cf, ObjectMapper baseMapper) {
         ObjectMapper mapper = baseMapper.copy()
                 .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+
+        PolymorphicTypeValidator polymorphicTypeValidator = BasicPolymorphicTypeValidator.builder()
+                .allowIfBaseType(Object.class)
+                .build();
+        mapper.activateDefaultTyping(polymorphicTypeValidator, ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY);
+
         GenericJackson2JsonRedisSerializer json = new GenericJackson2JsonRedisSerializer(mapper);
 
         RedisCacheConfiguration base = RedisCacheConfiguration.defaultCacheConfig()
