@@ -42,13 +42,13 @@ public class Review extends BaseEntity {
 
     private String photoUrl;
 
-    @Column(nullable = false, columnDefinition = "text")
+    @Column(columnDefinition = "text")
     private String content;
 
     @Column(nullable = false, columnDefinition = "TINYINT")
     @Min(1)
     @Max(5)
-    private int rating;
+    private Integer rating;
 
     public static Review of(Shelter shelter, User user, CreateReviewRequest request) {
         return new Review(null, shelter, user, request.photoUrl(),
