@@ -1,5 +1,16 @@
 package com.team19.musuimsa.review.service;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import com.team19.musuimsa.exception.conflict.OptimisticLockConflictException;
 import com.team19.musuimsa.exception.forbidden.ReviewAccessDeniedException;
 import com.team19.musuimsa.review.domain.Review;
@@ -11,6 +22,9 @@ import com.team19.musuimsa.review.repository.ReviewRepository;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.user.domain.User;
+import java.math.BigDecimal;
+import java.time.LocalTime;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,17 +34,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.time.LocalTime;
-import java.util.Optional;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @Transactional
@@ -103,6 +106,31 @@ public class ReviewServiceTest {
     }
 
     @Test
+    @DisplayName("리뷰 내용, url 없이도 작성 성공")
+    void createReviewWithNoContentSuccess() {
+        // given
+        CreateReviewRequest request = new CreateReviewRequest("", 5, "");
+        review = Review.of(shelter, user, request);
+
+        given(shelterRepository.findById(any(Long.class))).willReturn(Optional.of(shelter));
+        given(reviewRepository.save(any(Review.class))).willReturn(review);
+
+        stubAggregateForShelter(1L, 5L);
+
+        // when
+        ReviewResponse response = reviewService.createReview(shelterId, request, user);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.content()).isEqualTo(request.content());
+        assertThat(response.rating()).isEqualTo(request.rating());
+
+        verify(shelterRepository, times(1)).findById(shelterId);
+        verify(reviewRepository).save(any(Review.class));
+        verify(reviewRepository).aggregateByShelterId(eq(shelterId));
+    }
+
+    @Test
     @DisplayName("리뷰 수정 성공")
     void updateReviewSuccess() throws ReviewAccessDeniedException {
         // given
@@ -134,7 +162,137 @@ public class ReviewServiceTest {
     }
 
     @Test
-    @DisplayName("리뷰 삭제 실패 - 403 반환")
+    @DisplayName("리뷰 내용 없애기 수정 성공")
+    void updateReviewWithNoContentSuccess() throws ReviewAccessDeniedException {
+        // given
+        Long id = 1L;
+        CreateReviewRequest request = new CreateReviewRequest("시원하네요", 5, "리뷰사진");
+        review = Review.of(shelter, user, request);
+        Review reviewSpy = spy(review);
+
+        doNothing().when(reviewSpy).assertOwnedBy(user);  // 소유자 검증 패스
+
+        UpdateReviewRequest updateRequest = new UpdateReviewRequest("", 1,
+                "");
+
+        given(reviewRepository.findById(eq(id))).willReturn(Optional.of(reviewSpy));
+
+        given(reviewRepository.aggregateByShelterId(eq(shelterId)))
+                .willReturn(new ShelterReviewCountAndSum(1L, 1L));      // 수정 후 리뷰 개수1, 총점 1
+
+        // when
+        ReviewResponse response = reviewService.updateReview(id, updateRequest, user);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.content()).isEqualTo(updateRequest.content());
+        assertThat(response.rating()).isEqualTo(updateRequest.rating());
+
+        verify(reviewRepository).findById(eq(id));
+        verify(reviewRepository).aggregateByShelterId(eq(shelterId));
+    }
+
+    @Test
+    @DisplayName("내용 없던 리뷰에 내용 추가해서 수정 성공")
+    void updateNoContentReviewSuccess() throws ReviewAccessDeniedException {
+        // given
+        Long id = 1L;
+        CreateReviewRequest request = new CreateReviewRequest("", 5,
+                null);
+        review = Review.of(shelter, user, request);
+        Review reviewSpy = spy(review);
+
+        doNothing().when(reviewSpy).assertOwnedBy(user);  // 소유자 검증 패스
+
+        UpdateReviewRequest updateRequest = new UpdateReviewRequest("시원합니다.", 1, "photoUrl");
+
+        given(reviewRepository.findById(eq(id))).willReturn(Optional.of(reviewSpy));
+
+        given(reviewRepository.aggregateByShelterId(eq(shelterId)))
+                .willReturn(new ShelterReviewCountAndSum(1L, 1L));      // 수정 후 리뷰 개수 1, 총점 1
+
+        // when
+        ReviewResponse response = reviewService.updateReview(id, updateRequest, user);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.content()).isEqualTo(updateRequest.content());
+        assertThat(response.rating()).isEqualTo(updateRequest.rating());
+
+        verify(reviewRepository).findById(eq(id));
+        verify(reviewRepository).aggregateByShelterId(eq(shelterId));
+    }
+
+    @Test
+    @DisplayName("별점만 수정 성공")
+    void updateReviewRatingSuccess() throws ReviewAccessDeniedException {
+        // given
+        Long id = 1L;
+        CreateReviewRequest request = new CreateReviewRequest("", 5,
+                "");
+        review = Review.of(shelter, user, request);
+        Review reviewSpy = spy(review);
+
+        doNothing().when(reviewSpy).assertOwnedBy(user);  // 소유자 검증 패스
+
+        UpdateReviewRequest updateRequest = new UpdateReviewRequest(null, 1, null);
+
+        given(reviewRepository.findById(eq(id))).willReturn(Optional.of(reviewSpy));
+
+        given(reviewRepository.aggregateByShelterId(eq(shelterId)))
+                .willReturn(new ShelterReviewCountAndSum(1L, 1L));      // 수정 후 리뷰 개수 1, 총점 1
+
+        // when
+        ReviewResponse response = reviewService.updateReview(id, updateRequest, user);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.content()).isEqualTo(
+                request.content());    // content는 값 변경 없었으므로 원래 요청 시의 값과 비교
+        assertThat(response.rating()).isEqualTo(updateRequest.rating());
+        assertThat(response.photoUrl()).isEqualTo(
+                request.photoUrl());   // photoUrl도 값 변경 없었으므로 원래 요청 시의 값과 비교
+
+        verify(reviewRepository).findById(eq(id));
+        verify(reviewRepository).aggregateByShelterId(eq(shelterId));
+    }
+
+    @Test
+    @DisplayName("내용만 수정 성공")
+    void updateReviewContentSuccess() throws ReviewAccessDeniedException {
+        // given
+        Long id = 1L;
+        CreateReviewRequest request = new CreateReviewRequest("", 5,
+                "");
+        review = Review.of(shelter, user, request);
+        Review reviewSpy = spy(review);
+
+        doNothing().when(reviewSpy).assertOwnedBy(user);  // 소유자 검증 패스
+
+        UpdateReviewRequest updateRequest = new UpdateReviewRequest("수정된 내용입니다.", null, null);
+
+        given(reviewRepository.findById(eq(id))).willReturn(Optional.of(reviewSpy));
+
+        given(reviewRepository.aggregateByShelterId(eq(shelterId)))
+                .willReturn(new ShelterReviewCountAndSum(1L, 1L));      // 수정 후 리뷰 개수 1, 총점 1
+
+        // when
+        ReviewResponse response = reviewService.updateReview(id, updateRequest, user);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.content()).isEqualTo(
+                updateRequest.content());   // content는 값 변경 없었으므로 원래 요청 시의 값과 비교
+        assertThat(response.rating()).isEqualTo(request.rating());
+        assertThat(response.photoUrl()).isEqualTo(
+                request.photoUrl());   // photoUrl도 값 변경 없었으므로 원래 요청 시의 값과 비교
+
+        verify(reviewRepository).findById(eq(id));
+        verify(reviewRepository).aggregateByShelterId(eq(shelterId));
+    }
+
+    @Test
+    @DisplayName("작성자가 아니면 리뷰 삭제 불가 - 403 반환")
     void deleteReviewFail() throws ReviewAccessDeniedException {
         // given
         CreateReviewRequest request = new CreateReviewRequest("시원하네요", 5, "리뷰사진");

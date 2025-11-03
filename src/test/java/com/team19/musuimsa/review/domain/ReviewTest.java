@@ -1,9 +1,14 @@
 package com.team19.musuimsa.review.domain;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.repository.UserRepository;
+import java.math.BigDecimal;
+import java.time.LocalTime;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -13,12 +18,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.time.LocalTime;
-import java.util.List;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @Transactional
 @SpringBootTest
@@ -83,6 +82,28 @@ public class ReviewTest {
     }
 
     @Test
+    @DisplayName("내용, imageUrl 없는 리뷰 생성 성공")
+    void createNoContentReviewSuccess() {
+        // given
+        String content = "";
+        int rating = 5;
+        String imageUrl = "";
+
+        CreateReviewRequest request = new CreateReviewRequest(content, rating, imageUrl);
+
+        // when
+        Review review = Review.of(shelter, user, request);
+
+        //then
+        assertThat(review).isNotNull();
+        assertThat(review.getShelter()).isEqualTo(shelter);
+        assertThat(review.getUser().getUserId()).isEqualTo(user.getUserId());
+        assertThat(review.getContent()).isEqualTo(content);
+        assertThat(review.getRating()).isEqualTo(rating);
+        assertThat(review.getPhotoUrl()).isEqualTo(imageUrl);
+    }
+
+    @Test
     @DisplayName("리뷰 수정 성공")
     void reviewUpdateSuccess() {
         // given
@@ -100,4 +121,25 @@ public class ReviewTest {
         assertThat(review.getRating()).isEqualTo(updatedRating);
         assertThat(review.getPhotoUrl()).isEqualTo("수정 전 이미지");
     }
+
+    @Test
+    @DisplayName("내용 없던 리뷰 내용 포함하도록 수정 성공")
+    void reviewUpdateWithContentSuccess() {
+        // given
+        CreateReviewRequest request = new CreateReviewRequest("", 5, "수정 전 이미지");
+        Review review = Review.of(shelter, user, request);
+
+        String updatedContent = "수정 후 리뷰입니다.";
+        int updatedRating = 1;
+
+        // when
+        review.update(updatedContent, updatedRating, null);
+
+        // then
+        assertThat(review.getContent()).isEqualTo(updatedContent);
+        assertThat(review.getRating()).isEqualTo(updatedRating);
+        assertThat(review.getPhotoUrl()).isEqualTo("수정 전 이미지");
+    }
 }
+
+
