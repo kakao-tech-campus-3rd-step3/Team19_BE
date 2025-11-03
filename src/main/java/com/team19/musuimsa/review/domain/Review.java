@@ -42,7 +42,7 @@ public class Review extends BaseEntity {
 
     private String photoUrl;
 
-    @Column(nullable = false, columnDefinition = "text")
+    @Column(columnDefinition = "text")
     private String content;
 
     @Column(nullable = false, columnDefinition = "TINYINT")
