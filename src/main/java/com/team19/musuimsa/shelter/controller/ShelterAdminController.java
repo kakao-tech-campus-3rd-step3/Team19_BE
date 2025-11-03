@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
 
-@Profile("dev")
 @Tag(name = "관리자 API", description = "데이터 임포트 및 관리용 API (내부용)")
 @RestController
 @RequestMapping("/api/admin/shelters")
