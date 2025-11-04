@@ -19,7 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static com.team19.musuimsa.shelter.util.ShelterDtoUtils.*;
+import static com.team19.musuimsa.shelter.util.ShelterDtoUtils.average;
+import static com.team19.musuimsa.shelter.util.ShelterDtoUtils.distanceFrom;
+import static com.team19.musuimsa.shelter.util.ShelterDtoUtils.formatHours;
 
 @Service
 @RequiredArgsConstructor
@@ -67,7 +69,7 @@ public class WishService {
             Shelter shelter = wish.getShelter();
 
             String distance = null;
-            if (latitude != null && longitude != null) {
+            if (shelter.getLatitude() != null && shelter.getLongitude() != null) {
                 distance = distanceFrom(latitude, longitude, shelter);
             }
 

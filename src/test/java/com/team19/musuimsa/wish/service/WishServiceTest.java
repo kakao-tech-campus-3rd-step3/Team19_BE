@@ -145,7 +145,17 @@ class WishServiceTest {
     @Test
     @DisplayName("getWishes - 엔티티에서 DTO 목록으로 매핑한다(거리 null)")
     void getWishes_shouldMapEntitiesToDtos_whenNoCoords() {
-        Shelter shelter = shelterBasic(shelterId, "쉼터명");
+        Shelter shelter = Shelter.builder()
+                .shelterId(shelterId)
+                .name("쉼터명")
+                .address("서울")
+                .latitude(null)
+                .longitude(null)
+                .weekdayOpenTime(LocalTime.of(9, 0))
+                .weekdayCloseTime(LocalTime.of(18, 0))
+                .totalRating(0).reviewCount(0)
+                .build();
+
         Wish wish = Wish.of(user, shelter);
         given(wishRepository.findAllWithShelterByUserIdOrderByCreatedAtDesc(userId))
                 .willReturn(List.of(wish));
