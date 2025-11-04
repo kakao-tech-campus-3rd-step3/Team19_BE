@@ -4,6 +4,11 @@ import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.dto.UpdateResultResponse;
 import com.team19.musuimsa.shelter.dto.external.ExternalShelterItem;
 import jakarta.persistence.EntityManagerFactory;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
@@ -21,16 +26,9 @@ import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.batch.item.database.JpaPagingItemReader;
 import org.springframework.batch.item.database.builder.JpaItemWriterBuilder;
 import org.springframework.batch.item.database.builder.JpaPagingItemReaderBuilder;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
-
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 @Slf4j
 @Configuration
@@ -69,20 +67,27 @@ public class ShelterImportBatchConfig {
     @Bean
     @StepScope
     public JpaPagingItemReader<Shelter> shelterItemReader() {
-        return new JpaPagingItemReaderBuilder<Shelter>()
+        JpaPagingItemReader<Shelter> reader = new JpaPagingItemReaderBuilder<Shelter>()
                 .name("shelterItemReader")
                 .entityManagerFactory(entityManagerFactory)
                 .pageSize(CHUNK_SIZE)
                 .queryString("SELECT s FROM Shelter s ORDER BY s.shelterId")
                 .build();
+
+        reader.setTransacted(false);
+
+        return reader;
     }
 
     @Bean
     @StepScope
     public ItemProcessor<Shelter, Shelter> shelterItemProcessor(
-            @Value("#{jobExecutionContext['externalShelterData']}") Map<Long, ExternalShelterItem> externalDataMap) {
+            ShelterUpdateJobListener listener) {
+        Map<Long, ExternalShelterItem> externalDataMap = listener.getExternalShelterData();
+
         return shelter -> {
             ExternalShelterItem externalData = externalDataMap.get(shelter.getShelterId());
+
             if (externalData == null) {
                 // 외부 API에 없는 데이터는 건너뜀 (또는 삭제 로직 추가 가능)
                 return null;
@@ -99,7 +104,8 @@ public class ShelterImportBatchConfig {
 
             if (result.locationChanged()) {
                 StepContext stepCtx = StepSynchronizationManager.getContext();
-                ExecutionContext jobCtx = stepCtx.getStepExecution().getJobExecution().getExecutionContext();
+                ExecutionContext jobCtx = stepCtx.getStepExecution().getJobExecution()
+                        .getExecutionContext();
 
                 Set<Long> geoIds = (Set<Long>) jobCtx.get(LOCATION_UPDATED_IDS_KEY);
                 if (geoIds == null) {
