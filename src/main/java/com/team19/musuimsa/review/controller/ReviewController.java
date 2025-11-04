@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -47,13 +48,22 @@ public class ReviewController {
             @ApiResponse(responseCode = "201",
                     description = "리뷰 작성 성공 (헤더 Location에 리뷰 리소스 URI 포함)",
                     content = @Content(schema = @Schema(implementation = ReviewResponse.class))),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터 (내용 누락, 별점 범위 오류 등)",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
-            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터 (유효성 검사 오류)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "유효성 검사 실패",
+                                    value = "{\"status\": 400, \"error\": \"Bad Request\", \"message\": \"rating: 1에서 5 사이여야 합니다, content: 리뷰는 100자까지 작성 가능합니다.\", \"path\": \"/api/shelters/1/reviews\"}"))),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "인증 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"회원가입 또는 로그인 후 이용 가능합니다. \", \"path\": \"/api/shelters/1/reviews\"}"))),
             @ApiResponse(responseCode = "404", description = "해당 ID의 쉼터를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "쉼터 없음",
+                                    value = "{\"status\": 404, \"error\": \"Not Found\", \"message\": \"해당 ID의 쉼터를 찾을 수 없습니다: 999\", \"path\": \"/api/shelters/999/reviews\"}"))),
             @ApiResponse(responseCode = "409", description = "동시성 문제 발생 (리뷰 집계 업데이트 충돌)",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "동시성 충돌",
+                                    value = "{\"status\": 409, \"error\": \"Conflict\", \"message\": \"잠시 후 다시 시도해 주세요.\", \"path\": \"/api/shelters/1/reviews\"}")))
     })
     @PostMapping("/shelters/{shelterId}/reviews")
     public ResponseEntity<ReviewResponse> createReview(
@@ -81,15 +91,25 @@ public class ReviewController {
             @ApiResponse(responseCode = "200", description = "리뷰 수정 성공",
                     content = @Content(schema = @Schema(implementation = ReviewResponse.class))),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터 (유효성 검사 실패)",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "유효성 검사 실패",
+                                    value = "{\"status\": 400, \"error\": \"Bad Request\", \"message\": \"rating: 1에서 5 사이여야 합니다\", \"path\": \"/api/reviews/1\"}"))),
             @ApiResponse(responseCode = "401", description = "인증 실패",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "인증 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"회원가입 또는 로그인 후 이용 가능합니다. \", \"path\": \"/api/reviews/1\"}"))),
             @ApiResponse(responseCode = "403", description = "자신의 리뷰만 수정 가능 (권한 없음)",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "권한 없음",
+                                    value = "{\"status\": 403, \"error\": \"Forbidden\", \"message\": \"본인의 리뷰에만 접근할 수 있습니다.\", \"path\": \"/api/reviews/1\"}"))),
             @ApiResponse(responseCode = "404", description = "해당 ID의 리뷰를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "리뷰 없음",
+                                    value = "{\"status\": 404, \"error\": \"Not Found\", \"message\": \"해당 ID의 리뷰를 찾을 수 없습니다: 999\", \"path\": \"/api/reviews/999\"}"))),
             @ApiResponse(responseCode = "409", description = "동시성 문제 발생",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "동시성 충돌",
+                                    value = "{\"status\": 409, \"error\": \"Conflict\", \"message\": \"잠시 후 다시 시도해 주세요.\", \"path\": \"/api/reviews/1\"}")))
     })
     @PatchMapping("/reviews/{reviewId}")
     public ResponseEntity<ReviewResponse> updateReview(
@@ -111,13 +131,21 @@ public class ReviewController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "리뷰 삭제 성공"),
             @ApiResponse(responseCode = "401", description = "인증 실패",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "인증 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"회원가입 또는 로그인 후 이용 가능합니다. \", \"path\": \"/api/reviews/1\"}"))),
             @ApiResponse(responseCode = "403", description = "자신의 리뷰만 삭제 가능 (권한 없음)",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "권한 없음",
+                                    value = "{\"status\": 403, \"error\": \"Forbidden\", \"message\": \"본인의 리뷰에만 접근할 수 있습니다.\", \"path\": \"/api/reviews/1\"}"))),
             @ApiResponse(responseCode = "404", description = "해당 ID의 리뷰를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "리뷰 없음",
+                                    value = "{\"status\": 404, \"error\": \"Not Found\", \"message\": \"해당 ID의 리뷰를 찾을 수 없습니다: 999\", \"path\": \"/api/reviews/999\"}"))),
             @ApiResponse(responseCode = "409", description = "동시성 문제 발생",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "동시성 충돌",
+                                    value = "{\"status\": 409, \"error\": \"Conflict\", \"message\": \"잠시 후 다시 시도해 주세요.\", \"path\": \"/api/reviews/1\"}")))
     })
     @DeleteMapping("/reviews/{reviewId}")
     public ResponseEntity<Void> deleteReview(
@@ -136,7 +164,9 @@ public class ReviewController {
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = ReviewResponse.class))),
             @ApiResponse(responseCode = "404", description = "해당 ID의 리뷰를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "리뷰 없음",
+                                    value = "{\"status\": 404, \"error\": \"Not Found\", \"message\": \"해당 ID의 리뷰를 찾을 수 없습니다: 999\", \"path\": \"/api/reviews/999\"}")))
     })
     @GetMapping("/reviews/{reviewId}")
     public ResponseEntity<ReviewResponse> getReview(
@@ -155,7 +185,9 @@ public class ReviewController {
                     content = @Content(array = @ArraySchema(
                             schema = @Schema(implementation = ReviewResponse.class)))),
             @ApiResponse(responseCode = "404", description = "해당 ID의 쉼터를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "쉼터 없음",
+                                    value = "{\"status\": 404, \"error\": \"Not Found\", \"message\": \"해당 ID의 쉼터를 찾을 수 없습니다: 999\", \"path\": \"/api/shelters/999/reviews\"}")))
     })
     @GetMapping("/shelters/{shelterId}/reviews")
     public ResponseEntity<List<ReviewResponse>> getReviewByShelter(
@@ -175,9 +207,13 @@ public class ReviewController {
                     content = @Content(array = @ArraySchema(
                             schema = @Schema(implementation = ReviewResponse.class)))), // 배열 응답 명시
             @ApiResponse(responseCode = "401", description = "인증 실패",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "인증 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"회원가입 또는 로그인 후 이용 가능합니다. \", \"path\": \"/api/users/me/reviews\"}"))),
             @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "사용자 없음",
+                                    value = "{\"status\": 404, \"error\": \"Not Found\", \"message\": \"해당 ID의 사용자를 찾을 수 없습니다: 1\", \"path\": \"/api/users/me/reviews\"}")))
     })
     @GetMapping("/users/me/reviews")
     public ResponseEntity<List<ReviewResponse>> getReviewByUser(
