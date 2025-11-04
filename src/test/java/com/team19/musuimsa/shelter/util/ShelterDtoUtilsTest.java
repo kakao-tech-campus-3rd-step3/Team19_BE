@@ -30,21 +30,21 @@ class ShelterDtoUtilsTest {
         assertThat(d).isCloseTo(1100.0, offset(200.0)); // ±200m 허용
     }
 
-    @DisplayName("formatDistance - 모두 'Y.Ykm' 형식")
+    @DisplayName("formatDistance - 999m 이하는 'Xm', 1000m 이상은 'Y.Ykm'")
     @Test
     void formatDistance_thresholds() {
-        assertThat(ShelterDtoUtils.formatDistance(0.0)).isEqualTo("0.0km");
-        assertThat(ShelterDtoUtils.formatDistance(123.4)).isEqualTo("0.1km");
+        assertThat(ShelterDtoUtils.formatDistance(0.0)).isEqualTo("0m");
+        assertThat(ShelterDtoUtils.formatDistance(123.4)).isEqualTo("123m");
         // 999.6 → 반올림 1000 → 1.0km
         assertThat(ShelterDtoUtils.formatDistance(999.6)).isEqualTo("1.0km");
         assertThat(ShelterDtoUtils.formatDistance(1500.0)).isEqualTo("1.5km");
     }
 
-    @DisplayName("distanceBetween - 동일 좌표면 '0.0km', 떨어져 있으면 'Y.Ykm' 형식")
+    @DisplayName("distanceBetween - 동일 좌표면 '0m', 떨어져 있으면 'Y.Ykm' 형식")
     @Test
     void distanceBetween_formatsString() {
         String zero = ShelterDtoUtils.distanceBetween(37.0, 127.0, 37.0, 127.0);
-        assertThat(zero).isEqualTo("0.0km");
+        assertThat(zero).isEqualTo("0m");
 
         String approx = ShelterDtoUtils.distanceBetween(37.5665, 126.9780, 37.5651, 126.9895);
         assertThat(approx).endsWith("km");
@@ -60,7 +60,7 @@ class ShelterDtoUtilsTest {
 
         // 사용자 위치 동일 → 0m
         String d0 = ShelterDtoUtils.distanceFrom(37.5665, 126.9780, shelter);
-        assertThat(d0).isEqualTo("0.0km");
+        assertThat(d0).isEqualTo("0m");
 
         // 사용자 위치 살짝 이동 → km 형식(1.xkm)
         String d1 = ShelterDtoUtils.distanceFrom(37.5651, 126.9895, shelter);
