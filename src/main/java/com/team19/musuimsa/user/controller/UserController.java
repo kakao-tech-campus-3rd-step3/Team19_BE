@@ -17,6 +17,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -49,10 +50,18 @@ public class UserController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201",
                     description = "회원가입 성공 (헤더 Location에 사용자 리소스 URI 포함)"),
-            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터 (유효성 검사 오류)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "유효성 검사 실패",
+                                    value = "{\"status\": 400, \"error\": \"Bad Request\", \"message\": \"email: 유효한 이메일 형식이 아닙니다., password: 비밀번호는 8자 이상 20자 이하로 입력해주세요.\", \"path\": \"/api/users/signup\"}"))),
             @ApiResponse(responseCode = "409", description = "이메일 또는 닉네임 중복",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = {
+                                    @ExampleObject(name = "이메일 중복",
+                                            value = "{\"status\": 409, \"error\": \"Conflict\", \"message\": \"이미 사용 중인 이메일입니다: user@example.com\", \"path\": \"/api/users/signup\"}"),
+                                    @ExampleObject(name = "닉네임 중복",
+                                            value = "{\"status\": 409, \"error\": \"Conflict\", \"message\": \"이미 사용 중인 닉네임입니다: testUser\", \"path\": \"/api/users/signup\"}")
+                            }))
     })
     @PostMapping("/signup")
     public ResponseEntity<String> signUpUser(
@@ -72,9 +81,13 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "로그인 성공",
                     content = @Content(schema = @Schema(implementation = TokenResponse.class))),
             @ApiResponse(responseCode = "400", description = "잘못된 요청 데이터 (유효성 검사 실패)",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "유효성 검사 실패",
+                                    value = "{\"status\": 400, \"error\": \"Bad Request\", \"message\": \"email: 이메일은 필수 입력 값입니다.\", \"path\": \"/api/users/login\"}"))),
             @ApiResponse(responseCode = "401", description = "이메일 또는 비밀번호 불일치",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "로그인 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"이메일 또는 비밀번호가 일치하지 않습니다. \", \"path\": \"/api/users/login\"}")))
     })
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> loginUser(
@@ -91,7 +104,10 @@ public class UserController {
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "로그아웃 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 실패 (유효하지 않은 Access Token)")
+            @ApiResponse(responseCode = "401", description = "인증 실패 (유효하지 않은 Access Token)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "인증 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"회원가입 또는 로그인 후 이용 가능합니다. \", \"path\": \"/api/users/logout\"}")))
     })
     @PostMapping("/logout")
     public ResponseEntity<String> logoutUser(
@@ -113,7 +129,9 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "토큰 재발급 성공",
                     content = @Content(schema = @Schema(implementation = TokenResponse.class))),
             @ApiResponse(responseCode = "401", description = "유효하지 않은 Refresh Token",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "토큰 무효",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"유효하지 않은 리프레시 토큰입니다. 다시 로그인 해주세요.\", \"path\": \"/api/users/reissue\"}")))
     })
     @PostMapping("/reissue")
     public ResponseEntity<TokenResponse> reissueTokens(
@@ -129,9 +147,14 @@ public class UserController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = UserResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "인증 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"회원가입 또는 로그인 후 이용 가능합니다. \", \"path\": \"/api/users/me\"}"))),
             @ApiResponse(responseCode = "404", description = "사용자 정보를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "사용자 없음",
+                                    value = "{\"status\": 404, \"error\": \"Not Found\", \"message\": \"해당 ID의 사용자를 찾을 수 없습니다: 1\", \"path\": \"/api/users/me\"}")))
     })
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getMyInfo(
@@ -147,7 +170,9 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = UserResponse.class))),
             @ApiResponse(responseCode = "404", description = "해당 ID의 사용자를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "사용자 없음",
+                                    value = "{\"status\": 404, \"error\": \"Not Found\", \"message\": \"해당 ID의 사용자를 찾을 수 없습니다: 999\", \"path\": \"/api/users/999\"}")))
     })
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponse> getUserInfo(
@@ -164,9 +189,14 @@ public class UserController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "수정 성공",
                     content = @Content(schema = @Schema(implementation = UserResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "인증 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"회원가입 또는 로그인 후 이용 가능합니다. \", \"path\": \"/api/users/me\"}"))),
             @ApiResponse(responseCode = "409", description = "닉네임 중복",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "닉네임 중복",
+                                    value = "{\"status\": 409, \"error\": \"Conflict\", \"message\": \"이미 사용 중인 닉네임입니다: newNickname\", \"path\": \"/api/users/me\"}")))
     })
     @PatchMapping("/me")
     public ResponseEntity<UserResponse> updateUserInfo(
@@ -186,10 +216,14 @@ public class UserController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
             @ApiResponse(responseCode = "400",
-                    description = "잘못된 요청 데이터 (현재/새 비밀번호 누락 또는 유효성 검사 실패)",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+                    description = "잘못된 요청 데이터 (현재/새 비밀번호 유효성 검사 실패)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "유효성 검사 실패",
+                                    value = "{\"status\": 400, \"error\": \"Bad Request\", \"message\": \"currentPassword: 현재 비밀번호는 필수 입력값입니다.\", \"path\": \"/api/users/me/password\"}"))),
             @ApiResponse(responseCode = "401", description = "인증 실패 또는 현재 비밀번호 불일치",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "비밀번호 불일치",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"현재 비밀번호가 일치하지 않습니다.\", \"path\": \"/api/users/me/password\"}")))
     })
     @PatchMapping("/me/password")
     public ResponseEntity<String> updateUserPassword(
@@ -207,7 +241,10 @@ public class UserController {
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "회원 탈퇴 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 실패")
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "인증 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"회원가입 또는 로그인 후 이용 가능합니다. \", \"path\": \"/api/users/me\"}")))
     })
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteUser(
@@ -223,10 +260,18 @@ public class UserController {
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "위치 업데이트 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 위치 데이터 형식"),
-            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "400", description = "잘못된 위치 데이터 형식",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "유효성 검사 실패",
+                                    value = "{\"status\": 400, \"error\": \"Bad Request\", \"message\": \"latitude: 값이 없거나 유효하지 않습니다.\", \"path\": \"/api/users/me/location\"}"))),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "인증 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"회원가입 또는 로그인 후 이용 가능합니다. \", \"path\": \"/api/users/me/location\"}"))),
             @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "사용자 없음",
+                                    value = "{\"status\": 404, \"error\": \"Not Found\", \"message\": \"해당 ID의 사용자를 찾을 수 없습니다: 1\", \"path\": \"/api/users/me/location\"}")))
     })
     @PostMapping("/me/location")
     public ResponseEntity<Void> updateUserLocation(
@@ -243,10 +288,18 @@ public class UserController {
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "기기 토큰 등록 성공"),
-            @ApiResponse(responseCode = "400", description = "잘못된 기기 토큰 형식"),
-            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "400", description = "잘못된 기기 토큰 형식",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "유효성 검사 실패",
+                                    value = "{\"status\": 400, \"error\": \"Bad Request\", \"message\": \"deviceToken: 값이 없거나 유효하지 않습니다.\", \"path\": \"/api/users/me/device\"}"))),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "인증 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"회원가입 또는 로그인 후 이용 가능합니다. \", \"path\": \"/api/users/me/device\"}"))),
             @ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "사용자 없음",
+                                    value = "{\"status\": 404, \"error\": \"Not Found\", \"message\": \"해당 ID의 사용자를 찾을 수 없습니다: 1\", \"path\": \"/api/users/me/device\"}"))),
     })
     @PostMapping("/me/device")
     public ResponseEntity<Void> registerUserDevice(
