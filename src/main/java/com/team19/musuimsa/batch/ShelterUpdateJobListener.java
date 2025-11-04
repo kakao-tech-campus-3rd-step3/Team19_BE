@@ -7,6 +7,16 @@ import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.shelter.service.ShelterOpenApiClient;
 import com.team19.musuimsa.shelter.service.ShelterPhotoService;
 import com.team19.musuimsa.shelter.util.GeoHashUtil;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.JobExecution;
@@ -21,15 +31,6 @@ import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -42,12 +43,13 @@ public class ShelterUpdateJobListener implements JobExecutionListener {
     private final CacheManager cacheManager;
     private final Optional<StringRedisTemplate> redisTemplate;
 
+    @Getter
+    private Map<Long, ExternalShelterItem> externalShelterData = Collections.emptyMap();
+
     @Override
     public void beforeJob(JobExecution jobExecution) {
         log.info(">>>> Shelter Update Job START");
-        Map<Long, ExternalShelterItem> externalShelterData = fetchAllExternalShelterData();
-
-        jobExecution.getExecutionContext().put("externalShelterData", externalShelterData);
+        this.externalShelterData = fetchAllExternalShelterData();
 
         log.info(">>>> Fetched {} items from external API.", externalShelterData.size());
     }
@@ -55,7 +57,8 @@ public class ShelterUpdateJobListener implements JobExecutionListener {
     @Override
     public void afterJob(JobExecution jobExecution) {
         ExecutionContext ctx = jobExecution.getExecutionContext();
-        Set<Long> updatedIds = (Set<Long>) ctx.get(ShelterImportBatchConfig.LOCATION_UPDATED_IDS_KEY);
+        Set<Long> updatedIds = (Set<Long>) ctx.get(
+                ShelterImportBatchConfig.LOCATION_UPDATED_IDS_KEY);
 
         if (updatedIds == null || updatedIds.isEmpty()) {
             log.info("<<<< Shelter Update Job END (변경된 쉼터 없음, 사진 갱신 생략)");
@@ -78,7 +81,8 @@ public class ShelterUpdateJobListener implements JobExecutionListener {
             processed++;
         }
 
-        log.info("<<<< Shelter Update Job END (photo) processed={}, updated={}, failed={}", processed, updated, failed);
+        log.info("<<<< Shelter Update Job END (photo) processed={}, updated={}, failed={}",
+                processed, updated, failed);
 
         // 2) 선택 캐시 무효화
         try {
