@@ -11,6 +11,7 @@ import com.team19.musuimsa.user.dto.UserLocationUpdateRequest;
 import com.team19.musuimsa.user.dto.UserPasswordUpdateRequest;
 import com.team19.musuimsa.user.dto.UserResponse;
 import com.team19.musuimsa.user.dto.UserUpdateRequest;
+import com.team19.musuimsa.user.service.UserPhotoService;
 import com.team19.musuimsa.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,7 +25,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,7 +36,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.net.URI;
 
 @Tag(name = "사용자 API", description = "사용자 인증 및 정보 관련 API")
 @RestController
@@ -45,6 +49,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserService userService;
+
+    private final UserPhotoService userPhotoService;
 
     @Operation(summary = "회원 가입", description = "새로운 사용자를 등록합니다.")
     @ApiResponses(value = {
@@ -313,5 +319,24 @@ public class UserController {
         URI location = URI.create("/api/users/me/devices/" + savedDevice.getId());
 
         return ResponseEntity.created(location).build();
+    }
+
+    @Operation(summary = "내 프로필 이미지 업로드",
+            description = "멀티파트 이미지 업로드 후 사용자 프로필 이미지 URL을 갱신합니다.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "업로드/갱신 성공",
+                    content = @Content(schema = @Schema(implementation = UserResponse.class))),
+            @ApiResponse(responseCode = "400", description = "파일 누락/형식 오류",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+            @ApiResponse(responseCode = "401", description = "인증 실패")
+    })
+    @PostMapping(value = "/me/profile-image", consumes = "multipart/form-data")
+    public ResponseEntity<UserResponse> uploadMyProfileImage(
+            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user,
+            @RequestPart("file") MultipartFile file
+    ) {
+        UserResponse updated = userPhotoService.changeMyProfileImage(user, file);
+        return ResponseEntity.ok(updated);
     }
 }
