@@ -139,7 +139,6 @@ class UserPhotoServiceTest {
                 .hasMessageContaining("DB fail");
 
         verify(uploader).delete("users/1/new.jpg");
-
         verifyNoInteractions(signer);
     }
 
