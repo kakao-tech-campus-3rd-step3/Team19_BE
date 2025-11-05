@@ -1,5 +1,6 @@
 package com.team19.musuimsa.user.service;
 
+import com.team19.musuimsa.config.S3UrlSigner;
 import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.dto.UserPhotoUpdateResponse;
 import com.team19.musuimsa.user.dto.UserResponse;
@@ -11,6 +12,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.multipart.MultipartFile;
 
 import java.lang.reflect.Field;
+import java.time.Duration;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,17 +22,19 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class UserPhotoServiceTest {
 
     @Test
-    @DisplayName("성공: 같은 버킷이면 DB 갱신 후 이전 객체(S3) 삭제")
+    @DisplayName("성공: 같은 버킷이면 DB 갱신 후 이전 객체(S3) 삭제, 응답은 presigned URL")
     void changeMyProfileImage_success_and_delete_old_when_same_bucket() throws Exception {
         UserService userService = mock(UserService.class);
         UserPhotoUploader uploader = mock(UserPhotoUploader.class);
-        UserPhotoService service = new UserPhotoService(userService, uploader);
+        S3UrlSigner signer = mock(S3UrlSigner.class);
 
+        UserPhotoService service = new UserPhotoService(userService, uploader, signer);
         setField(service, "s3PublicBaseUrl", "https://cdn.example.com/");
 
         Long userId = 1L;
@@ -41,41 +45,41 @@ class UserPhotoServiceTest {
                 "https://cdn.example.com/users/1/old.jpg");
         UserPhotoUpdateResponse uploaded = new UserPhotoUpdateResponse(
                 "users/1/new.jpg", "https://cdn.example.com/users/1/new.jpg", "image/jpeg", 123L);
-        UserResponse after = new UserResponse(userId, "u@e.com", "nick", uploaded.publicUrl());
+
+        UserResponse afterSaved = new UserResponse(userId, "u@e.com", "nick", uploaded.publicUrl());
 
         when(userService.getUserInfo(userId)).thenReturn(before);
         when(uploader.upload(eq(userId), any(MultipartFile.class))).thenReturn(uploaded);
-        when(userService.updateUserInfo(any(UserUpdateRequest.class), eq(loginUser))).thenReturn(after);
+        when(userService.updateUserInfo(any(UserUpdateRequest.class), eq(loginUser))).thenReturn(afterSaved);
+        when(signer.signGetUrl(eq("users/1/new.jpg"), any(java.time.Duration.class))).thenReturn("https://signed.example.com/new?x=1");
 
         MultipartFile file = mock(MultipartFile.class);
 
         beginTx();
+        UserResponse res;
         try {
-            assertThat(before.profileImageUrl()).startsWith("https://cdn.example.com/");
-            assertThat(uploaded.publicUrl()).startsWith("https://cdn.example.com/");
-
-            UserResponse res = service.changeMyProfileImage(loginUser, file);
-            assertThat(res.profileImageUrl()).isEqualTo(after.profileImageUrl());
-
-            assertThat(TransactionSynchronizationManager.getSynchronizations())
-                    .as("afterCommit 콜백 등록 여부")
-                    .isNotEmpty();
+            res = service.changeMyProfileImage(loginUser, file);
         } finally {
             commitTx();
         }
 
-        ArgumentCaptor<String> keyCap = org.mockito.ArgumentCaptor.forClass(String.class);
-        verify(uploader).delete(keyCap.capture());
+        assertThat(res.profileImageUrl()).isEqualTo("https://signed.example.com/new?x=1");
 
-        assertThat(keyCap.getValue()).isIn("users/1/old.jpg");
+        ArgumentCaptor<String> keyCap = ArgumentCaptor.forClass(String.class);
+        verify(uploader).delete(keyCap.capture());
+        assertThat(keyCap.getValue()).isEqualTo("users/1/old.jpg");
+
+        verify(signer).signGetUrl(eq("users/1/new.jpg"), any(Duration.class));
     }
 
     @Test
-    @DisplayName("성공: 다른 버킷이면 이전 객체 삭제하지 않음")
+    @DisplayName("성공: 다른 버킷이면 이전 객체 삭제하지 않음, 응답은 presigned URL")
     void changeMyProfileImage_success_and_keep_old_when_different_bucket() throws Exception {
         UserService userService = mock(UserService.class);
         UserPhotoUploader uploader = mock(UserPhotoUploader.class);
-        UserPhotoService service = new UserPhotoService(userService, uploader);
+        S3UrlSigner signer = mock(S3UrlSigner.class);
+
+        UserPhotoService service = new UserPhotoService(userService, uploader, signer);
         setField(service, "s3PublicBaseUrl", "https://cdn.example.com");
 
         Long userId = 1L;
@@ -83,14 +87,15 @@ class UserPhotoServiceTest {
         setField(loginUser, "userId", userId);
 
         UserResponse before = new UserResponse(userId, "u@e.com", "nick",
-                "https://other-cdn.example.com/users/1/old.jpg"); // 다른 버킷
+                "https://other-cdn.example.com/users/1/old.jpg");
         UserPhotoUpdateResponse uploaded = new UserPhotoUpdateResponse(
                 "users/1/new.jpg", "https://cdn.example.com/users/1/new.jpg", "image/jpeg", 123L);
-        UserResponse after = new UserResponse(userId, "u@e.com", "nick", uploaded.publicUrl());
+        UserResponse afterSaved = new UserResponse(userId, "u@e.com", "nick", uploaded.publicUrl());
 
         when(userService.getUserInfo(userId)).thenReturn(before);
         when(uploader.upload(eq(userId), any(MultipartFile.class))).thenReturn(uploaded);
-        when(userService.updateUserInfo(any(UserUpdateRequest.class), eq(loginUser))).thenReturn(after);
+        when(userService.updateUserInfo(any(UserUpdateRequest.class), eq(loginUser))).thenReturn(afterSaved);
+        when(signer.signGetUrl(eq("users/1/new.jpg"), any(java.time.Duration.class))).thenReturn("https://signed.example.com/new?x=2");
 
         MultipartFile file = mock(MultipartFile.class);
 
@@ -98,8 +103,9 @@ class UserPhotoServiceTest {
         UserResponse res = service.changeMyProfileImage(loginUser, file);
         commitTx();
 
-        assertThat(res.profileImageUrl()).isEqualTo(after.profileImageUrl());
-        verify(uploader, never()).delete("users/1/old.jpg");
+        assertThat(res.profileImageUrl()).isEqualTo("https://signed.example.com/new?x=2");
+        verify(uploader, never()).delete("users/1/old.jpg"); // 다른 버킷 → 삭제 안 함
+        verify(signer).signGetUrl(eq("users/1/new.jpg"), any(Duration.class));
     }
 
     @Test
@@ -107,7 +113,10 @@ class UserPhotoServiceTest {
     void changeMyProfileImage_fail_then_delete_uploaded_object() throws Exception {
         UserService userService = mock(UserService.class);
         UserPhotoUploader uploader = mock(UserPhotoUploader.class);
-        UserPhotoService service = new UserPhotoService(userService, uploader);
+
+        S3UrlSigner signer = mock(S3UrlSigner.class);
+
+        UserPhotoService service = new UserPhotoService(userService, uploader, signer);
         setField(service, "s3PublicBaseUrl", "https://cdn.example.com");
 
         Long userId = 1L;
@@ -130,6 +139,7 @@ class UserPhotoServiceTest {
                 .hasMessageContaining("DB fail");
 
         verify(uploader).delete("users/1/new.jpg");
+        verifyNoInteractions(signer);
     }
 
     private static void beginTx() {
