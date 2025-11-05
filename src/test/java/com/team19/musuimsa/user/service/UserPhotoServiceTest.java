@@ -45,6 +45,7 @@ class UserPhotoServiceTest {
                 "https://cdn.example.com/users/1/old.jpg");
         UserPhotoUpdateResponse uploaded = new UserPhotoUpdateResponse(
                 "users/1/new.jpg", "https://cdn.example.com/users/1/new.jpg", "image/jpeg", 123L);
+
         UserResponse afterSaved = new UserResponse(userId, "u@e.com", "nick", uploaded.publicUrl());
 
         when(userService.getUserInfo(userId)).thenReturn(before);
@@ -112,6 +113,7 @@ class UserPhotoServiceTest {
     void changeMyProfileImage_fail_then_delete_uploaded_object() throws Exception {
         UserService userService = mock(UserService.class);
         UserPhotoUploader uploader = mock(UserPhotoUploader.class);
+
         S3UrlSigner signer = mock(S3UrlSigner.class);
 
         UserPhotoService service = new UserPhotoService(userService, uploader, signer);
@@ -137,6 +139,7 @@ class UserPhotoServiceTest {
                 .hasMessageContaining("DB fail");
 
         verify(uploader).delete("users/1/new.jpg");
+
         verifyNoInteractions(signer);
     }
 
