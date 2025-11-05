@@ -71,6 +71,6 @@ public class S3Config {
         if (!profile.isBlank()) {
             return ProfileCredentialsProvider.create(profile);
         }
-        return DefaultCredentialsProvider.create(); // Env, System props, WebIdentity, EC2/ECS/EKS Role 등
+        return DefaultCredentialsProvider.create();
     }
 }

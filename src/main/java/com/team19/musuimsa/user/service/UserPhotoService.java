@@ -30,8 +30,8 @@ public class UserPhotoService {
     public UserResponse changeMyProfileImage(User loginUser, MultipartFile file) {
         // 1) 업로드
         UserPhotoUpdateResponse uploaded = userPhotoUploader.upload(loginUser.getUserId(), file);
-        String newPublicUrl = uploaded.publicUrl();   // DB에는 이걸 저장
-        String newKey = uploaded.objectKey();   // 응답용 presign은 이 키로 생성
+        String newPublicUrl = uploaded.publicUrl();
+        String newKey = uploaded.objectKey();
 
         // 2) 기존 URL 확보
         String oldUrl = safeLoadCurrentUrl(loginUser);
@@ -73,7 +73,6 @@ public class UserPhotoService {
             if (url.startsWith(base)) {
                 key = url.substring(base.length());
             } else if (sameHost) {
-                // 예: https://musuimsa.s3.ap-northeast-2.amazonaws.com/users/1/..png?...
                 key = uri.getPath().startsWith("/") ? uri.getPath().substring(1) : uri.getPath();
             } else {
                 // CloudFront 등 다른 도메인일 수 있으니 여기선 서명 스킵
