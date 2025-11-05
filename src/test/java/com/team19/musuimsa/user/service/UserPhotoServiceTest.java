@@ -40,6 +40,7 @@ class UserPhotoServiceTest {
         Long userId = 1L;
         User loginUser = new User();
         setField(loginUser, "userId", userId);
+        setField(loginUser, "profileImageUrl", "https://cdn.example.com/users/1/old.jpg");
 
         UserResponse before = new UserResponse(userId, "u@e.com", "nick",
                 "https://cdn.example.com/users/1/old.jpg");
@@ -85,6 +86,7 @@ class UserPhotoServiceTest {
         Long userId = 1L;
         User loginUser = new User();
         setField(loginUser, "userId", userId);
+        setField(loginUser, "profileImageUrl", "https://external-legacy.com/profile/old.jpg");
 
         UserResponse before = new UserResponse(userId, "u@e.com", "nick",
                 "https://other-cdn.example.com/users/1/old.jpg");
