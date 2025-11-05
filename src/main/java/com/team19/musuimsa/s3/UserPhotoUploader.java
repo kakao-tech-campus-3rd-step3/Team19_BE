@@ -1,4 +1,4 @@
-package com.team19.musuimsa.user.service;
+package com.team19.musuimsa.s3;
 
 import com.team19.musuimsa.exception.external.S3UploadException;
 import com.team19.musuimsa.exception.invalid.InvalidFileException;

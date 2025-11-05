@@ -1,6 +1,7 @@
 package com.team19.musuimsa.user.service;
 
-import com.team19.musuimsa.config.S3UrlSigner;
+import com.team19.musuimsa.s3.S3UrlSigner;
+import com.team19.musuimsa.s3.UserPhotoUploader;
 import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.dto.UserPhotoUpdateResponse;
 import com.team19.musuimsa.user.dto.UserResponse;

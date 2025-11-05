@@ -1,6 +1,7 @@
 package com.team19.musuimsa.user.service;
 
 import com.team19.musuimsa.exception.invalid.UnsupportedImageTypeException;
+import com.team19.musuimsa.s3.UserPhotoUploader;
 import com.team19.musuimsa.user.dto.UserPhotoUpdateResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
