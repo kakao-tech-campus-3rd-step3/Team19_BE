@@ -28,7 +28,7 @@ public class UserPhotoService {
     public UserResponse changeMyProfileImage(User loginUser, MultipartFile file) {
         UserPhotoUpdateResponse uploaded = userPhotoUploader.upload(loginUser.getUserId(), file);
 
-        String oldUrl = null;
+        String oldUrl;
         try {
             UserResponse current = userService.getUserInfo(loginUser.getUserId());
             oldUrl = current.profileImageUrl();
