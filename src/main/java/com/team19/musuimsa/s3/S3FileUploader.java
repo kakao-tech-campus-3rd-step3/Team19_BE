@@ -3,7 +3,7 @@ package com.team19.musuimsa.s3;
 import com.team19.musuimsa.exception.external.S3UploadException;
 import com.team19.musuimsa.exception.invalid.InvalidFileException;
 import com.team19.musuimsa.exception.invalid.UnsupportedImageTypeException;
-import com.team19.musuimsa.user.dto.UserPhotoUpdateResponse;
+import com.team19.musuimsa.s3.dto.S3UploadResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -19,10 +19,10 @@ import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class UserPhotoUploader {
+public class S3FileUploader {
 
-    private static final String USER_PREFIX = "users";
     private static final Set<String> ALLOWED = Set.of("image/jpeg", "image/jpg", "image/png", "image/webp");
+    private static final long MAX_SIZE_BYTES = 10 * 1024 * 1024;
 
     private final S3Client s3Client;
 
@@ -32,16 +32,15 @@ public class UserPhotoUploader {
     @Value("${aws.s3.base-url}")
     private String s3PublicBaseUrl;
 
-    public UserPhotoUpdateResponse upload(Long userId, MultipartFile multipartFile) {
-        if (userId == null)
-            throw new InvalidFileException("userId가 필요합니다.");
-        if (multipartFile == null || multipartFile.isEmpty())
-            throw new InvalidFileException("업로드할 파일이 비어있습니다.");
+    public S3UploadResponse upload(String prefix, MultipartFile multipartFile) {
 
-        long maxSize = 10 * 1024 * 1024; // 10MB
-        if (multipartFile.getSize() > maxSize) {
+        if (multipartFile == null || multipartFile.isEmpty()) {
+            throw new InvalidFileException("업로드할 파일이 비어있습니다.");
+        }
+
+        if (multipartFile.getSize() > MAX_SIZE_BYTES) {
             throw new InvalidFileException(
-                    "파일 크기가 너무 큽니다. 최대 " + (maxSize / 1024 / 1024) + "MB까지 업로드 가능합니다.");
+                    "파일 크기가 너무 큽니다. 최대 " + (MAX_SIZE_BYTES / 1024 / 1024) + "MB까지 업로드 가능합니다.");
         }
 
         String contentType = multipartFile.getContentType();
@@ -49,10 +48,12 @@ public class UserPhotoUploader {
             throw new UnsupportedImageTypeException(contentType);
         }
 
+        // 2. 파일명 및 Object Key 생성
         String fileExtension = resolveFileExtension(multipartFile.getOriginalFilename(), contentType);
         String randomId = UUID.randomUUID().toString().replace("-", "");
-        String objectKey = USER_PREFIX + "/" + userId + "/" + randomId + "." + fileExtension;
+        String objectKey = prefix + "/" + randomId + "." + fileExtension;
 
+        // 3. PutObjectRequest 빌드
         PutObjectRequest putRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(objectKey)
@@ -60,17 +61,19 @@ public class UserPhotoUploader {
                 .cacheControl("public, max-age=31536000")
                 .build();
 
+        // 4. S3 업로드 실행
         try (InputStream inputStream = multipartFile.getInputStream()) {
             s3Client.putObject(putRequest, RequestBody.fromInputStream(inputStream, multipartFile.getSize()));
         } catch (IOException e) {
             throw new S3UploadException(bucketName, objectKey, e);
         }
 
+        // 5. Public URL 생성
         String publicUrl = s3PublicBaseUrl.endsWith("/")
                 ? s3PublicBaseUrl + objectKey
                 : s3PublicBaseUrl + "/" + objectKey;
 
-        return new UserPhotoUpdateResponse(objectKey, publicUrl, contentType, multipartFile.getSize());
+        return new S3UploadResponse(objectKey, publicUrl, contentType, multipartFile.getSize());
     }
 
     private String resolveFileExtension(String originalFilename, String contentType) {
@@ -84,6 +87,7 @@ public class UserPhotoUploader {
             return "webp";
         }
 
+        // Fallback: MIME 타입으로 결정할 수 없을 경우 파일명에서 확장자 추출
         if (originalFilename != null && originalFilename.contains(".")) {
             return originalFilename.substring(originalFilename.lastIndexOf('.') + 1).toLowerCase();
         }

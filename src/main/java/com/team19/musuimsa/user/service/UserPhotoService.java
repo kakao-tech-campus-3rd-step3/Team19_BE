@@ -1,9 +1,9 @@
 package com.team19.musuimsa.user.service;
 
+import com.team19.musuimsa.s3.S3FileUploader;
 import com.team19.musuimsa.s3.S3UrlSigner;
-import com.team19.musuimsa.s3.UserPhotoUploader;
+import com.team19.musuimsa.s3.dto.S3UploadResponse;
 import com.team19.musuimsa.user.domain.User;
-import com.team19.musuimsa.user.dto.UserPhotoUpdateResponse;
 import com.team19.musuimsa.user.dto.UserResponse;
 import com.team19.musuimsa.user.dto.UserUpdateRequest;
 import lombok.RequiredArgsConstructor;
@@ -25,12 +25,15 @@ public class UserPhotoService {
     private String s3PublicBaseUrl;
 
     private final UserService userService;
-    private final UserPhotoUploader userPhotoUploader;
+    private final S3FileUploader s3FileUploader;
     private final S3UrlSigner s3UrlSigner;
+
+    private static final String USER_PREFIX = "users";
 
     public UserResponse changeMyProfileImage(User loginUser, MultipartFile file) {
         // 1) 업로드
-        UserPhotoUpdateResponse uploaded = userPhotoUploader.upload(loginUser.getUserId(), file);
+        String prefix = USER_PREFIX + "/" + loginUser.getUserId();
+        S3UploadResponse uploaded = s3FileUploader.upload(prefix, file);
         // DB에는 반드시 정적 URL 저장 (쿼리 제거)
         String newPublicUrl = stripQuery(uploaded.publicUrl());
         String newKey = uploaded.objectKey();
@@ -89,7 +92,7 @@ public class UserPhotoService {
     private void safeDelete(String key) {
         try {
             if (key != null && !key.isBlank()) {
-                userPhotoUploader.delete(key);
+                s3FileUploader.delete(key);
             }
         } catch (Exception ex) {
             log.warn("Failed to cleanup uploaded image: {}", key, ex);
