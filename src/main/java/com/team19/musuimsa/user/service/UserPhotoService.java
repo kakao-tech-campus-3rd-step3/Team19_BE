@@ -30,7 +30,8 @@ public class UserPhotoService {
     public UserResponse changeMyProfileImage(User loginUser, MultipartFile file) {
         // 1) 업로드
         UserPhotoUpdateResponse uploaded = userPhotoUploader.upload(loginUser.getUserId(), file);
-        String newPublicUrl = uploaded.publicUrl();
+        // DB에는 반드시 정적 URL 저장 (쿼리 제거)
+        String newPublicUrl = stripQuery(uploaded.publicUrl());
         String newKey = uploaded.objectKey();
 
         // 2) 기존 URL 확보
@@ -55,38 +56,33 @@ public class UserPhotoService {
     }
 
     private String safeLoadCurrentUrl(User loginUser) {
-        try {
-            return userService.getUserInfo(loginUser.getUserId()).profileImageUrl();
-        } catch (RuntimeException e) {
-            return loginUser.getProfileImageUrl();
-        }
+        return loginUser.getProfileImageUrl();
     }
 
     private void registerDeleteOldIfCommitted(String oldUrl, String newUrl) {
+        final String oldKey = toKeyOrNull(oldUrl);
+        final String newKey = toKeyOrNull(newUrl);
+        Runnable task = () -> deleteIfDifferentManagedKey(oldKey, newKey);
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            deleteIfInSameBucket(oldUrl, newUrl);
+            task.run();
             return;
         }
-        final String oldSnap = oldUrl;
-        final String newSnap = newUrl;
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                deleteIfInSameBucket(oldSnap, newSnap);
+                task.run();
             }
         });
     }
 
-    private void deleteIfInSameBucket(String oldUrl, String newUrl) {
-        if (oldUrl == null || oldUrl.isBlank() || oldUrl.equals(newUrl)) {
+    private void deleteIfDifferentManagedKey(String oldKey, String newKey) {
+        if (oldKey == null || oldKey.isBlank()) {
             return;
         }
-
-        String base = s3PublicBaseUrl.endsWith("/") ? s3PublicBaseUrl : s3PublicBaseUrl + "/";
-        if (oldUrl.startsWith(base)) {
-            String key = oldUrl.substring(base.length());
-            safeDelete(key);
+        if (oldKey.equals(newKey)) {
+            return; // 동일 키면 삭제 X
         }
+        safeDelete(oldKey);
     }
 
     private void safeDelete(String key) {
@@ -97,6 +93,52 @@ public class UserPhotoService {
         } catch (Exception ex) {
             log.warn("Failed to cleanup uploaded image: {}", key, ex);
         }
+    }
+
+    // 조회 DTO의 정적 URL → presigned로 교체 시 사용
+    public UserResponse signIfPresent(UserResponse dto) {
+        String key = toKeyOrNull(dto.profileImageUrl());
+        if (key == null || key.isBlank()) {
+            return dto;
+        }
+        String signed = s3UrlSigner.signGetUrl(key, java.time.Duration.ofMinutes(15));
+        return new UserResponse(dto.userId(), dto.email(), dto.nickname(), signed);
+    }
+
+    private String stripQuery(String url) {
+        if (url == null) {
+            return null;
+        }
+        int i = url.indexOf('?');
+        return (i >= 0) ? url.substring(0, i) : url;
+    }
+
+    private String toKeyOrNull(String url) {
+        // 1. 입력 유효성 검사
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+
+        // 2. Base URL 기반 파싱
+        String base = s3PublicBaseUrl.endsWith("/") ? s3PublicBaseUrl : s3PublicBaseUrl + "/";
+        if (url.startsWith(base)) {
+            String keyWithQuery = url.substring(base.length());
+
+            int i = keyWithQuery.indexOf('?');
+            return (i >= 0) ? keyWithQuery.substring(0, i) : keyWithQuery;
+        }
+
+        // 3. AWS 호스트 기반 파싱
+        int at = url.indexOf(".amazonaws.com/");
+        if (at > 0) {
+            int start = at + ".amazonaws.com/".length();
+
+            int q = url.indexOf('?', start);
+            return (q > 0) ? url.substring(start, q) : url.substring(start);
+        }
+
+        // 4. 추출 실패
+        return null;
     }
 }
 
