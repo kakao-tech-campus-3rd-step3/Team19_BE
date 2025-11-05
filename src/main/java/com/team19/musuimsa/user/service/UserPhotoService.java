@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserPhotoService {
 
     @Value("${aws.s3.base-url}")
@@ -20,7 +21,6 @@ public class UserPhotoService {
     private final UserService userService;
     private final UserPhotoUploader userPhotoUploader;
 
-    @Transactional
     public UserResponse changeMyProfileImage(User loginUser, MultipartFile file) {
         UserResponse before = userService.getUserInfo(loginUser.getUserId());
         UserPhotoUpdateResponse uploaded = userPhotoUploader.upload(loginUser.getUserId(), file);
