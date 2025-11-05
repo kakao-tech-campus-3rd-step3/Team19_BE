@@ -54,39 +54,6 @@ public class UserPhotoService {
         }
     }
 
-    private UserResponse signIfS3(UserResponse raw) {
-        String url = raw.profileImageUrl();
-        if (url == null || url.isBlank()) return raw;
-
-        try {
-            // 설정값 파싱
-            String base = s3PublicBaseUrl.endsWith("/") ? s3PublicBaseUrl : s3PublicBaseUrl + "/";
-            java.net.URI baseUri = java.net.URI.create(base);
-            java.net.URI uri = java.net.URI.create(url);
-
-            // host 기준 매칭 (scheme/슬래시는 무시)
-            boolean sameHost = baseUri.getHost() != null
-                    && baseUri.getHost().equalsIgnoreCase(uri.getHost());
-
-            // 키 추출: base 프리픽스로 잘라보되, 안 되면 host 일치 시 path만 사용
-            String key;
-            if (url.startsWith(base)) {
-                key = url.substring(base.length());
-            } else if (sameHost) {
-                key = uri.getPath().startsWith("/") ? uri.getPath().substring(1) : uri.getPath();
-            } else {
-                // CloudFront 등 다른 도메인일 수 있으니 여기선 서명 스킵
-                return raw;
-            }
-
-            String signed = s3UrlSigner.signGetUrl(key, java.time.Duration.ofMinutes(15));
-            return new UserResponse(raw.userId(), raw.email(), raw.nickname(), signed);
-
-        } catch (Exception ignore) {
-            return raw; // 문제가 생겨도 기존 방식 유지
-        }
-    }
-
     private String safeLoadCurrentUrl(User loginUser) {
         try {
             return userService.getUserInfo(loginUser.getUserId()).profileImageUrl();
