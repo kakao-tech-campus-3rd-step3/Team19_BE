@@ -1,5 +1,6 @@
 package com.team19.musuimsa.user.service;
 
+import com.team19.musuimsa.config.S3UrlSigner;
 import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.dto.UserPhotoUpdateResponse;
 import com.team19.musuimsa.user.dto.UserResponse;
@@ -24,62 +25,111 @@ public class UserPhotoService {
 
     private final UserService userService;
     private final UserPhotoUploader userPhotoUploader;
+    private final S3UrlSigner s3UrlSigner;
 
     public UserResponse changeMyProfileImage(User loginUser, MultipartFile file) {
+        // 1) 업로드
         UserPhotoUpdateResponse uploaded = userPhotoUploader.upload(loginUser.getUserId(), file);
+        String newPublicUrl = uploaded.publicUrl();   // DB에는 이걸 저장
+        String newKey = uploaded.objectKey();   // 응답용 presign은 이 키로 생성
 
-        String oldUrl;
-        try {
-            oldUrl = userService.getUserInfo(loginUser.getUserId()).profileImageUrl();
-        } catch (RuntimeException e) {
-            log.warn("Failed to load current user info. oldUrl fallback to loginUser field.", e);
-            oldUrl = loginUser.getProfileImageUrl();
-        }
+        // 2) 기존 URL 확보
+        String oldUrl = safeLoadCurrentUrl(loginUser);
 
         try {
+            // 3) DB 업데이트(정적 URL 저장)
             UserResponse updated = userService.updateUserInfo(
-                    new UserUpdateRequest(null, uploaded.publicUrl()), loginUser);
+                    new UserUpdateRequest(null, newPublicUrl), loginUser);
 
-            if (TransactionSynchronizationManager.isSynchronizationActive()) {
-                final String oldUrlSnapshot = oldUrl;
-                final String newUrlSnapshot = updated.profileImageUrl();
+            // 4) 커밋 후 이전 이미지 삭제
+            registerDeleteOldIfCommitted(oldUrl, updated.profileImageUrl());
 
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        if (oldUrlSnapshot != null && !oldUrlSnapshot.isBlank()
-                                && !oldUrlSnapshot.equals(newUrlSnapshot)) {
-                            deleteIfInSameBucket(oldUrlSnapshot);
-                        }
-                    }
-                });
-            } else {
-                // 트랜잭션 없으면 즉시 처리(선택)
-                if (oldUrl != null && !oldUrl.isBlank()
-                        && !oldUrl.equals(updated.profileImageUrl())) {
-                    deleteIfInSameBucket(oldUrl);
-                }
-            }
-            return updated;
+            // 5) 응답은 '방금 업로드한 키'로 presign 생성 (URL 파싱 X)
+            String signed = s3UrlSigner.signGetUrl(newKey, java.time.Duration.ofMinutes(15));
+            return new UserResponse(updated.userId(), updated.email(), updated.nickname(), signed);
+
         } catch (RuntimeException e) {
-            try {
-                userPhotoUploader.delete(uploaded.objectKey());
-            } catch (Exception deleteEx) {
-                log.warn("Failed to cleanup uploaded image: {}", uploaded.objectKey(), deleteEx);
-            }
+            safeDelete(newKey); // 롤백 시 업로드 취소
             throw e;
         }
     }
 
-    private void deleteIfInSameBucket(String oldUrl) {
-        if (oldUrl == null || oldUrl.isBlank()) {
+    private UserResponse signIfS3(UserResponse raw) {
+        String url = raw.profileImageUrl();
+        if (url == null || url.isBlank()) return raw;
+
+        try {
+            // 설정값 파싱
+            String base = s3PublicBaseUrl.endsWith("/") ? s3PublicBaseUrl : s3PublicBaseUrl + "/";
+            java.net.URI baseUri = java.net.URI.create(base);
+            java.net.URI uri = java.net.URI.create(url);
+
+            // host 기준 매칭 (scheme/슬래시는 무시)
+            boolean sameHost = baseUri.getHost() != null
+                    && baseUri.getHost().equalsIgnoreCase(uri.getHost());
+
+            // 키 추출: base 프리픽스로 잘라보되, 안 되면 host 일치 시 path만 사용
+            String key;
+            if (url.startsWith(base)) {
+                key = url.substring(base.length());
+            } else if (sameHost) {
+                // 예: https://musuimsa.s3.ap-northeast-2.amazonaws.com/users/1/..png?...
+                key = uri.getPath().startsWith("/") ? uri.getPath().substring(1) : uri.getPath();
+            } else {
+                // CloudFront 등 다른 도메인일 수 있으니 여기선 서명 스킵
+                return raw;
+            }
+
+            String signed = s3UrlSigner.signGetUrl(key, java.time.Duration.ofMinutes(15));
+            return new UserResponse(raw.userId(), raw.email(), raw.nickname(), signed);
+
+        } catch (Exception ignore) {
+            return raw; // 문제가 생겨도 기존 방식 유지
+        }
+    }
+
+    private String safeLoadCurrentUrl(User loginUser) {
+        try {
+            return userService.getUserInfo(loginUser.getUserId()).profileImageUrl();
+        } catch (RuntimeException e) {
+            return loginUser.getProfileImageUrl();
+        }
+    }
+
+    private void registerDeleteOldIfCommitted(String oldUrl, String newUrl) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            deleteIfInSameBucket(oldUrl, newUrl);
+            return;
+        }
+        final String oldSnap = oldUrl;
+        final String newSnap = newUrl;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                deleteIfInSameBucket(oldSnap, newSnap);
+            }
+        });
+    }
+
+    private void deleteIfInSameBucket(String oldUrl, String newUrl) {
+        if (oldUrl == null || oldUrl.isBlank() || oldUrl.equals(newUrl)) {
             return;
         }
 
         String base = s3PublicBaseUrl.endsWith("/") ? s3PublicBaseUrl : s3PublicBaseUrl + "/";
         if (oldUrl.startsWith(base)) {
             String key = oldUrl.substring(base.length());
-            userPhotoUploader.delete(key);
+            safeDelete(key);
+        }
+    }
+
+    private void safeDelete(String key) {
+        try {
+            if (key != null && !key.isBlank()) {
+                userPhotoUploader.delete(key);
+            }
+        } catch (Exception ex) {
+            log.warn("Failed to cleanup uploaded image: {}", key, ex);
         }
     }
 }
