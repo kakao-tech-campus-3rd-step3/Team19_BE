@@ -38,6 +38,12 @@ public class UserPhotoUploader {
         if (multipartFile == null || multipartFile.isEmpty())
             throw new InvalidFileException("업로드할 파일이 비어있습니다.");
 
+        long maxSize = 10 * 1024 * 1024; // 10MB
+        if (multipartFile.getSize() > maxSize) {
+            throw new InvalidFileException(
+                    "파일 크기가 너무 큽니다. 최대 " + (maxSize / 1024 / 1024) + "MB까지 업로드 가능합니다.");
+        }
+
         String contentType = multipartFile.getContentType();
         if (contentType == null || !ALLOWED.contains(contentType.toLowerCase())) {
             throw new UnsupportedImageTypeException(contentType);
