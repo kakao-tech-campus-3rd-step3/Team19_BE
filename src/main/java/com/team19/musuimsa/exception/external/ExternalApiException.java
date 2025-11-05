@@ -8,6 +8,11 @@ public class ExternalApiException extends RuntimeException {
         this.url = url;
     }
 
+    public ExternalApiException(String message, String url, Throwable cause) {
+        super(message, cause);
+        this.url = url;
+    }
+
     public String getUrl() {
         return url;
     }
