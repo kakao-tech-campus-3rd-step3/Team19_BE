@@ -30,8 +30,7 @@ public class UserPhotoService {
 
         String oldUrl;
         try {
-            UserResponse current = userService.getUserInfo(loginUser.getUserId());
-            oldUrl = current.profileImageUrl();
+            oldUrl = userService.getUserInfo(loginUser.getUserId()).profileImageUrl();
         } catch (RuntimeException e) {
             log.warn("Failed to load current user info. oldUrl fallback to loginUser field.", e);
             oldUrl = loginUser.getProfileImageUrl();
@@ -55,7 +54,7 @@ public class UserPhotoService {
                     }
                 });
             } else {
-                // 트랜잭션 없으면 즉시 처리
+                // 트랜잭션 없으면 즉시 처리(선택)
                 if (oldUrl != null && !oldUrl.isBlank()
                         && !oldUrl.equals(updated.profileImageUrl())) {
                     deleteIfInSameBucket(oldUrl);
