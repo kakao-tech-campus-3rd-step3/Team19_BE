@@ -48,7 +48,7 @@ class ShelterControllerTest {
     void getByBbox_returnsMapResponse() throws Exception {
         List<MapFeature> items = List.of(
                 new ClusterFeature("gh_1", 37.11, 127.11, 3),
-                new MapShelterResponse(1L, "무더위쉼터A", 37.12, 127.12, true, 20, null, null)
+                new MapShelterResponse(1L, "중앙 쉼터", 37.5665, 126.9780, true, 50, "u.jpg", "09:00~18:00", "0.5km")
         );
         Mockito.when(shelterMapService.getByBbox(Mockito.any()))
                 .thenReturn(new MapResponse("cluster", items, 42));
@@ -58,6 +58,8 @@ class ShelterControllerTest {
                         .param("minLng", "127.0")
                         .param("maxLat", "37.2")
                         .param("maxLng", "127.2")
+                        .param("userLat", "37.5665")
+                        .param("userLng", "126.9780")
                         .param("zoom", "12")
                         .param("page", "0")
                         .param("size", "200")
@@ -66,6 +68,11 @@ class ShelterControllerTest {
                 .andExpect(jsonPath("$.level", is("cluster")))
                 .andExpect(jsonPath("$.total", is(42)))
                 .andExpect(jsonPath("$.items", hasSize(2)));
+
+        Mockito.verify(shelterMapService).getByBbox(Mockito.argThat(
+                req -> req.userLat() != null && req.userLat() == 37.5665
+                        && req.userLng() != null && req.userLng() == 126.9780
+        ));
     }
 
     @DisplayName("GET /api/shelters/nearby - 가까운 쉼터 목록 JSON 반환")

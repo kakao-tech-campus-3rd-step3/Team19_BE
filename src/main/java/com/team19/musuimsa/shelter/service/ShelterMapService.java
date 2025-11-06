@@ -9,6 +9,7 @@ import com.team19.musuimsa.shelter.dto.map.MapShelterRow;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.shelter.util.Clusterer;
 import com.team19.musuimsa.shelter.util.GeoHashUtil;
+import com.team19.musuimsa.shelter.util.ShelterDtoUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
@@ -56,7 +57,9 @@ public class ShelterMapService {
         // 2) summary/detail 레벨: 시간 포함 행을 받아 오늘(KST) 기준으로 운영시간과 함께 반환
         List<MapShelterRow> rows = shelterRepository.findInBboxWithHours(
                 minLat, minLng, maxLat, maxLng, pageable);
-        List<MapShelterResponse> items = rows.stream().map(this::toTodayResponse).toList();
+        List<MapShelterResponse> items = rows.stream()
+                .map(row -> toTodayResponse(row, req.userLat(), req.userLng()))
+                .toList();
 
         if (req.zoom() < 16) {
             return new MapResponse("summary", new ArrayList<MapFeature>(items), total);
@@ -76,7 +79,7 @@ public class ShelterMapService {
         return BigDecimal.valueOf(d);
     }
 
-    private MapShelterResponse toTodayResponse(MapShelterRow mapShelterRow) {
+    private MapShelterResponse toTodayResponse(MapShelterRow mapShelterRow, Double userLat, Double userLng) {
         ZoneId kst = ZoneId.of("Asia/Seoul");
         DayOfWeek dow = LocalDate.now(kst).getDayOfWeek();
         boolean weekend = (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY);
@@ -86,6 +89,15 @@ public class ShelterMapService {
 
         String from = normalizeHm(fromTime);
         String to = normalizeHm(toTime);
+
+        String distance = null;
+        if (userLat != null && userLng != null
+                && mapShelterRow.latitude() != 0.0
+                && mapShelterRow.longitude() != 0.0
+        ) {
+            distance = ShelterDtoUtils.distanceBetween(
+                    userLat, userLng, mapShelterRow.latitude(), mapShelterRow.longitude());
+        }
 
         String hours = mergeHours(from, to);
 
@@ -97,7 +109,8 @@ public class ShelterMapService {
                 mapShelterRow.hasAircon(),
                 mapShelterRow.capacity(),
                 mapShelterRow.photoUrl(),
-                hours
+                hours,
+                distance
         );
     }
 

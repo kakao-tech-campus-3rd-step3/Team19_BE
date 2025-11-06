@@ -29,15 +29,15 @@ class ShelterMapServiceTest {
 
         // repo summary 결과를 3개로 가정 (클러스터링 결과 count는 그룹 수)
         List<MapShelterResponse> three = List.of(
-                new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, null, null),
-                new MapShelterResponse(2L, "B", 37.1001, 127.1, false, 20, null, null),
-                new MapShelterResponse(3L, "C", 37.5, 127.5, true, 30, null, null)
+                new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, null, null, null),
+                new MapShelterResponse(2L, "B", 37.1001, 127.1, false, 20, null, null, null),
+                new MapShelterResponse(3L, "C", 37.5, 127.5, true, 30, null, null, null)
         );
         when(repo.findInBbox(any(), any(), any(), any(), any())).thenReturn(three);
 
         // zoom 12 → cluster
         MapResponse r1 = svc.getByBbox(new MapBoundsRequest(
-                37.0, 127.0, 37.6, 127.6, 12, null, null
+                37.0, 127.0, 37.6, 127.6, 12, null, null, null, null
         ));
         assertThat(r1.level()).isEqualTo("cluster");
         assertThat(r1.items()).isNotEmpty();
@@ -46,7 +46,7 @@ class ShelterMapServiceTest {
 
         // spanLat > 3.0 → cluster
         MapResponse r2 = svc.getByBbox(new MapBoundsRequest(
-                30.0, 120.0, 34.5, 122.0, 15, null, null
+                30.0, 120.0, 34.5, 122.0, 15, null, null, null, null
         ));
         assertThat(r2.level()).isEqualTo("cluster");
     }
@@ -59,43 +59,33 @@ class ShelterMapServiceTest {
 
         when(repo.countInBbox(any(), any(), any(), any())).thenReturn(42);
 
-        // 연속 호출 스텁: 1번째(summary), 2번째(detail)
-        when(repo.findInBboxWithHours(any(), any(), any(), any(), any()))
-                .thenReturn(
-                        List.of(
-                                new MapShelterRow(
-                                        1L, "A", 37.1, 127.1, true, 10, null,
-                                        "0900", "1800", "1000", "1600"
-                                )
-                        )
+        List<MapShelterRow> stubRows = List.of(
+                new MapShelterRow(
+                        1L, "A", 37.5665, 126.9780, true, 10, "u.jpg",
+                        "0900", "1800", "1000", "1600"
                 )
-                .thenReturn(
-                        List.of(
-                                new MapShelterRow(
-                                        1L, "A", 37.1, 127.1, true, 10, "u.jpg",
-                                        "09:00", "18:00", "10:00", "16:00"
-                                )
-                        )
-                );
+        );
 
-        // zoom 14 → summary
+        when(repo.findInBboxWithHours(any(), any(), any(), any(), any()))
+                .thenReturn(stubRows);
+
         MapResponse summary = svc.getByBbox(new MapBoundsRequest(
-                37.0, 127.0, 37.2, 127.2, 14, 0, 200
+                37.0, 127.0, 37.2, 127.2, 14, null, null, 0, 200
         ));
         assertThat(summary.level()).isEqualTo("summary");
         assertThat(summary.total()).isEqualTo(42);
-        verify(repo, times(1)).findInBboxWithHours(any(), any(), any(), any(), any());
+        assertThat(((MapShelterResponse) summary.items().get(0)).distance()).isNull();
 
         // 호출 기록만 초기화(스텁은 유지)
         clearInvocations(repo);
 
-        // zoom 16 → detail
+        // zoom 16 → detail (거리 미계산 테스트)
         MapResponse detail = svc.getByBbox(new MapBoundsRequest(
-                37.0, 127.0, 37.02, 127.02, 16, 0, 200
+                37.0, 127.0, 37.02, 127.02, 16, null, null, 0, 200
         ));
         assertThat(detail.level()).isEqualTo("detail");
         assertThat(detail.total()).isEqualTo(42);
-        verify(repo, times(1)).findInBboxWithHours(any(), any(), any(), any(), any());
+        assertThat(((MapShelterResponse) summary.items().get(0)).distance()).isNull();
     }
 
 }

@@ -16,7 +16,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +23,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @Tag(name = "쉼터 API", description = "무더위 쉼터 정보 조회 관련 API")
 @RestController
@@ -67,6 +68,10 @@ public class ShelterController {
             @RequestParam double maxLng,
             @Parameter(description = "지도 확대 레벨", example = "14", required = true)
             @RequestParam int zoom,
+            @Parameter(description = "현재 사용자 위도 (거리 계산용)", example = "37.5665", required = false)
+            @RequestParam(required = false) Double userLat,
+            @Parameter(description = "현재 사용자 경도 (거리 계산용)", example = "126.9780", required = false)
+            @RequestParam(required = false) Double userLng,
             @Parameter(description = "페이지 번호 (0부터 시작, summary/detail 레벨에서 유효)", example = "0")
             @RequestParam(required = false) Integer page,
             @Parameter(description = "페이지 크기 (기본값 200, 최대 500, summary/detail 레벨에서 유효)",
@@ -74,7 +79,7 @@ public class ShelterController {
             @RequestParam(required = false) Integer size
     ) {
         return ResponseEntity.ok(shelterMapService.getByBbox(
-                new MapBoundsRequest(minLat, minLng, maxLat, maxLng, zoom, page, size)));
+                new MapBoundsRequest(minLat, minLng, maxLat, maxLng, zoom, userLat, userLng, page, size)));
     }
 
     // 가까운 쉼터 조회
