@@ -39,7 +39,7 @@ public class ShelterService {
         return shelters.stream()
                 .map(s -> ShelterDtoUtils.toNearbyDto(
                         s,
-                        ShelterDtoUtils.distanceFrom(latitude, longitude, s)
+                        null
                 ))
                 .toList();
     }
