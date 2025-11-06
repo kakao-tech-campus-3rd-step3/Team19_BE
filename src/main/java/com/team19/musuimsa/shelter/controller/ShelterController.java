@@ -87,10 +87,29 @@ public class ShelterController {
                         size)));
     }
 
-    // 전체 쉼터 조회
+    @Operation(summary = "가까운 쉼터 목록 조회 (3km)",
+            description = "현재 위치(위도, 경도)를 기준으로 **반경 3km** 내의 모든 쉼터 목록을 거리순으로 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(array = @ArraySchema(
+                            schema = @Schema(implementation = NearbyShelterResponse.class)),
+                            examples = @ExampleObject(name = "가까운 쉼터 목록",
+                                    value = "[{\"shelterId\": 1, \"name\": \"종로 무더위 쉼터\", \"address\": \"서울 종로구 세종대로 175\", \"latitude\": 37.5665, \"longitude\": 126.9780, \"distance\": \"2.5km\", \"isOutdoors\": false, \"operatingHours\": {\"weekday\": \"09:00~18:00\", \"weekend\": \"10:00~16:00\"}, \"averageRating\": 4.5, \"photoUrl\": \"https://example.com/shelter1.jpg\"}]")
+                    )),
+            @ApiResponse(responseCode = "400", description = "잘못된 위도/경도 값",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "잘못된 좌표",
+                                    value = "{\"status\": 400, \"error\": \"Bad Request\", \"message\": \"잘못된 위도/경도 값\", \"path\": \"/api/shelters/all\"}")))
+    })
     @GetMapping("/all")
-    public ResponseEntity<List<ShelterResponse>> getAllShelters() {
-        List<ShelterResponse> allShelters = shelterService.getAllShelters();
+    public ResponseEntity<List<NearbyShelterResponse>> getAllShelters(
+            @Parameter(description = "현재 위도", example = "37.5665", required = true)
+            @RequestParam double latitude,
+            @Parameter(description = "현재 경도", example = "126.9780", required = true)
+            @RequestParam double longitude
+    ) {
+        List<NearbyShelterResponse> allShelters = shelterService.getAllShelters(latitude,
+                longitude);
         return ResponseEntity.ok(allShelters);
     }
 
