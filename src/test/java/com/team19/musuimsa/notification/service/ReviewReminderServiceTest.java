@@ -145,7 +145,7 @@ class ReviewReminderServiceTest {
         verify(fcmService, times(1)).sendPushNotification(
                 eq(1L),
                 eq("테스트 쉼터 이용은 어떠셨나요?"),
-                eq("10분 전 방문하신 쉼터의 소중한 리뷰를 남겨주세요!"),
+                eq("방문하신 쉼터의 소중한 리뷰를 남겨주세요!"),
                 dataCaptor.capture() //
         );
 
