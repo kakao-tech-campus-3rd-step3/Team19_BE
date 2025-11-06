@@ -1,6 +1,7 @@
 package com.team19.musuimsa.config;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team19.musuimsa.shelter.dto.map.ClusterFeature;
@@ -35,6 +36,9 @@ public class RedisCacheConfig {
     public CacheManager redisCacheManager(RedisConnectionFactory cf, ObjectMapper baseMapper) {
         ObjectMapper mapper = baseMapper.copy()
                 .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+
+        mapper.activateDefaultTyping(mapper.getPolymorphicTypeValidator(),
+                ObjectMapper.DefaultTyping.NON_FINAL, JsonTypeInfo.As.WRAPPER_ARRAY);
 
         mapper.registerSubtypes(ClusterFeature.class, MapShelterResponse.class);
 
