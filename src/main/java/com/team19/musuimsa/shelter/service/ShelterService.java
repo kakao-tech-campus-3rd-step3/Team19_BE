@@ -6,10 +6,9 @@ import com.team19.musuimsa.shelter.dto.NearbyShelterResponse;
 import com.team19.musuimsa.shelter.dto.ShelterResponse;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.shelter.util.ShelterDtoUtils;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,13 +19,23 @@ public class ShelterService {
     private final ShelterRepository shelterRepository;
 
     public List<NearbyShelterResponse> findNearbyShelters(double latitude, double longitude) {
-        List<Shelter> shelters = shelterRepository.findNearbyShelters(latitude, longitude, DEFAULT_RADIUS);
+        List<Shelter> shelters = shelterRepository.findNearbyShelters(latitude, longitude,
+                DEFAULT_RADIUS);
 
         return shelters.stream()
                 .map(s -> ShelterDtoUtils.toNearbyDto(
                         s,
                         ShelterDtoUtils.distanceFrom(latitude, longitude, s)
                 ))
+                .toList();
+    }
+
+    // 전체 쉼터 조회
+    public List<ShelterResponse> getAllShelters() {
+        List<Shelter> shelters = shelterRepository.findAll();
+
+        return shelters.stream()
+                .map(s -> ShelterDtoUtils.toDetailDto(s, null)) // 거리(distance)는 null로 설정
                 .toList();
     }
 
