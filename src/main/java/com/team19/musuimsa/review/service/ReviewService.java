@@ -149,7 +149,6 @@ public class ReviewService {
                 .orElseThrow(() -> new ReviewNotFoundException(reviewId));
     }
 
-    @Transactional(readOnly = true)
     public ReviewResponse updateReviewPhotoUrl(Long reviewId, String newPhotoUrl, User loginUser) {
         Review review = getReviewEntity(reviewId);
         review.assertOwnedBy(loginUser);
