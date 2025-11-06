@@ -109,7 +109,7 @@ class PushNotificationServiceTest {
     @DisplayName("쿨다운 경계값 테스트: 50분 직전에는 알림을 보내지 않는다")
     void doNotSendPush_When_JustBeforeCooldownExpires() {
         // given
-        LocalDateTime alertTime = LocalDateTime.now().minusMinutes(50).plusSeconds(1);
+        LocalDateTime alertTime = LocalDateTime.now().minusMinutes(5).plusSeconds(1);
         ReflectionTestUtils.setField(userWithLocation, "lastHeatwaveAlertAt", alertTime);
 
         WeatherResponse weatherResponse = new WeatherResponse(35.0, "20251010", "1500");

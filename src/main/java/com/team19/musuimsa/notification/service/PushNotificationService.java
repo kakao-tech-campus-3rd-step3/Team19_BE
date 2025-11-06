@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PushNotificationService {
 
     private static final double TEMPERATURE_THRESHOLD = 0.0;
-    private static final int NOTIFICATION_COOLDOWN_MINUTES = 50;
+    private static final int NOTIFICATION_COOLDOWN_MINUTES = 5;
 
     private final UserRepository userRepository;
     private final WeatherService weatherService;
