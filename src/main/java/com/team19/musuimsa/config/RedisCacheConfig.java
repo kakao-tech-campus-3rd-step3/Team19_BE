@@ -35,6 +35,16 @@ public class RedisCacheConfig {
         ObjectMapper mapper = baseMapper.copy()
                 .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
 
+        PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+                .allowIfSubType(Object.class)
+                .build();
+
+        mapper.activateDefaultTyping(
+                ptv,
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY
+        );
+
         GenericJackson2JsonRedisSerializer json = new GenericJackson2JsonRedisSerializer(mapper);
 
         RedisCacheConfiguration base = RedisCacheConfiguration.defaultCacheConfig()
