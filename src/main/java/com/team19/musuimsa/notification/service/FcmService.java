@@ -12,6 +12,7 @@ import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -70,6 +71,44 @@ public class FcmService {
 
             try {
                 String response = FirebaseMessaging.getInstance().send(message);
+                log.info("Successfully sent message to token {}: {}",
+                        maskToken(device.getDeviceToken()),
+                        response);
+                atLeastOneSuccess = true;
+            } catch (Exception e) {
+                log.error("Failed to send push notification to token {}: {}",
+                        maskToken(device.getDeviceToken()), e.getMessage());
+            }
+        }
+
+        return atLeastOneSuccess;
+    }
+
+    public boolean sendPushNotification(Long userId, String title, String body,
+            Map<String, String> data) {
+        List<UserDevice> devices = userDeviceRepository.findByUser_UserId(userId);
+        if (devices.isEmpty()) {
+            log.warn("User {} has no registered devices. Skipping push.", userId);
+            return false;
+        }
+
+        Notification notification = Notification.builder()
+                .setTitle(title)
+                .setBody(body)
+                .build();
+
+        boolean atLeastOneSuccess = false;
+        for (UserDevice device : devices) {
+            Message.Builder messageBuilder = Message.builder()
+                    .setToken(device.getDeviceToken())
+                    .setNotification(notification);
+
+            if (data != null && !data.isEmpty()) {
+                messageBuilder.putAllData(data); //
+            }
+
+            try {
+                String response = FirebaseMessaging.getInstance().send(messageBuilder.build());
                 log.info("Successfully sent message to token {}: {}",
                         maskToken(device.getDeviceToken()),
                         response);

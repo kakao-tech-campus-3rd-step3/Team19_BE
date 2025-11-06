@@ -9,6 +9,7 @@ import com.team19.musuimsa.user.domain.User;
 import com.team19.musuimsa.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -44,7 +45,6 @@ public class ReviewReminderService {
                 user.getUserId(), shelter.getShelterId(), notifyAt);
     }
 
-    // 예약된 리뷰 알림을 발송합니다. (스케줄러에 의해 1분마다 호출됨)
     public void processPendingReminders() {
         LocalDateTime now = LocalDateTime.now();
         List<ReviewReminderTask> tasks = taskRepository.findPendingTasks(now);
@@ -62,8 +62,16 @@ public class ReviewReminderService {
                 String title = task.getShelter().getName() + " 이용은 어떠셨나요?";
                 String body = String.format("%d분 전 방문하신 쉼터의 소중한 리뷰를 남겨주세요!", DELAY_MINUTES);
 
+                //
+                Map<String, String> data = Map.of(
+                        "type", "REVIEW_REMINDER",
+                        "shelterId", String.valueOf(task.getShelter().getShelterId()),
+                        "shelterName", task.getShelter().getName()
+                );
+
+                //
                 boolean sent = fcmService.sendPushNotification(
-                        task.getUser().getUserId(), title, body
+                        task.getUser().getUserId(), title, body, data
                 );
 
                 if (sent) {
@@ -77,7 +85,6 @@ public class ReviewReminderService {
                 log.error("Error processing review reminder task ID: {}", task.getId(), e);
                 failCount++;
             } finally {
-                // 성공 여부와 관계없이 중복 발송을 막기 위해 '발송됨'으로 처리
                 task.markAsSent();
                 taskRepository.save(task);
             }
