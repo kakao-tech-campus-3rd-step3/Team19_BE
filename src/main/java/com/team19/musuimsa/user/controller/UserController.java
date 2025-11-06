@@ -25,7 +25,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -39,6 +38,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.net.URI;
 
 @Tag(name = "사용자 API", description = "사용자 인증 및 정보 관련 API")
 @RestController
@@ -182,7 +183,7 @@ public class UserController {
     ) {
         UserResponse userInfo = userService.getUserInfo(user.getUserId());
 
-        return ResponseEntity.ok(userInfo);
+        return ResponseEntity.ok(userPhotoService.signIfPresent(userInfo));
     }
 
     @Operation(summary = "내 정보 수정", description = "로그인된 사용자의 닉네임 또는 프로필 이미지 URL을 수정합니다.")

@@ -4,6 +4,7 @@ import com.team19.musuimsa.exception.dto.ErrorResponseDto;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
+import com.team19.musuimsa.review.service.ReviewPhotoService;
 import com.team19.musuimsa.review.service.ReviewService;
 import com.team19.musuimsa.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,8 +18,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.net.URI;
-import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,7 +27,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.net.URI;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Tag(name = "리뷰 API", description = "쉼터 리뷰 작성, 수정, 삭제, 조회 관련 API")
 @RestController
@@ -36,9 +41,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final ReviewPhotoService reviewPhotoService;
 
-    public ReviewController(ReviewService reviewService) {
+    public ReviewController(ReviewService reviewService, ReviewPhotoService reviewPhotoService) {
         this.reviewService = reviewService;
+        this.reviewPhotoService = reviewPhotoService;
     }
 
     // 리뷰 작성
@@ -190,7 +197,8 @@ public class ReviewController {
             @Parameter(description = "조회할 리뷰의 ID", example = "1", required = true)
             @PathVariable Long reviewId) {
 
-        ReviewResponse response = reviewService.getReview(reviewId);
+        ReviewResponse review = reviewService.getReview(reviewId);
+        ReviewResponse response = reviewPhotoService.signReviewPhotoIfPresent(review);
 
         return ResponseEntity.ok(response);
     }
@@ -243,8 +251,11 @@ public class ReviewController {
             @PathVariable Long shelterId) {
 
         List<ReviewResponse> reviews = reviewService.getReviewsByShelter(shelterId);
+        List<ReviewResponse> signedReviews = reviews.stream()
+                .map(reviewPhotoService::signReviewPhotoIfPresent)
+                .collect(Collectors.toList());
 
-        return ResponseEntity.ok(reviews);
+        return ResponseEntity.ok(signedReviews);
     }
 
     // 내가 쓴 리뷰 조회
@@ -299,7 +310,30 @@ public class ReviewController {
             @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
 
         List<ReviewResponse> reviews = reviewService.getReviewsByUser(user);
+        List<ReviewResponse> signedReviews = reviews.stream()
+                .map(reviewPhotoService::signReviewPhotoIfPresent)
+                .collect(Collectors.toList());
 
-        return ResponseEntity.ok(reviews);
+        return ResponseEntity.ok(signedReviews);
+    }
+
+    @Operation(summary = "리뷰 사진 업로드 및 갱신",
+            description = "특정 리뷰에 대한 사진을 업로드하고 리뷰의 photoUrl을 갱신합니다.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "업로드/갱신 성공",
+                    content = @Content(schema = @Schema(implementation = ReviewResponse.class))),
+            @ApiResponse(responseCode = "403", description = "자신의 리뷰만 수정 가능"),
+            @ApiResponse(responseCode = "404", description = "리뷰를 찾을 수 없음")
+    })
+    @PostMapping(value = "/reviews/{reviewId}/photo", consumes = "multipart/form-data")
+    public ResponseEntity<ReviewResponse> uploadReviewPhoto(
+            @Parameter(description = "갱신할 리뷰 ID", example = "1", required = true)
+            @PathVariable Long reviewId,
+            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user,
+            @RequestPart("file") MultipartFile file
+    ) {
+        ReviewResponse updated = reviewPhotoService.uploadReviewImage(reviewId, file, user);
+        return ResponseEntity.ok(updated);
     }
 }
