@@ -79,7 +79,7 @@ class ReviewReminderServiceTest {
         verify(taskRepository).save(taskCaptor.capture());
         ReviewReminderTask savedTask = taskCaptor.getValue();
 
-        LocalDateTime expectedNotifyAt = LocalDateTime.now().plusMinutes(10);
+        LocalDateTime expectedNotifyAt = LocalDateTime.now().plusMinutes(1);
 
         assertSoftly(softly -> {
             softly.assertThat(savedTask.getUser()).isEqualTo(loginUser);
