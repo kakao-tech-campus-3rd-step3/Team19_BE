@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.team19.musuimsa.shelter.dto.map.ClusterFeature;
 import com.team19.musuimsa.shelter.dto.map.MapShelterResponse;
 import java.time.Duration;
@@ -36,6 +38,16 @@ public class RedisCacheConfig {
     public CacheManager redisCacheManager(RedisConnectionFactory cf, ObjectMapper baseMapper) {
         ObjectMapper mapper = baseMapper.copy()
                 .setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+
+        PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+                .allowIfSubType(Object.class)
+                .build();
+
+        mapper.activateDefaultTyping(
+                ptv,
+                ObjectMapper.DefaultTyping.NON_FINAL,
+                JsonTypeInfo.As.PROPERTY
+        );
 
         mapper.registerSubtypes(ClusterFeature.class, MapShelterResponse.class);
 
