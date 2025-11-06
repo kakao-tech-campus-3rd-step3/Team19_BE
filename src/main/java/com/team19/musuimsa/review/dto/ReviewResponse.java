@@ -42,10 +42,19 @@ public record ReviewResponse(
         );
     }
 
+    // 리뷰 사진 URL 업데이트
     public ReviewResponse withPhotoUrl(String newPhotoUrl) {
         return new ReviewResponse(
                 this.reviewId, this.shelterId, this.shelterName, this.userId, this.nickname,
                 this.content, this.rating, newPhotoUrl, this.profileImageUrl, this.createdAt, this.updatedAt
+        );
+    }
+
+    // 작성자 프로필 URL 업데이트
+    public ReviewResponse withProfileImageUrl(String newProfileImageUrl) {
+        return new ReviewResponse(
+                this.reviewId, this.shelterId, this.shelterName, this.userId, this.nickname,
+                this.content, this.rating, this.photoUrl, newProfileImageUrl, this.createdAt, this.updatedAt
         );
     }
 }
