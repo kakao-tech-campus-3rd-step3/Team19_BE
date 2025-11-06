@@ -59,7 +59,7 @@ class PushNotificationServiceTest {
     @DisplayName("기온이 35도 이상이고 쿨다운이 지났을 때 푸시 알림을 보낸다")
     void sendPush_When_TemperatureIsHigh_And_CooldownPassed() {
         // given
-        WeatherResponse weatherResponse = new WeatherResponse(0.0, "20251009", "1400");
+        WeatherResponse weatherResponse = new WeatherResponse(35.0, "20251009", "1400");
         when(userRepository.findAll()).thenReturn(List.of(userWithLocation));
         when(weatherService.getCurrentTemp(anyDouble(), anyDouble())).thenReturn(weatherResponse);
         when(fcmService.sendPushNotification(anyLong(), anyString(), anyString())).thenReturn(true);
@@ -77,7 +77,7 @@ class PushNotificationServiceTest {
     @DisplayName("기온이 35도 미만일 때 푸시 알림을 보내지 않는다")
     void doNotSendPush_When_TemperatureIsLow() {
         // given
-        WeatherResponse weatherResponse = new WeatherResponse(-34.9, "20251009", "1400");
+        WeatherResponse weatherResponse = new WeatherResponse(34.9, "20251009", "1400");
         when(userRepository.findAll()).thenReturn(List.of(userWithLocation));
         when(weatherService.getCurrentTemp(anyDouble(), anyDouble())).thenReturn(weatherResponse);
 
@@ -94,7 +94,7 @@ class PushNotificationServiceTest {
     void doNotSendPush_When_TemperatureIsHigh_And_CooldownNotPassed() {
         // given
         userWithLocation.updateLastHeatwaveAlertAt(); // 현재 시간으로 마지막 알림 시간 설정
-        WeatherResponse weatherResponse = new WeatherResponse(1.0, "20251009", "1400");
+        WeatherResponse weatherResponse = new WeatherResponse(36.0, "20251009", "1400");
         when(userRepository.findAll()).thenReturn(List.of(userWithLocation));
         when(weatherService.getCurrentTemp(anyDouble(), anyDouble())).thenReturn(weatherResponse);
 
@@ -109,7 +109,7 @@ class PushNotificationServiceTest {
     @DisplayName("쿨다운 경계값 테스트: 50분 직전에는 알림을 보내지 않는다")
     void doNotSendPush_When_JustBeforeCooldownExpires() {
         // given
-        LocalDateTime alertTime = LocalDateTime.now().minusMinutes(5).plusSeconds(1);
+        LocalDateTime alertTime = LocalDateTime.now().minusMinutes(50).plusSeconds(1);
         ReflectionTestUtils.setField(userWithLocation, "lastHeatwaveAlertAt", alertTime);
 
         WeatherResponse weatherResponse = new WeatherResponse(35.0, "20251010", "1500");
