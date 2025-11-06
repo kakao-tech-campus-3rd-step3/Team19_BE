@@ -33,7 +33,7 @@ class UserPhotoServiceTest {
     @Test
     @DisplayName("성공: 같은 버킷이면 DB 갱신 후 이전 객체(S3) 삭제, 응답은 presigned URL")
     void changeMyProfileImage_success_and_delete_old_when_same_bucket() throws Exception {
-        UserService userService = mock(UserService.class);
+        UserService userService = mock(UserService.class);   
         S3FileUploader uploader = mock(S3FileUploader.class);
         S3UrlSigner signer = mock(S3UrlSigner.class);
 
@@ -118,7 +118,6 @@ class UserPhotoServiceTest {
     void changeMyProfileImage_fail_then_delete_uploaded_object() throws Exception {
         UserService userService = mock(UserService.class);
         S3FileUploader uploader = mock(S3FileUploader.class);
-
         S3UrlSigner signer = mock(S3UrlSigner.class);
 
         UserPhotoService service = new UserPhotoService(userService, uploader, signer);
