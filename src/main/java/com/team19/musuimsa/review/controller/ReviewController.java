@@ -202,7 +202,36 @@ public class ReviewController {
                     content = @Content(array = @ArraySchema(
                             schema = @Schema(implementation = ReviewResponse.class)),
                             examples = @ExampleObject(name = "쉼터 리뷰 목록",
-                                    value = "[{\"reviewId\": 101, \"shelterId\": 1, \"shelterName\": \"행복 쉼터\", \"userId\": 1, \"nickname\": \"무더위쉼터탐험가\", \"content\": \"여기 정말 시원해요!\", \"rating\": 5, \"photoUrl\": \"https://example.com/review.jpg\", \"profileImageUrl\": \"https://example.com/profile.jpg\", \"createdAt\": \"2025-07-01T14:30:00\", \"updatedAt\": \"2025-07-01T14:30:00\"}, {\"reviewId\": 102, \"shelterId\": 1, ...}]"))),
+                                    value = """
+                                            [
+                                              {
+                                                "reviewId": 101,
+                                                "shelterId": 1,
+                                                "shelterName": "행복 쉼터",
+                                                "userId": 1,
+                                                "nickname": "무더위쉼터탐험가",
+                                                "content": "여기 정말 시원해요!",
+                                                "rating": 5,
+                                                "photoUrl": "https://example.com/review.jpg",
+                                                "profileImageUrl": "https://example.com/profile.jpg",
+                                                "createdAt": "2025-07-01T14:30:00",
+                                                "updatedAt": "2025-07-01T14:30:00"
+                                              },
+                                              {
+                                                "reviewId": 102,
+                                                "shelterId": 1,
+                                                "shelterName": "행복 쉼터",
+                                                "userId": 2,
+                                                "nickname": "다른사용자",
+                                                "content": "그냥 그래요.",
+                                                "rating": 3,
+                                                "photoUrl": null,
+                                                "profileImageUrl": "https://example.com/other.jpg",
+                                                "createdAt": "2025-07-02T10:00:00",
+                                                "updatedAt": "2025-07-02T10:00:00"
+                                              }
+                                            ]
+                                            """))),
             @ApiResponse(responseCode = "404", description = "해당 ID의 쉼터를 찾을 수 없음",
                     content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
                             examples = @ExampleObject(name = "쉼터 없음",
@@ -224,9 +253,38 @@ public class ReviewController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(array = @ArraySchema(
-                            schema = @Schema(implementation = ReviewResponse.class)), // 배열 응답 명시
+                            schema = @Schema(implementation = ReviewResponse.class)),
                             examples = @ExampleObject(name = "내가 쓴 리뷰 목록",
-                                    value = "[{\"reviewId\": 101, \"shelterId\": 1, \"shelterName\": \"행복 쉼터\", \"userId\": 1, \"nickname\": \"무더위쉼터탐험가\", \"content\": \"여기 정말 시원해요!\", \"rating\": 5, \"photoUrl\": \"https://example.com/review.jpg\", \"profileImageUrl\": \"https://example.com/profile.jpg\", \"createdAt\": \"2025-07-01T14:30:00\", \"updatedAt\": \"2025-07-01T14:30:00\"}, {\"reviewId\": 103, ...}]"))),
+                                    value = """
+                                            [
+                                              {
+                                                "reviewId": 101,
+                                                "shelterId": 1,
+                                                "shelterName": "행복 쉼터",
+                                                "userId": 1,
+                                                "nickname": "무더위쉼터탐험가",
+                                                "content": "여기 정말 시원해요!",
+                                                "rating": 5,
+                                                "photoUrl": "https://example.com/review.jpg",
+                                                "profileImageUrl": "https://example.com/profile.jpg",
+                                                "createdAt": "2025-07-01T14:30:00",
+                                                "updatedAt": "2025-07-01T14:30:00"
+                                              },
+                                              {
+                                                "reviewId": 103,
+                                                "shelterId": 5,
+                                                "shelterName": "중앙 쉼터",
+                                                "userId": 1,
+                                                "nickname": "무더위쉼터탐험가",
+                                                "content": "여긴 에어컨이 없네요.",
+                                                "rating": 1,
+                                                "photoUrl": null,
+                                                "profileImageUrl": "https://example.com/profile.jpg",
+                                                "createdAt": "2025-07-03T11:00:00",
+                                                "updatedAt": "2025-07-03T11:00:00"
+                                              }
+                                            ]
+                                            """))),
             @ApiResponse(responseCode = "401", description = "인증 실패",
                     content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
                             examples = @ExampleObject(name = "인증 실패",
