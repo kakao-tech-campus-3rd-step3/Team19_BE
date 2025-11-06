@@ -1,12 +1,14 @@
 package com.team19.musuimsa.shelter.controller;
 
 import com.team19.musuimsa.exception.dto.ErrorResponseDto;
+import com.team19.musuimsa.notification.service.ReviewReminderService;
 import com.team19.musuimsa.shelter.dto.NearbyShelterResponse;
 import com.team19.musuimsa.shelter.dto.ShelterResponse;
 import com.team19.musuimsa.shelter.dto.map.MapBoundsRequest;
 import com.team19.musuimsa.shelter.dto.map.MapResponse;
 import com.team19.musuimsa.shelter.service.ShelterMapService;
 import com.team19.musuimsa.shelter.service.ShelterService;
+import com.team19.musuimsa.user.domain.User;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -15,16 +17,18 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @Tag(name = "쉼터 API", description = "무더위 쉼터 정보 조회 관련 API")
 @RestController
@@ -33,8 +37,8 @@ import java.util.List;
 public class ShelterController {
 
     private final ShelterService shelterService;
-
     private final ShelterMapService shelterMapService;
+    private final ReviewReminderService reviewReminderService;
 
     // 쉼터 메인 페이지 바운딩박스 기반 조회
     @Operation(summary = "지도 범위 내 쉼터/클러스터 조회",
@@ -79,7 +83,8 @@ public class ShelterController {
             @RequestParam(required = false) Integer size
     ) {
         return ResponseEntity.ok(shelterMapService.getByBbox(
-                new MapBoundsRequest(minLat, minLng, maxLat, maxLng, zoom, userLat, userLng, page, size)));
+                new MapBoundsRequest(minLat, minLng, maxLat, maxLng, zoom, userLat, userLng, page,
+                        size)));
     }
 
     // 가까운 쉼터 조회
@@ -135,5 +140,29 @@ public class ShelterController {
             @RequestParam double longitude
     ) {
         return ResponseEntity.ok(shelterService.getShelter(shelterId, latitude, longitude));
+    }
+
+    @Operation(summary = "쉼터 도착 알림", description = "사용자가 쉼터에 도착했음을 서버에 알려 10분 뒤 리뷰 알림을 예약합니다.")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "202", description = "리뷰 알림 예약 성공"),
+            @ApiResponse(responseCode = "401", description = "인증 실패 (유효하지 않은 Access Token)",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "인증 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"회원가입 또는 로그인 후 이용 가능합니다. \", \"path\": \"/api/shelters/1/arrival\"}"))),
+            @ApiResponse(responseCode = "404", description = "해당 ID의 쉼터를 찾을 수 없음",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "쉼터 없음",
+                                    value = "{\"status\": 404, \"error\": \"Not Found\", \"message\": \"해당 ID의 쉼터를 찾을 수 없습니다: 999\", \"path\": \"/api/shelters/999/arrival\"}")))
+    })
+    @PostMapping("/{shelterId}/arrival")
+    public ResponseEntity<Void> notifyArrival(
+            @Parameter(description = "도착한 쉼터의 ID", example = "1", required = true)
+            @PathVariable Long shelterId,
+            @Parameter(hidden = true) @AuthenticationPrincipal User user
+    ) {
+        reviewReminderService.scheduleReviewReminder(shelterId, user);
+        // 비동기 작업(10분 뒤)을 요청받았으므로 202 Accepted 응답 반환
+        return ResponseEntity.accepted().build();
     }
 }
