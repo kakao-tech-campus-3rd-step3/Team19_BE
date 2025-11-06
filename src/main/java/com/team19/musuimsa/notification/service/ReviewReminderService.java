@@ -60,7 +60,7 @@ public class ReviewReminderService {
         for (ReviewReminderTask task : tasks) {
             try {
                 String title = task.getShelter().getName() + " 이용은 어떠셨나요?";
-                String body = String.format("%d분 전 방문하신 쉼터의 소중한 리뷰를 남겨주세요!", DELAY_MINUTES);
+                String body = "방문하신 쉼터의 소중한 리뷰를 남겨주세요!";
 
                 //
                 Map<String, String> data = Map.of(
