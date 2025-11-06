@@ -37,10 +37,10 @@ class ShelterMapServiceCachingTest {
             ShelterRepository repo = ctx.getBean(ShelterRepository.class);
 
             when(repo.findInBbox(any(), any(), any(), any(), any()))
-                    .thenReturn(List.of(new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, null, null)));
+                    .thenReturn(List.of(new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, null, null, null)));
             when(repo.countInBbox(any(), any(), any(), any())).thenReturn(1);
 
-            MapBoundsRequest req = new MapBoundsRequest(37.0, 127.0, 37.2, 127.2, 14, 0, 200);
+            MapBoundsRequest req = new MapBoundsRequest(37.0, 127.0, 37.2, 127.2, 14, null, null, 0, 200);
 
             // 1st: DB hit
             MapResponse r1 = svc.getByBbox(req);
@@ -66,8 +66,8 @@ class ShelterMapServiceCachingTest {
             when(repo.findInBboxWithHours(any(), any(), any(), any(), any()))
                     .thenReturn(List.of());
 
-            MapBoundsRequest page0 = new MapBoundsRequest(37.0, 127.0, 37.2, 127.2, 14, 0, 200);
-            MapBoundsRequest page1 = new MapBoundsRequest(37.0, 127.0, 37.2, 127.2, 14, 1, 200);
+            MapBoundsRequest page0 = new MapBoundsRequest(37.0, 127.0, 37.2, 127.2, 14, null, null, 0, 200);
+            MapBoundsRequest page1 = new MapBoundsRequest(37.0, 127.0, 37.2, 127.2, 14, null, null, 1, 200);
 
             svc.getByBbox(page0); // miss
             svc.getByBbox(page1); // miss (다른 키)
@@ -91,7 +91,6 @@ class ShelterMapServiceCachingTest {
 
         @Bean
         CacheManager cacheManager() {
-            // 테스트용 간단 Caffeine 캐시
             return new CaffeineCacheManager("sheltersMap");
         }
     }
