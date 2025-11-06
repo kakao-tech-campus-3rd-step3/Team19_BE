@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -22,6 +23,7 @@ import com.team19.musuimsa.user.repository.UserRepository;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -115,33 +117,44 @@ class ReviewReminderServiceTest {
         reviewReminderService.processPendingReminders();
 
         // then
-        verify(fcmService, never()).sendPushNotification(anyLong(), anyString(), anyString());
+        //
+        verify(fcmService, never()).sendPushNotification(anyLong(), anyString(), anyString(),
+                anyMap());
     }
 
     @Test
     @DisplayName("보낼 알림이 있으면 FCM 전송 후 작업을 'sent'로 표시한다")
     void processPendingReminders_sendsFcm_andMarksAsSent() {
         // given
-        // 1. 실제 객체 생성
         ReviewReminderTask realTask = new ReviewReminderTask(loginUser, shelter,
                 LocalDateTime.now().minusMinutes(1));
-        // 2. Mockito.spy()로 래핑
         ReviewReminderTask task = Mockito.spy(realTask);
 
         when(taskRepository.findPendingTasks(any(LocalDateTime.class))).thenReturn(List.of(task));
-        when(fcmService.sendPushNotification(eq(1L), anyString(), anyString())).thenReturn(true);
+        //
+        when(fcmService.sendPushNotification(eq(1L), anyString(), anyString(),
+                any(Map.class)))
+                .thenReturn(true);
 
         // when
         reviewReminderService.processPendingReminders();
 
         // then
-        verify(fcmService, times(1)).sendPushNotification(eq(1L),
+        //
+        ArgumentCaptor<Map<String, String>> dataCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(fcmService, times(1)).sendPushNotification(
+                eq(1L),
                 eq("테스트 쉼터 이용은 어떠셨나요?"),
-                eq("10분 전 방문하신 쉼터의 소중한 리뷰를 남겨주세요!"));
+                eq("10분 전 방문하신 쉼터의 소중한 리뷰를 남겨주세요!"),
+                dataCaptor.capture() //
+        );
 
-        // task.markAsSent()가 호출되었는지 검증
+        //
+        assertThat(dataCaptor.getValue())
+                .containsEntry("type", "REVIEW_REMINDER")
+                .containsEntry("shelterId", "10");
+
         verify(task, times(1)).markAsSent();
-        // task가 'sent=true' 상태로 save 되었는지 검증
         verify(taskRepository, times(1)).save(task);
         assertThat(task.isSent()).isTrue();
     }
@@ -150,21 +163,23 @@ class ReviewReminderServiceTest {
     @DisplayName("FCM 전송이 실패(false)해도 작업을 'sent'로 표시한다 (중복 방지)")
     void processPendingReminders_marksAsSent_evenIfFcmFails() {
         // given
-        // 1. 실제 객체 생성
         ReviewReminderTask realTask = new ReviewReminderTask(loginUser, shelter,
                 LocalDateTime.now().minusMinutes(1));
-        // 2. Mockito.spy()로 래핑
         ReviewReminderTask task = Mockito.spy(realTask);
 
         when(taskRepository.findPendingTasks(any(LocalDateTime.class))).thenReturn(List.of(task));
-        // FCM 전송 실패
-        when(fcmService.sendPushNotification(eq(1L), anyString(), anyString())).thenReturn(false);
+        //
+        when(fcmService.sendPushNotification(eq(1L), anyString(), anyString(),
+                any(Map.class)))
+                .thenReturn(false);
 
         // when
         reviewReminderService.processPendingReminders();
 
         // then
-        verify(fcmService, times(1)).sendPushNotification(anyLong(), anyString(), anyString());
+        //
+        verify(fcmService, times(1)).sendPushNotification(anyLong(), anyString(), anyString(),
+                any(Map.class));
 
         // 실패했음에도 불구하고,
         verify(task, times(1)).markAsSent(); // markAsSent 호출
