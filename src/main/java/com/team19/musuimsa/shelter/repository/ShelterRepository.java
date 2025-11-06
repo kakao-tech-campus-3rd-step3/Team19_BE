@@ -54,7 +54,7 @@ public interface ShelterRepository extends JpaRepository<Shelter, Long> {
                 CASE WHEN coalesce(s.airConditionerCount, 0) > 0 THEN true ELSE false END,
                 s.capacity,
                 s.photoUrl,
-                cast(null as com.team19.musuimsa.shelter.dto.OperatingHoursResponse),
+                NULL,
                 cast(null as double)
               )
               FROM Shelter s
