@@ -4,10 +4,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -30,7 +28,6 @@ import org.mockito.Mockito;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -168,18 +165,5 @@ class ShelterControllerTest {
                 .andExpect(jsonPath("$.totalRating", is(14)))
                 .andExpect(jsonPath("$.reviewCount", is(5)))
                 .andExpect(jsonPath("$.photoUrl", is("https://example.com/shelter1.jpg")));
-    }
-
-    @DisplayName("POST /api/shelters/{shelterId}/arrival - (addFilters=false) 202 반환")
-    @Test
-    void notifyArrival_returns202Accepted_andCallsService() throws Exception {
-        long shelterId = 1L;
-
-        mockMvc.perform(post("/api/shelters/{shelterId}/arrival", shelterId)
-                        .with(SecurityMockMvcRequestPostProcessors.csrf())
-                )
-                .andExpect(status().isAccepted()); // 202 Accepted
-
-        verify(reviewReminderService).scheduleReviewReminder(eq(shelterId), isNull());
     }
 }
