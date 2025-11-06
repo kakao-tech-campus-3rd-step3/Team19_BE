@@ -3,7 +3,12 @@ package com.team19.musuimsa.shelter.dto.map;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type",
+        defaultImpl = ClusterFeature.class
+)
 @JsonSubTypes({
         @JsonSubTypes.Type(value = ClusterFeature.class, name = "cluster"),
         @JsonSubTypes.Type(value = MapShelterResponse.class, name = "shelter")
