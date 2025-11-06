@@ -25,13 +25,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -39,8 +39,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.net.URI;
 
 @Tag(name = "사용자 API", description = "사용자 인증 및 정보 관련 API")
 @RestController
@@ -167,25 +165,6 @@ public class UserController {
             @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user
     ) {
         UserResponse userInfo = userService.getUserInfo(user.getUserId());
-
-        return ResponseEntity.ok(userInfo);
-    }
-
-    @Operation(summary = "특정 사용자 정보 조회", description = "사용자 ID를 이용하여 특정 사용자의 정보를 조회합니다.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = UserResponse.class))),
-            @ApiResponse(responseCode = "404", description = "해당 ID의 사용자를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
-                            examples = @ExampleObject(name = "사용자 없음",
-                                    value = "{\"status\": 404, \"error\": \"Not Found\", \"message\": \"해당 ID의 사용자를 찾을 수 없습니다: 999\", \"path\": \"/api/users/999\"}")))
-    })
-    @GetMapping("/{userId}")
-    public ResponseEntity<UserResponse> getUserInfo(
-            @Parameter(description = "조회할 사용자의 ID", example = "1", required = true)
-            @PathVariable Long userId
-    ) {
-        UserResponse userInfo = userService.getUserInfo(userId);
 
         return ResponseEntity.ok(userInfo);
     }

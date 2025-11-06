@@ -1,11 +1,9 @@
 package com.team19.musuimsa.user.controller;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -237,18 +235,6 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("new-access-token"))
                 .andExpect(jsonPath("$.refreshToken").value("new-refresh-token"));
-    }
-
-    @Test
-    @DisplayName("회원 정보 조회 API 테스트")
-    void getUserInfo() throws Exception {
-        UserResponse userResponse = UserResponse.from(testUser);
-        given(userService.getUserInfo(anyLong())).willReturn(userResponse);
-
-        mockMvc.perform(get("/api/users/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value(testUser.getEmail()))
-                .andExpect(jsonPath("$.nickname").value(testUser.getNickname()));
     }
 
     @Test
