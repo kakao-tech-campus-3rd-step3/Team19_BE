@@ -14,20 +14,19 @@
 
 ### 💻 Frontend
 
-|                                           Frontend                                           |                                          Frontend                                           |
-|:--------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------:|
+| Frontend | Frontend |
+|:---:|:---:|
 | <img src="https://avatars.githubusercontent.com/u/195718822?v=4" width="100" alt="고은채 프로필"/> | <img src="https://avatars.githubusercontent.com/u/81281798?v=4" width="100" alt="정지원 프로필"/> |
-|                             [고은채](https://github.com/eunchae-04)                             |                              [정지원](https://github.com/jjw5655)                              |
-|                                           FE 테크리더                                            |                                             플래너                                             |
+| [고은채](https://github.com/eunchae-04) | [정지원](https://github.com/jjw5655) |
+| FE 테크리더 | 플래너 |
 
 ### 💾 Backend
 
-|                                           Backend                                            |                                           Backend      _                                   |                                           Backend                                           |
-|:--------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------:|
+| Backend | Backend | Backend |
+|:---:|:---:|:---:|
 | <img src="https://avatars.githubusercontent.com/u/146078205?v=4" width="100" alt="박수화 프로필"/> | <img src="https://avatars.githubusercontent.com/u/187789828?v=4" width="100" alt="윤아란 프로필"/> | <img src="https://avatars.githubusercontent.com/u/73630653?v=4" width="100" alt="이어진 프로필"/> |
-|                             [박수화](https://github.com/hydrationn)                             |                              [윤아란](https://github.com/uvrvuoon)                              |                              [이어진](https://github.com/win929)                               |
-|                                              팀장                                              |                                             메이커                                              |                                           BE 테크리더                                           |
-
+| [박수화](https://github.com/hydrationn) | [윤아란](https://github.com/uvrvuoon) | [이어진](https://github.com/win929) |
+| 팀장 | 메이커 | BE 테크리더 |
 ---
 
 ### ✨ 주요 기능 (사용자)
