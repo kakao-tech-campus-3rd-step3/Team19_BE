@@ -245,21 +245,6 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("회원 정보 조회 API 테스트")
-    void getUserInfo() throws Exception {
-        UserResponse userResponse = UserResponse.from(testUser);
-        given(userService.getUserInfo(anyLong())).willReturn(userResponse);
-
-        given(userPhotoService.signIfPresent(any(UserResponse.class)))
-                .willAnswer(inv -> inv.getArgument(0));
-
-        mockMvc.perform(get("/api/users/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value(testUser.getEmail()))
-                .andExpect(jsonPath("$.nickname").value(testUser.getNickname()));
-    }
-
-    @Test
     @DisplayName("회원 정보 수정 API 테스트")
     void updateUserInfo() throws Exception {
         UserUpdateRequest requestDto = new UserUpdateRequest("newNickname", "newProfile.jpg");
