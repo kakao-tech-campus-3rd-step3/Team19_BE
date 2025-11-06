@@ -2,6 +2,7 @@ package com.team19.musuimsa.review.dto;
 
 import com.team19.musuimsa.review.domain.Review;
 import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.LocalDateTime;
 
 @Schema(description = "리뷰 정보 응답 데이터")
@@ -38,6 +39,13 @@ public record ReviewResponse(
                 review.getContent(), review.getRating(), review.getPhotoUrl(),
                 review.getUser().getProfileImageUrl(),
                 review.getCreatedAt(), review.getUpdatedAt()
+        );
+    }
+
+    public ReviewResponse withPhotoUrl(String newPhotoUrl) {
+        return new ReviewResponse(
+                this.reviewId, this.shelterId, this.shelterName, this.userId, this.nickname,
+                this.content, this.rating, newPhotoUrl, this.profileImageUrl, this.createdAt, this.updatedAt
         );
     }
 }

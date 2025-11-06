@@ -1,28 +1,14 @@
 package com.team19.musuimsa.review.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.verify;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.team19.musuimsa.exception.handler.GlobalExceptionHandler;
 import com.team19.musuimsa.review.dto.CreateReviewRequest;
 import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.review.dto.UpdateReviewRequest;
+import com.team19.musuimsa.review.service.ReviewPhotoService;
 import com.team19.musuimsa.review.service.ReviewService;
 import com.team19.musuimsa.user.domain.User;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDateTime;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,6 +28,22 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.verify;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 @ExtendWith(MockitoExtension.class)
 public class ReviewControllerTest {
 
@@ -51,6 +53,9 @@ public class ReviewControllerTest {
 
     @Mock
     private ReviewService reviewService;
+
+    @Mock
+    private ReviewPhotoService reviewPhotoService;
 
     @InjectMocks
     private ReviewController reviewController;
@@ -85,7 +90,6 @@ public class ReviewControllerTest {
                 .build();
     }
 
-    // @AuthenticationPrincipal에 사용자 객체를 주입하기 위한 커스텀 ArgumentResolver
     private static class MockAuthenticationPrincipalArgumentResolver implements
             HandlerMethodArgumentResolver {
 
@@ -103,7 +107,7 @@ public class ReviewControllerTest {
 
         @Override
         public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
-                NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
+                                      NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
             return user;
         }
     }
@@ -234,6 +238,7 @@ public class ReviewControllerTest {
     void getReviewSuccess() throws Exception {
         // Given
         given(reviewService.getReview(any(Long.class))).willReturn(response);
+        given(reviewPhotoService.signReviewPhotoIfPresent(any(ReviewResponse.class))).willReturn(response);
 
         // When & Then
         mockMvc.perform(get("/api/reviews/{reviewId}", reviewId))
@@ -249,6 +254,7 @@ public class ReviewControllerTest {
         List<ReviewResponse> reviews = List.of(response);
 
         given(reviewService.getReviewsByShelter(any(Long.class))).willReturn(reviews);
+        given(reviewPhotoService.signReviewPhotoIfPresent(any(ReviewResponse.class))).willReturn(response);
 
         // When & Then
         mockMvc.perform(get("/api/shelters/{shelterId}/reviews", shelterId))
@@ -264,6 +270,7 @@ public class ReviewControllerTest {
         List<ReviewResponse> reviews = List.of(response);
 
         given(reviewService.getReviewsByUser(any(User.class))).willReturn(reviews);
+        given(reviewPhotoService.signReviewPhotoIfPresent(any(ReviewResponse.class))).willReturn(response);
 
         // When & Then
         mockMvc.perform(get("/api/users/me/reviews"))

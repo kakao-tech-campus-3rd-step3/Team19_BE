@@ -75,4 +75,10 @@ public class Review extends BaseEntity {
             throw new ReviewAccessDeniedException();
         }
     }
+
+    public void updatePhotoUrl(String photoUrl) {
+        if (photoUrl != null) {
+            this.photoUrl = photoUrl;
+        }
+    }
 }
