@@ -110,7 +110,7 @@ public class UserPhotoService {
         return new UserResponse(dto.userId(), dto.email(), dto.nickname(), signed);
     }
 
-    public ReviewResponse signReviewProfileImageIfPresent(com.team19.musuimsa.review.dto.ReviewResponse dto) {
+    public ReviewResponse signReviewProfileImageIfPresent(ReviewResponse dto) {
         String key = toKeyOrNull(dto.profileImageUrl());
         if (key == null || key.isBlank()) {
             return dto;
