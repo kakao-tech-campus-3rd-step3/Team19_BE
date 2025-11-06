@@ -14,7 +14,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,6 +24,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.net.URI;
 
 @Tag(name = "위시리스트 API", description = "사용자 위시리스트(찜) 관련 API")
 @RestController
@@ -57,7 +58,7 @@ public class WishController {
     public ResponseEntity<CreateWishResponse> createWish(
             @Parameter(description = "위시리스트에 추가할 쉼터의 ID", example = "1", required = true)
             @PathVariable Long shelterId,
-            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user
+            @Parameter(hidden = true) @AuthenticationPrincipal User user
     ) {
         CreateWishResponse response = wishService.createWish(shelterId, user);
 
@@ -86,7 +87,7 @@ public class WishController {
             @RequestParam(required = false) Double latitude,
             @Parameter(description = "현재 경도 (거리 계산용, 선택)", example = "126.9780")
             @RequestParam(required = false) Double longitude,
-            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user
+            @Parameter(hidden = true) @AuthenticationPrincipal User user
     ) {
         WishListResponse response = wishService.getWishes(user, latitude, longitude);
         return ResponseEntity.ok(response);
@@ -106,7 +107,7 @@ public class WishController {
     public ResponseEntity<Void> deleteWish(
             @Parameter(description = "위시리스트에서 삭제할 쉼터의 ID", example = "1", required = true)
             @PathVariable Long shelterId,
-            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user
+            @Parameter(hidden = true) @AuthenticationPrincipal User user
     ) {
         wishService.deleteWish(shelterId, user);
         return ResponseEntity.noContent().build();
