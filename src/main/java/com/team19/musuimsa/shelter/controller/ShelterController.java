@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -43,7 +44,9 @@ public class ShelterController {
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = MapResponse.class))),
             @ApiResponse(responseCode = "400", description = "잘못된 파라미터 값 (위도/경도 범위 오류 등)",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "잘못된 파라미터",
+                                    value = "{\"status\": 400, \"error\": \"Bad Request\", \"message\": \"잘못된 파라미터 값 (위도/경도 범위 오류 등)\", \"path\": \"/api/shelters\"}")))
     })
     @GetMapping
     public ResponseEntity<MapResponse> getByBbox(
@@ -75,7 +78,9 @@ public class ShelterController {
                     content = @Content(array = @ArraySchema(
                             schema = @Schema(implementation = NearbyShelterResponse.class)))),
             @ApiResponse(responseCode = "400", description = "잘못된 위도/경도 값",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "잘못된 좌표",
+                                    value = "{\"status\": 400, \"error\": \"Bad Request\", \"message\": \"잘못된 위도/경도 값\", \"path\": \"/api/shelters/nearby\"}")))
     })
     @GetMapping("/nearby")
     public ResponseEntity<List<NearbyShelterResponse>> findNearbyShelters(
@@ -94,9 +99,13 @@ public class ShelterController {
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = ShelterResponse.class))),
             @ApiResponse(responseCode = "400", description = "잘못된 위도/경도 값",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "잘못된 좌표",
+                                    value = "{\"status\": 400, \"error\": \"Bad Request\", \"message\": \"잘못된 위도/경도 값\", \"path\": \"/api/shelters/1\"}"))),
             @ApiResponse(responseCode = "404", description = "해당 ID의 쉼터를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "쉼터 없음",
+                                    value = "{\"status\": 404, \"error\": \"Not Found\", \"message\": \"해당 ID의 쉼터를 찾을 수 없습니다: 999\", \"path\": \"/api/shelters/999\"}")))
     })
     @GetMapping("/{shelterId}")
     public ResponseEntity<ShelterResponse> getShelter(
