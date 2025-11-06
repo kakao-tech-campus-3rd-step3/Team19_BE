@@ -128,7 +128,7 @@ public class UserController {
     })
     @PostMapping("/logout")
     public ResponseEntity<String> logoutUser(
-            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user
+            @Parameter(hidden = true) @AuthenticationPrincipal User user
     ) {
         userService.logout(user);
 
@@ -179,7 +179,7 @@ public class UserController {
     })
     @GetMapping("/me")
     public ResponseEntity<UserResponse> getMyInfo(
-            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user
+            @Parameter(hidden = true) @AuthenticationPrincipal User user
     ) {
         UserResponse userInfo = userService.getUserInfo(user.getUserId());
 
@@ -216,7 +216,7 @@ public class UserController {
                     }
             )
             @RequestBody UserUpdateRequest userUpdateRequest,
-            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user
+            @Parameter(hidden = true) @AuthenticationPrincipal User user
     ) {
         UserResponse updatedUser = userService.updateUserInfo(userUpdateRequest,
                 user);
@@ -248,7 +248,7 @@ public class UserController {
                             value = "{\"currentPassword\": \"password123!\", \"newPassword\": \"newPassword456@\"}")
             )
             @Valid @RequestBody UserPasswordUpdateRequest requestDto,
-            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user
+            @Parameter(hidden = true) @AuthenticationPrincipal User user
     ) {
         userService.updateUserPassword(requestDto, user);
 
@@ -266,7 +266,7 @@ public class UserController {
     })
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteUser(
-            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user
+            @Parameter(hidden = true) @AuthenticationPrincipal User user
     ) {
         userService.deleteUser(user);
 
@@ -293,7 +293,7 @@ public class UserController {
     })
     @PostMapping("/me/location")
     public ResponseEntity<Void> updateUserLocation(
-            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user,
+            @Parameter(hidden = true) @AuthenticationPrincipal User user,
             @Parameter(description = "위도, 경도 정보", required = true,
                     schema = @Schema(implementation = UserLocationUpdateRequest.class),
                     examples = @ExampleObject(name = "위치 정보",
@@ -324,7 +324,7 @@ public class UserController {
     })
     @PostMapping("/me/device")
     public ResponseEntity<Void> registerUserDevice(
-            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user,
+            @Parameter(hidden = true) @AuthenticationPrincipal User user,
             @Parameter(description = "FCM 기기 토큰 정보", required = true,
                     schema = @Schema(implementation = UserDeviceRegisterRequest.class),
                     examples = @ExampleObject(name = "FCM 토큰",
@@ -364,7 +364,7 @@ public class UserController {
     })
     @PostMapping(value = "/me/profile-image", consumes = "multipart/form-data")
     public ResponseEntity<UserResponse> uploadMyProfileImage(
-            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user,
+            @Parameter(hidden = true) @AuthenticationPrincipal User user,
             @RequestPart("file") MultipartFile file
     ) {
         UserResponse updated = userPhotoService.changeMyProfileImage(user, file);

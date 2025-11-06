@@ -87,7 +87,7 @@ public class ReviewController {
             @PathVariable Long shelterId,
 
             @Parameter(hidden = true)
-            @AuthenticationPrincipal(expression = "user") User user) {
+            @AuthenticationPrincipal User user) {
 
         ReviewResponse response = reviewService.createReview(shelterId, request, user);
 
@@ -140,7 +140,7 @@ public class ReviewController {
                     }
             )
             @Valid @RequestBody UpdateReviewRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
+            @Parameter(hidden = true) @AuthenticationPrincipal User user) {
 
         ReviewResponse response = reviewService.updateReview(reviewId, request, user);
 
@@ -173,7 +173,7 @@ public class ReviewController {
     public ResponseEntity<Void> deleteReview(
             @Parameter(description = "삭제할 리뷰의 ID", example = "1", required = true)
             @PathVariable Long reviewId,
-            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
+            @Parameter(hidden = true) @AuthenticationPrincipal User user) {
 
         reviewService.deleteReview(reviewId, user);
 
@@ -307,7 +307,7 @@ public class ReviewController {
     })
     @GetMapping("/users/me/reviews")
     public ResponseEntity<List<ReviewResponse>> getReviewByUser(
-            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user) {
+            @Parameter(hidden = true) @AuthenticationPrincipal User user) {
 
         List<ReviewResponse> reviews = reviewService.getReviewsByUser(user);
         List<ReviewResponse> signedReviews = reviews.stream()
@@ -330,7 +330,7 @@ public class ReviewController {
     public ResponseEntity<ReviewResponse> uploadReviewPhoto(
             @Parameter(description = "갱신할 리뷰 ID", example = "1", required = true)
             @PathVariable Long reviewId,
-            @Parameter(hidden = true) @AuthenticationPrincipal(expression = "user") User user,
+            @Parameter(hidden = true) @AuthenticationPrincipal User user,
             @RequestPart("file") MultipartFile file
     ) {
         ReviewResponse updated = reviewPhotoService.uploadReviewImage(reviewId, file, user);
