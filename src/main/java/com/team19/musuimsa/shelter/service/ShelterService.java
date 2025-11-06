@@ -30,9 +30,9 @@ public class ShelterService {
                 .toList();
     }
 
-    // 전체 쉼터 조회
+    // 대전광역시 쉼터 조회
     public List<ShelterResponse> getAllShelters() {
-        List<Shelter> shelters = shelterRepository.findAll();
+        List<Shelter> shelters = shelterRepository.findByAddressStartingWith("대전광역시");
 
         return shelters.stream()
                 .map(s -> ShelterDtoUtils.toDetailDto(s, null)) // 거리(distance)는 null로 설정
