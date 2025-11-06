@@ -1,8 +1,9 @@
 package com.team19.musuimsa.user.service;
 
-import com.team19.musuimsa.config.S3UrlSigner;
+import com.team19.musuimsa.s3.S3FileUploader;
+import com.team19.musuimsa.s3.S3UrlSigner;
+import com.team19.musuimsa.s3.dto.S3UploadResponse;
 import com.team19.musuimsa.user.domain.User;
-import com.team19.musuimsa.user.dto.UserPhotoUpdateResponse;
 import com.team19.musuimsa.user.dto.UserResponse;
 import com.team19.musuimsa.user.dto.UserUpdateRequest;
 import org.junit.jupiter.api.DisplayName;
@@ -27,11 +28,13 @@ import static org.mockito.Mockito.when;
 
 class UserPhotoServiceTest {
 
+    private static final String USER_PREFIX_KEY = "users/1";
+
     @Test
     @DisplayName("성공: 같은 버킷이면 DB 갱신 후 이전 객체(S3) 삭제, 응답은 presigned URL")
     void changeMyProfileImage_success_and_delete_old_when_same_bucket() throws Exception {
-        UserService userService = mock(UserService.class);
-        UserPhotoUploader uploader = mock(UserPhotoUploader.class);
+        UserService userService = mock(UserService.class);   
+        S3FileUploader uploader = mock(S3FileUploader.class);
         S3UrlSigner signer = mock(S3UrlSigner.class);
 
         UserPhotoService service = new UserPhotoService(userService, uploader, signer);
@@ -40,16 +43,17 @@ class UserPhotoServiceTest {
         Long userId = 1L;
         User loginUser = new User();
         setField(loginUser, "userId", userId);
+        setField(loginUser, "profileImageUrl", "https://cdn.example.com/users/1/old.jpg");
 
         UserResponse before = new UserResponse(userId, "u@e.com", "nick",
                 "https://cdn.example.com/users/1/old.jpg");
-        UserPhotoUpdateResponse uploaded = new UserPhotoUpdateResponse(
+        S3UploadResponse uploaded = new S3UploadResponse(
                 "users/1/new.jpg", "https://cdn.example.com/users/1/new.jpg", "image/jpeg", 123L);
 
         UserResponse afterSaved = new UserResponse(userId, "u@e.com", "nick", uploaded.publicUrl());
 
         when(userService.getUserInfo(userId)).thenReturn(before);
-        when(uploader.upload(eq(userId), any(MultipartFile.class))).thenReturn(uploaded);
+        when(uploader.upload(eq(USER_PREFIX_KEY), any(MultipartFile.class))).thenReturn(uploaded);
         when(userService.updateUserInfo(any(UserUpdateRequest.class), eq(loginUser))).thenReturn(afterSaved);
         when(signer.signGetUrl(eq("users/1/new.jpg"), any(java.time.Duration.class))).thenReturn("https://signed.example.com/new?x=1");
 
@@ -76,7 +80,7 @@ class UserPhotoServiceTest {
     @DisplayName("성공: 다른 버킷이면 이전 객체 삭제하지 않음, 응답은 presigned URL")
     void changeMyProfileImage_success_and_keep_old_when_different_bucket() throws Exception {
         UserService userService = mock(UserService.class);
-        UserPhotoUploader uploader = mock(UserPhotoUploader.class);
+        S3FileUploader uploader = mock(S3FileUploader.class);
         S3UrlSigner signer = mock(S3UrlSigner.class);
 
         UserPhotoService service = new UserPhotoService(userService, uploader, signer);
@@ -85,15 +89,16 @@ class UserPhotoServiceTest {
         Long userId = 1L;
         User loginUser = new User();
         setField(loginUser, "userId", userId);
+        setField(loginUser, "profileImageUrl", "https://external-legacy.com/profile/old.jpg");
 
         UserResponse before = new UserResponse(userId, "u@e.com", "nick",
                 "https://other-cdn.example.com/users/1/old.jpg");
-        UserPhotoUpdateResponse uploaded = new UserPhotoUpdateResponse(
+        S3UploadResponse uploaded = new S3UploadResponse(
                 "users/1/new.jpg", "https://cdn.example.com/users/1/new.jpg", "image/jpeg", 123L);
         UserResponse afterSaved = new UserResponse(userId, "u@e.com", "nick", uploaded.publicUrl());
 
         when(userService.getUserInfo(userId)).thenReturn(before);
-        when(uploader.upload(eq(userId), any(MultipartFile.class))).thenReturn(uploaded);
+        when(uploader.upload(eq(USER_PREFIX_KEY), any(MultipartFile.class))).thenReturn(uploaded);
         when(userService.updateUserInfo(any(UserUpdateRequest.class), eq(loginUser))).thenReturn(afterSaved);
         when(signer.signGetUrl(eq("users/1/new.jpg"), any(java.time.Duration.class))).thenReturn("https://signed.example.com/new?x=2");
 
@@ -112,8 +117,7 @@ class UserPhotoServiceTest {
     @DisplayName("실패: DB 갱신 중 예외면, 방금 업로드한 객체 삭제(롤백 보상)")
     void changeMyProfileImage_fail_then_delete_uploaded_object() throws Exception {
         UserService userService = mock(UserService.class);
-        UserPhotoUploader uploader = mock(UserPhotoUploader.class);
-
+        S3FileUploader uploader = mock(S3FileUploader.class);
         S3UrlSigner signer = mock(S3UrlSigner.class);
 
         UserPhotoService service = new UserPhotoService(userService, uploader, signer);
@@ -125,11 +129,11 @@ class UserPhotoServiceTest {
 
         UserResponse before = new UserResponse(userId, "u@e.com", "nick",
                 "https://cdn.example.com/users/1/old.jpg");
-        UserPhotoUpdateResponse uploaded = new UserPhotoUpdateResponse(
+        S3UploadResponse uploaded = new S3UploadResponse(
                 "users/1/new.jpg", "https://cdn.example.com/users/1/new.jpg", "image/jpeg", 123L);
 
         when(userService.getUserInfo(userId)).thenReturn(before);
-        when(uploader.upload(eq(userId), any(MultipartFile.class))).thenReturn(uploaded);
+        when(uploader.upload(eq(USER_PREFIX_KEY), any(MultipartFile.class))).thenReturn(uploaded);
         when(userService.updateUserInfo(any(UserUpdateRequest.class), eq(loginUser)))
                 .thenThrow(new RuntimeException("DB fail"));
 

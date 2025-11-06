@@ -100,7 +100,7 @@ public class ReviewService {
 
         return reviewRepository.findByUserIdWithShelterName(loginUser.getUserId());
     }
-    
+
     private void updateReviewsOfShelter(Shelter shelter) {
         ShelterReviewCountAndSum dto = reviewRepository.aggregateByShelterId(
                 shelter.getShelterId());
@@ -141,5 +141,20 @@ public class ReviewService {
                         .orElseThrow(() -> new ShelterNotFoundException(id));
             }
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Review getReviewEntity(Long reviewId) {
+        return reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ReviewNotFoundException(reviewId));
+    }
+
+    public ReviewResponse updateReviewPhotoUrl(Long reviewId, String newPhotoUrl, User loginUser) {
+        Review review = getReviewEntity(reviewId);
+        review.assertOwnedBy(loginUser);
+
+        review.updatePhotoUrl(newPhotoUrl);
+
+        return ReviewResponse.from(review);
     }
 }

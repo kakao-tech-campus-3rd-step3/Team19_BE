@@ -1,11 +1,11 @@
-package com.team19.musuimsa.user.service;
+package com.team19.musuimsa.review.service;
 
+import com.team19.musuimsa.review.domain.Review;
+import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.s3.S3FileUploader;
 import com.team19.musuimsa.s3.S3UrlSigner;
 import com.team19.musuimsa.s3.dto.S3UploadResponse;
 import com.team19.musuimsa.user.domain.User;
-import com.team19.musuimsa.user.dto.UserResponse;
-import com.team19.musuimsa.user.dto.UserUpdateRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,52 +15,73 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Duration;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class UserPhotoService {
+public class ReviewPhotoService {
 
     @Value("${aws.s3.base-url}")
     private String s3PublicBaseUrl;
 
-    private final UserService userService;
+    private final ReviewService reviewService;
     private final S3FileUploader s3FileUploader;
     private final S3UrlSigner s3UrlSigner;
 
-    private static final String USER_PREFIX = "users";
+    private static final String REVIEW_PREFIX = "reviews";
 
-    public UserResponse changeMyProfileImage(User loginUser, MultipartFile file) {
-        // 1) 업로드
-        String prefix = USER_PREFIX + "/" + loginUser.getUserId();
+    public ReviewResponse uploadReviewImage(Long reviewId, MultipartFile file, User loginUser) {
+
+        Review review = reviewService.getReviewEntity(reviewId);
+        review.assertOwnedBy(loginUser);
+
+        // 1. 파일 업로드 및 Key, URL 확보
+        String prefix = REVIEW_PREFIX + "/" + reviewId;
         S3UploadResponse uploaded = s3FileUploader.upload(prefix, file);
-        // DB에는 반드시 정적 URL 저장 (쿼리 제거)
+
         String newPublicUrl = stripQuery(uploaded.publicUrl());
         String newKey = uploaded.objectKey();
 
-        // 2) 기존 URL 확보
-        String oldUrl = safeLoadCurrentUrl(loginUser);
+        String oldUrl = review.getPhotoUrl();
 
         try {
-            // 3) DB 업데이트(정적 URL 저장)
-            UserResponse updated = userService.updateUserInfo(
-                    new UserUpdateRequest(null, newPublicUrl), loginUser);
+            // 2. DB 업데이트 (ReviewService의 트랜잭션 내에서 처리)
+            ReviewResponse updated = reviewService.updateReviewPhotoUrl(reviewId, newPublicUrl, loginUser);
 
-            // 4) 커밋 후 이전 이미지 삭제
-            registerDeleteOldIfCommitted(oldUrl, updated.profileImageUrl());
+            // 3. 트랜잭션 커밋 성공 후 이전 이미지 삭제
+            registerDeleteOldIfCommitted(oldUrl, updated.photoUrl());
 
-            // 5) 응답은 '방금 업로드한 키'로 presign 생성 (URL 파싱 X)
-            String signed = s3UrlSigner.signGetUrl(newKey, java.time.Duration.ofMinutes(15));
-            return new UserResponse(updated.userId(), updated.email(), updated.nickname(), signed);
+            // 4. 응답은 '방금 업로드한 키'로 presign 생성
+            String signed = s3UrlSigner.signGetUrl(newKey, Duration.ofMinutes(15));
+
+            // photoUrl만 Presigned URL로 교체하여 반환
+            return updated.withPhotoUrl(signed);
 
         } catch (RuntimeException e) {
-            safeDelete(newKey); // 롤백 시 업로드 취소
+            safeDelete(newKey);
             throw e;
         }
     }
 
-    private String safeLoadCurrentUrl(User loginUser) {
-        return loginUser.getProfileImageUrl();
+    public ReviewResponse signReviewPhotoIfPresent(ReviewResponse dto) {
+        String key = toKeyOrNull(dto.photoUrl());
+        if (key == null || key.isBlank()) {
+            return dto;
+        }
+        String signed = s3UrlSigner.signGetUrl(key, Duration.ofMinutes(15));
+        return dto.withPhotoUrl(signed);
+    }
+
+    private void safeDelete(String key) {
+        try {
+            if (key != null && !key.isBlank()) {
+                s3FileUploader.delete(key);
+            }
+        } catch (Exception ex) {
+            log.warn("Failed to cleanup uploaded image: {}", key, ex);
+        }
     }
 
     private void registerDeleteOldIfCommitted(String oldUrl, String newUrl) {
@@ -89,26 +110,6 @@ public class UserPhotoService {
         safeDelete(oldKey);
     }
 
-    private void safeDelete(String key) {
-        try {
-            if (key != null && !key.isBlank()) {
-                s3FileUploader.delete(key);
-            }
-        } catch (Exception ex) {
-            log.warn("Failed to cleanup uploaded image: {}", key, ex);
-        }
-    }
-
-    // 조회 DTO의 정적 URL → presigned로 교체 시 사용
-    public UserResponse signIfPresent(UserResponse dto) {
-        String key = toKeyOrNull(dto.profileImageUrl());
-        if (key == null || key.isBlank()) {
-            return dto;
-        }
-        String signed = s3UrlSigner.signGetUrl(key, java.time.Duration.ofMinutes(15));
-        return new UserResponse(dto.userId(), dto.email(), dto.nickname(), signed);
-    }
-
     private String stripQuery(String url) {
         if (url == null) {
             return null;
@@ -118,12 +119,10 @@ public class UserPhotoService {
     }
 
     private String toKeyOrNull(String url) {
-        // 1. 입력 유효성 검사
         if (url == null || url.isBlank()) {
             return null;
         }
 
-        // 2. Base URL 기반 파싱
         String base = s3PublicBaseUrl.endsWith("/") ? s3PublicBaseUrl : s3PublicBaseUrl + "/";
         if (url.startsWith(base)) {
             String keyWithQuery = url.substring(base.length());
@@ -132,7 +131,6 @@ public class UserPhotoService {
             return (i >= 0) ? keyWithQuery.substring(0, i) : keyWithQuery;
         }
 
-        // 3. AWS 호스트 기반 파싱
         int at = url.indexOf(".amazonaws.com/");
         if (at > 0) {
             int start = at + ".amazonaws.com/".length();
@@ -141,7 +139,6 @@ public class UserPhotoService {
             return (q > 0) ? url.substring(start, q) : url.substring(start);
         }
 
-        // 4. 추출 실패
         return null;
     }
 }

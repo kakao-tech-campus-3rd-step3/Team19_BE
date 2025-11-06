@@ -1,4 +1,4 @@
-package com.team19.musuimsa.config;
+package com.team19.musuimsa.s3;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
