@@ -9,10 +9,12 @@ import com.team19.musuimsa.shelter.service.ShelterPhotoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,8 +22,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Optional;
 
 @Tag(name = "관리자 API", description = "데이터 임포트 및 관리용 API (내부용)")
 @RestController
@@ -37,9 +37,14 @@ public class ShelterAdminController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "임포트 성공",
                     content = @Content(
-                            schema = @Schema(implementation = ShelterImportResponse.class))),
+                            schema = @Schema(implementation = ShelterImportResponse.class),
+                            examples = @ExampleObject(name = "임포트 성공",
+                                    value = "{\"saved\": 59639}")
+                    )),
             @ApiResponse(responseCode = "502", description = "외부 API 호출 실패",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "공공데이터 API 실패",
+                                    value = "{\"status\": 502, \"error\": \"Bad Gateway\", \"message\": \"외부 API 호출 실패: https://www.safetydata.go.kr/...\", \"path\": \"/api/admin/shelters/import\"}")))
     })
     @PostMapping("/import")
     public ResponseEntity<ShelterImportResponse> importShelters() {
@@ -54,12 +59,19 @@ public class ShelterAdminController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "사진 업데이트 성공",
                     content = @Content(schema = @Schema(
-                            implementation = ShelterPhotoUrlUpdateResponse.class))),
+                            implementation = ShelterPhotoUrlUpdateResponse.class),
+                            examples = @ExampleObject(name = "사진 업데이트 성공",
+                                    value = "{\"updated\": true, \"photoUrl\": \"https://musuimsa.s3.ap-northeast-2.amazonaws.com/shelters/1.jpg\"}")
+                    )),
             @ApiResponse(responseCode = "204", description = "해당 쉼터의 사진을 찾지 못함 (업데이트 없음)"),
             @ApiResponse(responseCode = "404", description = "해당 ID의 쉼터를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "쉼터 없음",
+                                    value = "{\"status\": 404, \"error\": \"Not Found\", \"message\": \"해당 ID의 쉼터를 찾을 수 없습니다: 999\", \"path\": \"/api/admin/shelters/photos/999\"}"))),
             @ApiResponse(responseCode = "502", description = "외부(Mapillary/S3) API 호출 실패",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "Mapillary API 실패",
+                                    value = "{\"status\": 502, \"error\": \"Bad Gateway\", \"message\": \"외부 API 호출 실패: https://graph.mapillary.com/...\", \"path\": \"/api/admin/shelters/photos/1\"}")))
     })
     @PostMapping("/photos/{shelterId}")
     public ResponseEntity<ShelterPhotoUrlUpdateResponse> updateOne(
@@ -80,7 +92,10 @@ public class ShelterAdminController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "배치 실행 완료",
                     content = @Content(
-                            schema = @Schema(implementation = BatchUpdateResponse.class)))
+                            schema = @Schema(implementation = BatchUpdateResponse.class),
+                            examples = @ExampleObject(name = "배치 실행 완료",
+                                    value = "{\"processed\": 100, \"updated\": 85, \"failed\": 15}")
+                    ))
     })
     @PostMapping("/photos/all")
     public ResponseEntity<BatchUpdateResponse> updateBatch(
