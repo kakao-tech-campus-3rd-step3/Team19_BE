@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
+import com.team19.musuimsa.shelter.dto.map.ClusterFeature;
+import com.team19.musuimsa.shelter.dto.map.MapShelterResponse;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,6 +48,8 @@ public class RedisCacheConfig {
                 ObjectMapper.DefaultTyping.NON_FINAL,
                 JsonTypeInfo.As.PROPERTY
         );
+
+        mapper.registerSubtypes(ClusterFeature.class, MapShelterResponse.class);
 
         GenericJackson2JsonRedisSerializer json = new GenericJackson2JsonRedisSerializer(mapper);
 
