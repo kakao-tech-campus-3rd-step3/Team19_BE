@@ -1,5 +1,6 @@
 package com.team19.musuimsa.shelter.service;
 
+import com.team19.musuimsa.shelter.dto.OperatingHoursResponse;
 import com.team19.musuimsa.shelter.dto.map.MapBoundsRequest;
 import com.team19.musuimsa.shelter.dto.map.MapResponse;
 import com.team19.musuimsa.shelter.dto.map.MapShelterResponse;
@@ -37,7 +38,9 @@ class ShelterMapServiceCachingTest {
             ShelterRepository repo = ctx.getBean(ShelterRepository.class);
 
             when(repo.findInBbox(any(), any(), any(), any(), any()))
-                    .thenReturn(List.of(new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, null, null, null)));
+                    .thenReturn(List.of(
+                            new MapShelterResponse(1L, "A", "주소 A", 37.1, 127.1, null, true, 10, null, new OperatingHoursResponse(null, null), 0.0)
+                    ));
             when(repo.countInBbox(any(), any(), any(), any())).thenReturn(1);
 
             MapBoundsRequest req = new MapBoundsRequest(37.0, 127.0, 37.2, 127.2, 14, null, null, 0, 200);

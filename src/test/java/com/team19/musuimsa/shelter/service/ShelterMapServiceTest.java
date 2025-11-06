@@ -1,5 +1,6 @@
 package com.team19.musuimsa.shelter.service;
 
+import com.team19.musuimsa.shelter.dto.OperatingHoursResponse;
 import com.team19.musuimsa.shelter.dto.map.MapBoundsRequest;
 import com.team19.musuimsa.shelter.dto.map.MapResponse;
 import com.team19.musuimsa.shelter.dto.map.MapShelterResponse;
@@ -27,11 +28,13 @@ class ShelterMapServiceTest {
         ShelterRepository repo = mock(ShelterRepository.class);
         ShelterMapService svc = new ShelterMapService(repo);
 
+        OperatingHoursResponse hours = new OperatingHoursResponse("09:00~18:00", "10:00~16:00");
+
         // repo summary 결과를 3개로 가정 (클러스터링 결과 count는 그룹 수)
         List<MapShelterResponse> three = List.of(
-                new MapShelterResponse(1L, "A", 37.1, 127.1, true, 10, null, null, null),
-                new MapShelterResponse(2L, "B", 37.1001, 127.1, false, 20, null, null, null),
-                new MapShelterResponse(3L, "C", 37.5, 127.5, true, 30, null, null, null)
+                new MapShelterResponse(1L, "A", "주소 A", 37.1, 127.1, "0.5km", true, 10, "u.jpg", hours, 4.0),
+                new MapShelterResponse(2L, "B", "주소 B", 37.1001, 127.1, "0.5km", false, 20, null, hours, 3.0),
+                new MapShelterResponse(3L, "C", "주소 C", 37.5, 127.5, "0.5km", true, 30, null, hours, 5.0)
         );
         when(repo.findInBbox(any(), any(), any(), any(), any())).thenReturn(three);
 
@@ -61,8 +64,9 @@ class ShelterMapServiceTest {
 
         List<MapShelterRow> stubRows = List.of(
                 new MapShelterRow(
-                        1L, "A", 37.5665, 126.9780, true, 10, "u.jpg",
-                        "0900", "1800", "1000", "1600"
+                        1L, "A", "서울시 종로구", 37.5665, 126.9780, true, 10, "u.jpg",
+                        "0900", "1800", "1000", "1600",
+                        42L, 10L // totalRating, reviewCount 추가
                 )
         );
 

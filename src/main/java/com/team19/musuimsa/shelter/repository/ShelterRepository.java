@@ -47,13 +47,15 @@ public interface ShelterRepository extends JpaRepository<Shelter, Long> {
               SELECT new com.team19.musuimsa.shelter.dto.map.MapShelterResponse(
                 s.shelterId,
                 s.name,
+                s.address,
                 cast(s.latitude  as double),
                 cast(s.longitude as double),
+                cast(null as string),
                 CASE WHEN coalesce(s.airConditionerCount, 0) > 0 THEN true ELSE false END,
                 s.capacity,
                 s.photoUrl,
-                cast(null as string),
-                cast(null as string)
+                cast(null as com.team19.musuimsa.shelter.dto.OperatingHoursResponse),
+                cast(null as double)
               )
               FROM Shelter s
               WHERE s.latitude  BETWEEN :minLat AND :maxLat
@@ -70,6 +72,7 @@ public interface ShelterRepository extends JpaRepository<Shelter, Long> {
               SELECT new com.team19.musuimsa.shelter.dto.map.MapShelterRow(
                 s.shelterId,
                 s.name,
+                s.address,
                 cast(s.latitude  as double),
                 cast(s.longitude as double),
                 CASE WHEN coalesce(s.airConditionerCount, 0) > 0 THEN true ELSE false END,
@@ -78,7 +81,9 @@ public interface ShelterRepository extends JpaRepository<Shelter, Long> {
                 cast(s.weekdayOpenTime  as string),
                 cast(s.weekdayCloseTime as string),
                 cast(s.weekendOpenTime  as string),
-                cast(s.weekendCloseTime as string)
+                cast(s.weekendCloseTime as string),
+                cast(s.totalRating as long),
+                cast(s.reviewCount as long)
               )
               FROM Shelter s
               WHERE s.latitude  BETWEEN :minLat AND :maxLat
