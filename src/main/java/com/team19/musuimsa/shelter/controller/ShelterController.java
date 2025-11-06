@@ -68,10 +68,10 @@ public class ShelterController {
             @RequestParam double maxLng,
             @Parameter(description = "지도 확대 레벨", example = "14", required = true)
             @RequestParam int zoom,
-            @Parameter(description = "현재 사용자 위도 (거리 계산용)", example = "37.5665", required = false)
-            @RequestParam(required = false) Double userLat,
-            @Parameter(description = "현재 사용자 경도 (거리 계산용)", example = "126.9780", required = false)
-            @RequestParam(required = false) Double userLng,
+            @Parameter(description = "현재 사용자 위도 (거리 계산용)", example = "37.5665")
+            @RequestParam Double userLat,
+            @Parameter(description = "현재 사용자 경도 (거리 계산용)", example = "126.9780")
+            @RequestParam Double userLng,
             @Parameter(description = "페이지 번호 (0부터 시작, summary/detail 레벨에서 유효)", example = "0")
             @RequestParam(required = false) Integer page,
             @Parameter(description = "페이지 크기 (기본값 200, 최대 500, summary/detail 레벨에서 유효)",

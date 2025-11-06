@@ -48,7 +48,7 @@ class ShelterControllerTest {
     void getByBbox_returnsMapResponse() throws Exception {
         List<MapFeature> items = List.of(
                 new ClusterFeature("gh_1", 37.11, 127.11, 3),
-                new MapShelterResponse(1L, "중앙 쉼터", 37.5665, 126.9780, true, 50, "u.jpg", "09:00~18:00", "0.5km")
+                new MapShelterResponse(1L, "중앙 쉼터", "서울 주소", 37.5665, 126.9780, "0.5km", true, 50, "u.jpg", new OperatingHoursResponse("09:00~18:00", "10:00~16:00"), 4.0)
         );
         Mockito.when(shelterMapService.getByBbox(Mockito.any()))
                 .thenReturn(new MapResponse("cluster", items, 42));
