@@ -40,7 +40,10 @@ public class WishController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201",
                     description = "위시 추가 성공 (헤더 Location에 위시 리소스 URI 포함)", content = @Content(
-                    schema = @Schema(implementation = CreateWishResponse.class))),
+                    schema = @Schema(implementation = CreateWishResponse.class),
+                    examples = @ExampleObject(name = "위시 추가 성공",
+                            value = "{\"wishId\": 101, \"userId\": 1, \"shelterId\": 10, \"createdAt\": \"2025-07-01T14:30:00\"}")
+            )),
             @ApiResponse(responseCode = "401", description = "인증 실패",
                     content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
                             examples = @ExampleObject(name = "인증 실패",
@@ -68,7 +71,10 @@ public class WishController {
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = WishListResponse.class))),
+                    content = @Content(schema = @Schema(implementation = WishListResponse.class),
+                            examples = @ExampleObject(name = "위시리스트 조회",
+                                    value = "{\"items\": [{\"shelterId\": 10, \"name\": \"행복 쉼터\", \"address\": \"서울특별시 강남구 테헤란로 123\", \"operatingHours\": \"09:00~18:00\", \"averageRating\": 4.5, \"photoUrl\": \"https://example.com/photo.jpg\", \"distance\": \"1.2km\"}, {\"shelterId\": 11, \"name\": \"희망 쉼터\", \"address\": \"...\", \"operatingHours\": \"09:00~17:00\", \"averageRating\": 3.8, \"photoUrl\": null, \"distance\": \"2.5km\"}]}")
+                    )),
             @ApiResponse(responseCode = "401", description = "인증 실패",
                     content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
                             examples = @ExampleObject(name = "인증 실패",

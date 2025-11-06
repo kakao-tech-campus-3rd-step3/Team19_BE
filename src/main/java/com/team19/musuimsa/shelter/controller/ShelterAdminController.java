@@ -37,7 +37,10 @@ public class ShelterAdminController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "임포트 성공",
                     content = @Content(
-                            schema = @Schema(implementation = ShelterImportResponse.class))),
+                            schema = @Schema(implementation = ShelterImportResponse.class),
+                            examples = @ExampleObject(name = "임포트 성공",
+                                    value = "{\"saved\": 59639}")
+                    )),
             @ApiResponse(responseCode = "502", description = "외부 API 호출 실패",
                     content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
                             examples = @ExampleObject(name = "공공데이터 API 실패",
@@ -56,7 +59,10 @@ public class ShelterAdminController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "사진 업데이트 성공",
                     content = @Content(schema = @Schema(
-                            implementation = ShelterPhotoUrlUpdateResponse.class))),
+                            implementation = ShelterPhotoUrlUpdateResponse.class),
+                            examples = @ExampleObject(name = "사진 업데이트 성공",
+                                    value = "{\"updated\": true, \"photoUrl\": \"https://musuimsa.s3.ap-northeast-2.amazonaws.com/shelters/1.jpg\"}")
+                    )),
             @ApiResponse(responseCode = "204", description = "해당 쉼터의 사진을 찾지 못함 (업데이트 없음)"),
             @ApiResponse(responseCode = "404", description = "해당 ID의 쉼터를 찾을 수 없음",
                     content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
@@ -86,7 +92,10 @@ public class ShelterAdminController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "배치 실행 완료",
                     content = @Content(
-                            schema = @Schema(implementation = BatchUpdateResponse.class)))
+                            schema = @Schema(implementation = BatchUpdateResponse.class),
+                            examples = @ExampleObject(name = "배치 실행 완료",
+                                    value = "{\"processed\": 100, \"updated\": 85, \"failed\": 15}")
+                    ))
     })
     @PostMapping("/photos/all")
     public ResponseEntity<BatchUpdateResponse> updateBatch(

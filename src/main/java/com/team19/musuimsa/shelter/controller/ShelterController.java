@@ -42,7 +42,14 @@ public class ShelterController {
                             + "낮은 Zoom 레벨(12 이하)에서는 클러스터링된 결과가, 높은 Zoom 레벨(13 이상)에서는 개별 쉼터 정보가 반환됩니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = MapResponse.class))),
+                    content = @Content(schema = @Schema(implementation = MapResponse.class),
+                            examples = {
+                                    @ExampleObject(name = "클러스터 응답 (Zoom 12 이하)",
+                                            value = "{\"level\": \"cluster\", \"items\": [{\"id\": \"gh_1\", \"latitude\": 37.11, \"longitude\": 127.11, \"count\": 3}, {\"id\": \"gh_2\", \"latitude\": 37.12, \"longitude\": 127.12, \"count\": 5}], \"total\": 8}"),
+                                    @ExampleObject(name = "개별 쉼터 응답 (Zoom 13 이상)",
+                                            value = "{\"level\": \"detail\", \"items\": [{\"id\": 1, \"name\": \"행복 쉼터\", \"latitude\": 37.12, \"longitude\": 127.12, \"hasAircon\": true, \"capacity\": 50, \"photoUrl\": \"https://example.com/photo.jpg\", \"operatingHours\": \"09:00~18:00\"}], \"total\": 1}")
+                            }
+                    )),
             @ApiResponse(responseCode = "400", description = "잘못된 파라미터 값 (위도/경도 범위 오류 등)",
                     content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
                             examples = @ExampleObject(name = "잘못된 파라미터",
@@ -76,7 +83,10 @@ public class ShelterController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(array = @ArraySchema(
-                            schema = @Schema(implementation = NearbyShelterResponse.class)))),
+                            schema = @Schema(implementation = NearbyShelterResponse.class)),
+                            examples = @ExampleObject(name = "가까운 쉼터 목록",
+                                    value = "[{\"shelterId\": 1, \"name\": \"종로 무더위 쉼터\", \"address\": \"서울 종로구 세종대로 175\", \"latitude\": 37.5665, \"longitude\": 126.9780, \"distance\": \"150m\", \"isOutdoors\": false, \"operatingHours\": {\"weekday\": \"09:00~18:00\", \"weekend\": \"10:00~16:00\"}, \"averageRating\": 4.5, \"photoUrl\": \"https://example.com/shelter1.jpg\"}]")
+                    )),
             @ApiResponse(responseCode = "400", description = "잘못된 위도/경도 값",
                     content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
                             examples = @ExampleObject(name = "잘못된 좌표",
@@ -97,7 +107,10 @@ public class ShelterController {
             description = "특정 쉼터의 상세 정보를 조회합니다. 현재 위치를 함께 제공하면 쉼터까지의 거리를 계산하여 포함합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = ShelterResponse.class))),
+                    content = @Content(schema = @Schema(implementation = ShelterResponse.class),
+                            examples = @ExampleObject(name = "쉼터 상세 조회",
+                                    value = "{\"shelterId\": 1, \"name\": \"종로 무더위 쉼터\", \"address\": \"서울 종로구 세종대로 175\", \"latitude\": 37.5665, \"longitude\": 126.9780, \"distance\": \"150m\", \"operatingHours\": {\"weekday\": \"09:00~18:00\", \"weekend\": \"10:00~16:00\"}, \"capacity\": 50, \"isOutdoors\": false, \"coolingEquipment\": {\"fanCount\": 3, \"airConditionerCount\": 1}, \"totalRating\": 14, \"reviewCount\": 5, \"photoUrl\": \"https://example.com/shelter1.jpg\"}")
+                    )),
             @ApiResponse(responseCode = "400", description = "잘못된 위도/경도 값",
                     content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
                             examples = @ExampleObject(name = "잘못된 좌표",

@@ -29,7 +29,10 @@ public class WeatherController {
     @Operation(summary = "현재 위치 기온 조회", description = "위도와 경도를 기반으로 가장 최근 관측된 현재 기온을 조회합니다.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공",
-                    content = @Content(schema = @Schema(implementation = WeatherResponse.class))),
+                    content = @Content(schema = @Schema(implementation = WeatherResponse.class),
+                            examples = @ExampleObject(name = "현재 기온 조회",
+                                    value = "{\"temperature\": 33.5, \"baseDate\": \"20250701\", \"baseTime\": \"1400\"}")
+                    )),
             @ApiResponse(responseCode = "400", description = "잘못된 위도/경도 값",
                     content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
                             examples = @ExampleObject(name = "잘못된 좌표",
