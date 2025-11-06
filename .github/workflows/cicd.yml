@@ -101,10 +101,10 @@ jobs:
             sudo docker stop musuimsa-app || true
             sudo docker rm musuimsa-app || true
             
-            redis-cli -h ${{ secrets.REDIS_HOST }} -p 6379 -a ${{ secrets.REDIS_PASSWORD }} FLUSHDB
-            
             # 최신 이미지 pull
             sudo docker pull $AWS_ECR_URI:latest
+            
+            redis-cli -h ${{ secrets.REDIS_HOST }} -p 6379 -a ${{ secrets.REDIS_PASSWORD }} FLUSHDB
             
             # 새 컨테이너 실행
             sudo docker run -d \
