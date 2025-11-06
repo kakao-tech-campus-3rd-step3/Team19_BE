@@ -87,6 +87,13 @@ public class ShelterController {
                         size)));
     }
 
+    // 전체 쉼터 조회
+    @GetMapping("/all")
+    public ResponseEntity<List<ShelterResponse>> getAllShelters() {
+        List<ShelterResponse> allShelters = shelterService.getAllShelters();
+        return ResponseEntity.ok(allShelters);
+    }
+
     // 가까운 쉼터 조회
     @Operation(summary = "가까운 쉼터 목록 조회",
             description = "현재 위치(위도, 경도)를 기준으로 반경 1km 내의 가까운 쉼터 목록을 거리순으로 조회합니다.")

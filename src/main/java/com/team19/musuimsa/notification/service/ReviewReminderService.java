@@ -27,7 +27,7 @@ public class ReviewReminderService {
     private final FcmService fcmService;
 
     // 알림 지연 시간 (10분)
-    private static final int DELAY_MINUTES = 10;
+    private static final int DELAY_MINUTES = 1;
 
     // 클라이언트로부터 쉼터 도착 알림을 받아 10분 뒤 리뷰 알림을 예약합니다.
     public void scheduleReviewReminder(Long shelterId, User loginUser) {

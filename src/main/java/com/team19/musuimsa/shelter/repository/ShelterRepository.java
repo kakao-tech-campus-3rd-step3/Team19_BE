@@ -3,13 +3,12 @@ package com.team19.musuimsa.shelter.repository;
 import com.team19.musuimsa.shelter.domain.Shelter;
 import com.team19.musuimsa.shelter.dto.map.MapShelterResponse;
 import com.team19.musuimsa.shelter.dto.map.MapShelterRow;
+import java.math.BigDecimal;
+import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-
-import java.math.BigDecimal;
-import java.util.List;
 
 public interface ShelterRepository extends JpaRepository<Shelter, Long> {
 
@@ -103,7 +102,9 @@ public interface ShelterRepository extends JpaRepository<Shelter, Long> {
                 AND s.longitude BETWEEN :minLng AND :maxLng
             """)
     int countInBbox(@Param("minLat") BigDecimal minLat,
-                    @Param("minLng") BigDecimal minLng,
-                    @Param("maxLat") BigDecimal maxLat,
-                    @Param("maxLng") BigDecimal maxLng);
+            @Param("minLng") BigDecimal minLng,
+            @Param("maxLat") BigDecimal maxLat,
+            @Param("maxLng") BigDecimal maxLng);
+
+    List<Shelter> findByAddressStartingWith(String addressPrefix);
 }

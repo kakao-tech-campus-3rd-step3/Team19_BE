@@ -116,7 +116,7 @@
 
 ## 아키텍처 구조
 
-![image](https://github.com/user-attachments/assets/bbbc5b48-4507-4bb2-9ed7-9d2376b99eac)
+![Image](https://github.com/user-attachments/assets/e460bb28-d996-4f97-b356-d59c302fa81a)
 
 <br>
 
@@ -128,7 +128,7 @@
 
 ### ERD
 
-![Image](https://github.com/user-attachments/assets/9d9c0579-33da-429e-8037-d07418f9e2f2)
+![image](https://github.com/user-attachments/assets/d48bba61-d33f-4495-98cd-834d94315ab8)
 
 <br>
 
