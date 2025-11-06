@@ -71,7 +71,7 @@ public class ReviewPhotoService {
             return dto;
         }
         String signed = s3UrlSigner.signGetUrl(key, Duration.ofMinutes(15));
-        return dto.withProfileImageUrl(signed);
+        return dto.withPhotoUrl(signed);
     }
 
     private void safeDelete(String key) {
