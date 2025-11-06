@@ -1,6 +1,7 @@
 package com.team19.musuimsa.config;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team19.musuimsa.shelter.dto.map.ClusterFeature;
