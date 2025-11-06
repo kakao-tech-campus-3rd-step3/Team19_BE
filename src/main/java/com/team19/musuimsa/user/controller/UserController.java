@@ -305,10 +305,23 @@ public class UserController {
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "업로드/갱신 성공",
-                    content = @Content(schema = @Schema(implementation = UserResponse.class))),
+                    content = @Content(schema = @Schema(implementation = UserResponse.class),
+                            examples = @ExampleObject(name = "프로필 이미지 업로드 성공",
+                                    value = "{\"userId\": 1, \"email\": \"user@example.com\", \"nickname\": \"무더위쉼터탐험가\", \"profileImageUrl\": \"https://musuimsa.s3.ap-northeast-2.amazonaws.com/users/1/uuid.jpg?AWSAccessKeyId=...&Expires=...&Signature=...\"}"))),
             @ApiResponse(responseCode = "400", description = "파일 누락/형식 오류",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))),
-            @ApiResponse(responseCode = "401", description = "인증 실패")
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = {
+                                    @ExampleObject(name = "파일 형식 오류",
+                                            value = "{\"status\": 400, \"error\": \"Bad Request\", \"message\": \"지원하지 않는 이미지 형식입니다: image/gif (허용: image/jpeg, image/png, image/webp)\", \"path\": \"/api/users/me/profile-image\"}"),
+                                    @ExampleObject(name = "파일 누락",
+                                            value = "{\"status\": 400, \"error\": \"Bad Request\", \"message\": \"업로드할 파일이 비어있습니다.\", \"path\": \"/api/users/me/profile-image\"}"),
+                                    @ExampleObject(name = "파일 크기 초과",
+                                            value = "{\"status\": 400, \"error\": \"Bad Request\", \"message\": \"파일 크기가 너무 큽니다. 최대 10MB까지 업로드 가능합니다.\", \"path\": \"/api/users/me/profile-image\"}")
+                            })),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "인증 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"회원가입 또는 로그인 후 이용 가능합니다. \", \"path\": \"/api/users/me/profile-image\"}")))
     })
     @PostMapping(value = "/me/profile-image", consumes = "multipart/form-data")
     public ResponseEntity<UserResponse> uploadMyProfileImage(
@@ -316,6 +329,7 @@ public class UserController {
             @RequestPart("file") MultipartFile file
     ) {
         UserResponse updated = userPhotoService.changeMyProfileImage(user, file);
+
         return ResponseEntity.ok(updated);
     }
 }
