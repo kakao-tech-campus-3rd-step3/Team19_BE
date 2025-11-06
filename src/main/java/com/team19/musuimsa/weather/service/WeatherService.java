@@ -75,6 +75,9 @@ public class WeatherService {
             KmaTime.Base b = (h == 0) ? base : KmaTime.minusHours(base, h);
             Double v = safeFetchT1H(b.date(), b.time(), grid.nx(), grid.ny());
             if (v != null) {
+                log.info("KMA T1H 수신 성공: {}°C (base={} {}, nx={}, ny={}, fallback={})",
+                        v, b.date(), b.time(), grid.nx(), grid.ny(),
+                        (h == 0 ? "none" : "-" + h + "h"));
                 return v;
             }
         }
