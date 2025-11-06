@@ -52,6 +52,7 @@ public interface ShelterRepository extends JpaRepository<Shelter, Long> {
                 CASE WHEN coalesce(s.airConditionerCount, 0) > 0 THEN true ELSE false END,
                 s.capacity,
                 s.photoUrl,
+                cast(null as string),
                 cast(null as string)
               )
               FROM Shelter s

@@ -6,7 +6,10 @@ public record MapBoundsRequest(
         double maxLat,
         double maxLng,
         int zoom,
-        Integer page, Integer size
+        Double userLat,
+        Double userLng,
+        Integer page,
+        Integer size
 ) {
     public int pageOrDefault() {
         return page == null ? 0 : page;
