@@ -3,6 +3,7 @@ package com.team19.musuimsa.shelter.dto.map;
 public record MapShelterRow(
         Long id,
         String name,
+        String address,
         double latitude,
         double longitude,
         Boolean hasAircon,
@@ -11,7 +12,8 @@ public record MapShelterRow(
         String weekdayOpenTime,
         String weekdayCloseTime,
         String weekendOpenTime,
-        String weekendCloseTime
+        String weekendCloseTime,
+        Long totalRating,
+        Long reviewCount
 ) {
 }
-

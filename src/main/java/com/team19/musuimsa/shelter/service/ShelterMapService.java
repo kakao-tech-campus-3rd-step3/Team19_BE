@@ -1,5 +1,6 @@
 package com.team19.musuimsa.shelter.service;
 
+import com.team19.musuimsa.shelter.dto.OperatingHoursResponse;
 import com.team19.musuimsa.shelter.dto.map.ClusterFeature;
 import com.team19.musuimsa.shelter.dto.map.MapBoundsRequest;
 import com.team19.musuimsa.shelter.dto.map.MapFeature;
@@ -18,9 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,15 +78,10 @@ public class ShelterMapService {
     }
 
     private MapShelterResponse toTodayResponse(MapShelterRow mapShelterRow, Double userLat, Double userLng) {
-        ZoneId kst = ZoneId.of("Asia/Seoul");
-        DayOfWeek dow = LocalDate.now(kst).getDayOfWeek();
-        boolean weekend = (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY);
-
-        String fromTime = weekend ? mapShelterRow.weekendOpenTime() : mapShelterRow.weekdayOpenTime();
-        String toTime = weekend ? mapShelterRow.weekendCloseTime() : mapShelterRow.weekdayCloseTime();
-
-        String from = normalizeHm(fromTime);
-        String to = normalizeHm(toTime);
+        OperatingHoursResponse operatingHours = new OperatingHoursResponse(
+                mergeHours(normalizeHm(mapShelterRow.weekdayOpenTime()), normalizeHm(mapShelterRow.weekdayCloseTime())),
+                mergeHours(normalizeHm(mapShelterRow.weekendOpenTime()), normalizeHm(mapShelterRow.weekendCloseTime()))
+        );
 
         String distance = null;
         if (userLat != null && userLng != null
@@ -99,18 +92,23 @@ public class ShelterMapService {
                     userLat, userLng, mapShelterRow.latitude(), mapShelterRow.longitude());
         }
 
-        String hours = mergeHours(from, to);
+        Double averageRating = ShelterDtoUtils.average(
+                mapShelterRow.totalRating() != null ? mapShelterRow.totalRating().intValue() : 0,
+                mapShelterRow.reviewCount() != null ? mapShelterRow.reviewCount().intValue() : 0
+        );
 
         return new MapShelterResponse(
                 mapShelterRow.id(),
                 mapShelterRow.name(),
+                mapShelterRow.address(),
                 mapShelterRow.latitude(),
                 mapShelterRow.longitude(),
+                distance,
                 mapShelterRow.hasAircon(),
                 mapShelterRow.capacity(),
                 mapShelterRow.photoUrl(),
-                hours,
-                distance
+                operatingHours,
+                averageRating
         );
     }
 

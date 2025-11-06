@@ -1,15 +1,5 @@
 package com.team19.musuimsa.shelter.controller;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.anyDouble;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.team19.musuimsa.notification.service.ReviewReminderService;
 import com.team19.musuimsa.shelter.dto.NearbyShelterResponse;
 import com.team19.musuimsa.shelter.dto.OperatingHoursResponse;
@@ -21,7 +11,6 @@ import com.team19.musuimsa.shelter.dto.map.MapShelterResponse;
 import com.team19.musuimsa.shelter.service.ShelterMapService;
 import com.team19.musuimsa.shelter.service.ShelterService;
 import jakarta.annotation.Resource;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -30,6 +19,18 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.List;
+
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ShelterController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -52,8 +53,7 @@ class ShelterControllerTest {
     void getByBbox_returnsMapResponse() throws Exception {
         List<MapFeature> items = List.of(
                 new ClusterFeature("gh_1", 37.11, 127.11, 3),
-                new MapShelterResponse(1L, "중앙 쉼터", 37.5665, 126.9780, true, 50, "u.jpg",
-                        "09:00~18:00", "0.5km")
+                new MapShelterResponse(1L, "중앙 쉼터", "서울 주소", 37.5665, 126.9780, "0.5km", true, 50, "u.jpg", new OperatingHoursResponse("09:00~18:00", "10:00~16:00"), 4.0)
         );
         Mockito.when(shelterMapService.getByBbox(Mockito.any()))
                 .thenReturn(new MapResponse("cluster", items, 42));
