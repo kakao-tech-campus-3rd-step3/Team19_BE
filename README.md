@@ -116,8 +116,7 @@
 
 ## 아키텍처 구조
 
-![Image](https://github.com/user-attachments/assets/e460bb28-d996-4f97-b356-d59c302fa81a)
-
+![Image](https://github.com/user-attachments/assets/54e2315e-bd94-44b6-b1b8-431088847e8d)
 <br>
 
 ## CI/CD
@@ -128,7 +127,7 @@
 
 ### ERD
 
-![image](https://github.com/user-attachments/assets/d48bba61-d33f-4495-98cd-834d94315ab8)
+![image](https://github.com/user-attachments/assets/793ec7b7-87bc-4225-9cdc-dbab82cef49a)
 
 <br>
 
