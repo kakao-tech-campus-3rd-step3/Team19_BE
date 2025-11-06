@@ -1,5 +1,6 @@
 package com.team19.musuimsa.shelter.controller;
 
+import com.team19.musuimsa.notification.service.ReviewReminderService;
 import com.team19.musuimsa.shelter.dto.NearbyShelterResponse;
 import com.team19.musuimsa.shelter.dto.OperatingHoursResponse;
 import com.team19.musuimsa.shelter.dto.ShelterResponse;
@@ -43,6 +44,9 @@ class ShelterControllerTest {
 
     @MockitoBean
     ShelterMapService shelterMapService;
+
+    @MockitoBean
+    ReviewReminderService reviewReminderService;
 
     @Test
     @DisplayName("GET /api/shelters - 바운딩박스 파라미터 바인딩 및 MapResponse JSON 반환")
