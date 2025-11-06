@@ -8,6 +8,7 @@ import com.team19.musuimsa.wish.service.WishService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -40,9 +41,14 @@ public class WishController {
             @ApiResponse(responseCode = "201",
                     description = "위시 추가 성공 (헤더 Location에 위시 리소스 URI 포함)", content = @Content(
                     schema = @Schema(implementation = CreateWishResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 실패"),
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "인증 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"회원가입 또는 로그인 후 이용 가능합니다. \", \"path\": \"/api/users/me/wishes/1\"}"))),
             @ApiResponse(responseCode = "404", description = "해당 ID의 쉼터를 찾을 수 없음",
-                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class)))
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "쉼터 없음",
+                                    value = "{\"status\": 404, \"error\": \"Not Found\", \"message\": \"해당 ID의 쉼터를 찾을 수 없습니다: 999\", \"path\": \"/api/users/me/wishes/999\"}")))
     })
     @PostMapping("/{shelterId}")
     public ResponseEntity<CreateWishResponse> createWish(
@@ -63,7 +69,10 @@ public class WishController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공",
                     content = @Content(schema = @Schema(implementation = WishListResponse.class))),
-            @ApiResponse(responseCode = "401", description = "인증 실패")
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "인증 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"회원가입 또는 로그인 후 이용 가능합니다. \", \"path\": \"/api/users/me/wishes\"}")))
     })
     @GetMapping
     public ResponseEntity<WishListResponse> getWishes(
@@ -82,7 +91,10 @@ public class WishController {
     @SecurityRequirement(name = "bearerAuth")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "삭제 성공"),
-            @ApiResponse(responseCode = "401", description = "인증 실패")
+            @ApiResponse(responseCode = "401", description = "인증 실패",
+                    content = @Content(schema = @Schema(implementation = ErrorResponseDto.class),
+                            examples = @ExampleObject(name = "인증 실패",
+                                    value = "{\"status\": 401, \"error\": \"Unauthorized\", \"message\": \"회원가입 또는 로그인 후 이용 가능합니다. \", \"path\": \"/api/users/me/wishes/1\"}")))
     })
     @DeleteMapping("/{shelterId}")
     public ResponseEntity<Void> deleteWish(
