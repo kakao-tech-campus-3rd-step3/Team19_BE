@@ -57,14 +57,6 @@ public class UserPhotoService {
             safeDelete(newKey); // 롤백 시 업로드 취소
             throw e;
         }
-        final String oldSnap = oldUrl;
-        final String newSnap = newUrl;
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                deleteIfInSameBucket(oldSnap, newSnap);
-            }
-        });
     }
 
     private String safeLoadCurrentUrl(User loginUser) {
@@ -133,7 +125,6 @@ public class UserPhotoService {
 
         // 2. Base URL 기반 파싱
         String base = s3PublicBaseUrl.endsWith("/") ? s3PublicBaseUrl : s3PublicBaseUrl + "/";
-
         if (url.startsWith(base)) {
             String keyWithQuery = url.substring(base.length());
 
@@ -154,4 +145,3 @@ public class UserPhotoService {
         return null;
     }
 }
-
