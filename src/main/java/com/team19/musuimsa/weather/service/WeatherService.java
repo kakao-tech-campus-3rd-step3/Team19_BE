@@ -41,6 +41,24 @@ public class WeatherService {
         log.info("[WeatherService] KMA baseUrl = {}", baseUrl);
     }
 
+    private record FetchResult(Double t1h, KmaTime.Base usedBase) {
+
+    }
+
+    private FetchResult tryFetchWithFallbacks(KmaTime.Base base, NxNy grid, int... minusHours) {
+        for (int h : minusHours) {
+            KmaTime.Base b = (h == 0) ? base : KmaTime.minusHours(base, h);
+            Double v = safeFetchT1H(b.date(), b.time(), grid.nx(), grid.ny());
+            if (v != null) {
+                log.info("KMA T1H 수신 성공: {}°C (base={} {}, nx={}, ny={}, fallback={})",
+                        v, b.date(), b.time(), grid.nx(), grid.ny(),
+                        (h == 0 ? "none" : "-" + h + "h"));
+                return new FetchResult(v, b);
+            }
+        }
+        return new FetchResult(null, null);
+    }
+
     // 최신 기준시각에서 조회 실패/무자료면 -1h, -2h 순으로 폴백. KMA가 갓 갱신된 시각에 데이터를 늦게 올리는 경우를 흡수한다.
     @Cacheable(cacheManager = "caffeineCacheManager", cacheNames = "weather",
             key = "#root.target.gridKey(#latitude, #longitude) + ':t1h'")
@@ -50,38 +68,20 @@ public class WeatherService {
 
         KmaTime.Base baseTime = KmaTime.latestBase(kstClock);
 
-        // 0h(현재 기준), -1h, -2h 순서로 시도
-        Double t1h = tryFetchWithFallbacks(baseTime, grid, 0, 1, 2);
-        KmaTime.Base usedBase = baseTime;
+        FetchResult res = tryFetchWithFallbacks(baseTime, grid, 0, 1, 2);
 
-        if (t1h == null) {
-            // 어떤 시각에서도 못 받았으면 에러
+        if (res.t1h() == null) {
             String requestInfo = "base=" + baseTime.date() + " " + baseTime.time()
                     + ", nx=" + grid.nx() + ", ny=" + grid.ny();
             log.warn("기상청 응답에 현재기온이 없음. {}", requestInfo);
             throw new ExternalApiException(requestInfo);
         }
-
-        return new WeatherResponse(t1h, usedBase.date(), usedBase.time());
+        return new WeatherResponse(res.t1h(), res.usedBase().date(), res.usedBase().time());
     }
 
     public String gridKey(double latitude, double longitude) {
         NxNy grid = KmaGrid.fromLatLon(latitude, longitude);
         return grid.nx() + "-" + grid.ny();
-    }
-
-    private Double tryFetchWithFallbacks(KmaTime.Base base, NxNy grid, int... minusHours) {
-        for (int h : minusHours) {
-            KmaTime.Base b = (h == 0) ? base : KmaTime.minusHours(base, h);
-            Double v = safeFetchT1H(b.date(), b.time(), grid.nx(), grid.ny());
-            if (v != null) {
-                log.info("KMA T1H 수신 성공: {}°C (base={} {}, nx={}, ny={}, fallback={})",
-                        v, b.date(), b.time(), grid.nx(), grid.ny(),
-                        (h == 0 ? "none" : "-" + h + "h"));
-                return v;
-            }
-        }
-        return null;
     }
 
     // 외부 예외를 던지지 않고 null로 흘려보내 폴백을 유도
