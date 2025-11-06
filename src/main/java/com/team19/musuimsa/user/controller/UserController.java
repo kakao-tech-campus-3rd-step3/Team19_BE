@@ -145,7 +145,7 @@ public class UserController {
     ) {
         UserResponse userInfo = userService.getUserInfo(user.getUserId());
 
-        return ResponseEntity.ok(userInfo);
+        return ResponseEntity.ok(userPhotoService.signIfPresent(userInfo));
     }
 
     @Operation(summary = "특정 사용자 정보 조회", description = "사용자 ID를 이용하여 특정 사용자의 정보를 조회합니다.")
@@ -162,7 +162,7 @@ public class UserController {
     ) {
         UserResponse userInfo = userService.getUserInfo(userId);
 
-        return ResponseEntity.ok(userInfo);
+        return ResponseEntity.ok(userPhotoService.signIfPresent(userInfo));
     }
 
     @Operation(summary = "내 정보 수정", description = "로그인된 사용자의 닉네임 또는 프로필 이미지 URL을 수정합니다.")
