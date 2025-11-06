@@ -7,6 +7,7 @@ import com.team19.musuimsa.review.dto.UpdateReviewRequest;
 import com.team19.musuimsa.review.service.ReviewPhotoService;
 import com.team19.musuimsa.review.service.ReviewService;
 import com.team19.musuimsa.user.domain.User;
+import com.team19.musuimsa.user.service.UserPhotoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -42,10 +43,12 @@ public class ReviewController {
 
     private final ReviewService reviewService;
     private final ReviewPhotoService reviewPhotoService;
+    private final UserPhotoService userPhotoService;
 
-    public ReviewController(ReviewService reviewService, ReviewPhotoService reviewPhotoService) {
+    public ReviewController(ReviewService reviewService, ReviewPhotoService reviewPhotoService, UserPhotoService userPhotoService) {
         this.reviewService = reviewService;
         this.reviewPhotoService = reviewPhotoService;
+        this.userPhotoService = userPhotoService;
     }
 
     // 리뷰 작성
@@ -198,7 +201,8 @@ public class ReviewController {
             @PathVariable Long reviewId) {
 
         ReviewResponse review = reviewService.getReview(reviewId);
-        ReviewResponse response = reviewPhotoService.signReviewPhotoIfPresent(review);
+        ReviewResponse signedPhoto = reviewPhotoService.signReviewPhotoIfPresent(review);
+        ReviewResponse response = userPhotoService.signReviewProfileImageIfPresent(signedPhoto);
 
         return ResponseEntity.ok(response);
     }
@@ -253,6 +257,7 @@ public class ReviewController {
         List<ReviewResponse> reviews = reviewService.getReviewsByShelter(shelterId);
         List<ReviewResponse> signedReviews = reviews.stream()
                 .map(reviewPhotoService::signReviewPhotoIfPresent)
+                .map(userPhotoService::signReviewProfileImageIfPresent)
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(signedReviews);
@@ -312,6 +317,7 @@ public class ReviewController {
         List<ReviewResponse> reviews = reviewService.getReviewsByUser(user);
         List<ReviewResponse> signedReviews = reviews.stream()
                 .map(reviewPhotoService::signReviewPhotoIfPresent)
+                .map(userPhotoService::signReviewProfileImageIfPresent)
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(signedReviews);

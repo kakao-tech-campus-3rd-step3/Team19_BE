@@ -1,5 +1,6 @@
 package com.team19.musuimsa.shelter.service;
 
+import com.team19.musuimsa.shelter.dto.OperatingHoursResponse;
 import com.team19.musuimsa.shelter.dto.map.ClusterFeature;
 import com.team19.musuimsa.shelter.dto.map.MapBoundsRequest;
 import com.team19.musuimsa.shelter.dto.map.MapFeature;
@@ -9,6 +10,7 @@ import com.team19.musuimsa.shelter.dto.map.MapShelterRow;
 import com.team19.musuimsa.shelter.repository.ShelterRepository;
 import com.team19.musuimsa.shelter.util.Clusterer;
 import com.team19.musuimsa.shelter.util.GeoHashUtil;
+import com.team19.musuimsa.shelter.util.ShelterDtoUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
@@ -17,9 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,7 +55,9 @@ public class ShelterMapService {
         // 2) summary/detail 레벨: 시간 포함 행을 받아 오늘(KST) 기준으로 운영시간과 함께 반환
         List<MapShelterRow> rows = shelterRepository.findInBboxWithHours(
                 minLat, minLng, maxLat, maxLng, pageable);
-        List<MapShelterResponse> items = rows.stream().map(this::toTodayResponse).toList();
+        List<MapShelterResponse> items = rows.stream()
+                .map(row -> toTodayResponse(row, req.userLat(), req.userLng()))
+                .toList();
 
         if (req.zoom() < 16) {
             return new MapResponse("summary", new ArrayList<MapFeature>(items), total);
@@ -76,28 +77,38 @@ public class ShelterMapService {
         return BigDecimal.valueOf(d);
     }
 
-    private MapShelterResponse toTodayResponse(MapShelterRow mapShelterRow) {
-        ZoneId kst = ZoneId.of("Asia/Seoul");
-        DayOfWeek dow = LocalDate.now(kst).getDayOfWeek();
-        boolean weekend = (dow == DayOfWeek.SATURDAY || dow == DayOfWeek.SUNDAY);
+    private MapShelterResponse toTodayResponse(MapShelterRow mapShelterRow, Double userLat, Double userLng) {
+        OperatingHoursResponse operatingHours = new OperatingHoursResponse(
+                mergeHours(normalizeHm(mapShelterRow.weekdayOpenTime()), normalizeHm(mapShelterRow.weekdayCloseTime())),
+                mergeHours(normalizeHm(mapShelterRow.weekendOpenTime()), normalizeHm(mapShelterRow.weekendCloseTime()))
+        );
 
-        String fromTime = weekend ? mapShelterRow.weekendOpenTime() : mapShelterRow.weekdayOpenTime();
-        String toTime = weekend ? mapShelterRow.weekendCloseTime() : mapShelterRow.weekdayCloseTime();
+        String distance = null;
+        if (userLat != null && userLng != null
+                && mapShelterRow.latitude() != 0.0
+                && mapShelterRow.longitude() != 0.0
+        ) {
+            distance = ShelterDtoUtils.distanceBetween(
+                    userLat, userLng, mapShelterRow.latitude(), mapShelterRow.longitude());
+        }
 
-        String from = normalizeHm(fromTime);
-        String to = normalizeHm(toTime);
-
-        String hours = mergeHours(from, to);
+        Double averageRating = ShelterDtoUtils.average(
+                mapShelterRow.totalRating() != null ? mapShelterRow.totalRating().intValue() : 0,
+                mapShelterRow.reviewCount() != null ? mapShelterRow.reviewCount().intValue() : 0
+        );
 
         return new MapShelterResponse(
                 mapShelterRow.id(),
                 mapShelterRow.name(),
+                mapShelterRow.address(),
                 mapShelterRow.latitude(),
                 mapShelterRow.longitude(),
+                distance,
                 mapShelterRow.hasAircon(),
                 mapShelterRow.capacity(),
                 mapShelterRow.photoUrl(),
-                hours
+                operatingHours,
+                averageRating
         );
     }
 

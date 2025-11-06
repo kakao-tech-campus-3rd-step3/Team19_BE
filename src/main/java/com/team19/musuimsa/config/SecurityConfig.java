@@ -71,7 +71,8 @@ public class SecurityConfig {
                         // 특정 사용자를 조회하는 GET 요청은 허용
                         .requestMatchers(HttpMethod.GET, "/api/users/{userId}").permitAll()
                         // 그 외의 모든 api 요청은 인증된 사용자만 접근 가능
-                        .requestMatchers("/api/users/me/**", "/api/reviews/{reviewId}")
+                        .requestMatchers("/api/users/me/**", "/api/reviews/{reviewId}",
+                                "/api/shelters/{shelterId}/arrival")
                         .authenticated()
 
                         // 나머지 요청은 일단 모두 허용 (추후에 필요에 따라 변경 가능)

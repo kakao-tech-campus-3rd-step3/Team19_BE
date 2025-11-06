@@ -9,6 +9,7 @@ import com.team19.musuimsa.review.dto.UpdateReviewRequest;
 import com.team19.musuimsa.review.service.ReviewPhotoService;
 import com.team19.musuimsa.review.service.ReviewService;
 import com.team19.musuimsa.user.domain.User;
+import com.team19.musuimsa.user.service.UserPhotoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,6 +57,9 @@ public class ReviewControllerTest {
 
     @Mock
     private ReviewPhotoService reviewPhotoService;
+
+    @Mock
+    private UserPhotoService userPhotoService;
 
     @InjectMocks
     private ReviewController reviewController;
@@ -239,6 +243,7 @@ public class ReviewControllerTest {
         // Given
         given(reviewService.getReview(any(Long.class))).willReturn(response);
         given(reviewPhotoService.signReviewPhotoIfPresent(any(ReviewResponse.class))).willReturn(response);
+        given(userPhotoService.signReviewProfileImageIfPresent(any(ReviewResponse.class))).willReturn(response);
 
         // When & Then
         mockMvc.perform(get("/api/reviews/{reviewId}", reviewId))
@@ -255,6 +260,7 @@ public class ReviewControllerTest {
 
         given(reviewService.getReviewsByShelter(any(Long.class))).willReturn(reviews);
         given(reviewPhotoService.signReviewPhotoIfPresent(any(ReviewResponse.class))).willReturn(response);
+        given(userPhotoService.signReviewProfileImageIfPresent(any(ReviewResponse.class))).willReturn(response);
 
         // When & Then
         mockMvc.perform(get("/api/shelters/{shelterId}/reviews", shelterId))
@@ -271,6 +277,7 @@ public class ReviewControllerTest {
 
         given(reviewService.getReviewsByUser(any(User.class))).willReturn(reviews);
         given(reviewPhotoService.signReviewPhotoIfPresent(any(ReviewResponse.class))).willReturn(response);
+        given(userPhotoService.signReviewProfileImageIfPresent(any(ReviewResponse.class))).willReturn(response);
 
         // When & Then
         mockMvc.perform(get("/api/users/me/reviews"))

@@ -1,5 +1,6 @@
 package com.team19.musuimsa.user.service;
 
+import com.team19.musuimsa.review.dto.ReviewResponse;
 import com.team19.musuimsa.s3.S3FileUploader;
 import com.team19.musuimsa.s3.S3UrlSigner;
 import com.team19.musuimsa.s3.dto.S3UploadResponse;
@@ -107,6 +108,15 @@ public class UserPhotoService {
         }
         String signed = s3UrlSigner.signGetUrl(key, java.time.Duration.ofMinutes(15));
         return new UserResponse(dto.userId(), dto.email(), dto.nickname(), signed);
+    }
+
+    public ReviewResponse signReviewProfileImageIfPresent(ReviewResponse dto) {
+        String key = toKeyOrNull(dto.profileImageUrl());
+        if (key == null || key.isBlank()) {
+            return dto;
+        }
+        String signed = s3UrlSigner.signGetUrl(key, java.time.Duration.ofMinutes(15));
+        return dto.withProfileImageUrl(signed);
     }
 
     private String stripQuery(String url) {
