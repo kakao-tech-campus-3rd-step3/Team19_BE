@@ -70,7 +70,12 @@ public class MapillaryPhotoAgent {
         // 2) 썸네일 있는 것만 남기고 거리 계산해서 가장 가까운 한 장
         Optional<MapillaryImageResponse> pick = res.data().stream()
                 .filter(i -> i.bestThumbUrl() != null)
-                .min(Comparator.comparingDouble(i -> distanceM(latitude.doubleValue(), longitude.doubleValue(), i.latitude(), i.longitude())));
+                .min(Comparator.comparingDouble(i -> {
+                    double dist = distanceM(latitude.doubleValue(), longitude.doubleValue(), i.latitude(), i.longitude());
+                    long timePenaltyMinutes = (System.currentTimeMillis() - i.capturedAt()) / 60_000L;
+
+                    return dist + (timePenaltyMinutes / 60.0) * 100.0;
+                }));
 
         if (pick.isEmpty()) {
             return Optional.empty();
